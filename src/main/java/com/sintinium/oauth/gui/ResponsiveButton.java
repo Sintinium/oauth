@@ -1,28 +1,27 @@
 package com.sintinium.oauth.gui;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.client.Minecraft;
 
-public class ResponsiveButton extends Button {
+public class ResponsiveButton extends ActionButton {
     private Runnable onHover;
     private Runnable onUnhover;
     private boolean wasHovered = false;
 
-    public ResponsiveButton(int p_i232255_1_, int p_i232255_2_, int p_i232255_3_, int p_i232255_4_, ITextComponent p_i232255_5_, IPressable p_i232255_6_, Runnable onHover, Runnable onUnhover) {
-        super(p_i232255_1_, p_i232255_2_, p_i232255_3_, p_i232255_4_, p_i232255_5_, p_i232255_6_);
+    public ResponsiveButton(int buttonId, int x, int y, int width, int height, String text, Runnable onClick, Runnable onHover, Runnable onUnhover) {
+        super(buttonId, x, y, width, height, text, onClick);
         this.onHover = onHover;
         this.onUnhover = onUnhover;
     }
 
     @Override
-    public void render(MatrixStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
-        super.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-        if (!this.active) {
+    public void drawButton(Minecraft mc, int mouseX, int mouseY, float partialTicks) {
+        super.drawButton(mc, mouseX, mouseY, partialTicks);
+        if (!this.enabled) {
             onUnhover.run();
             return;
         }
-        if (this.isHovered()) {
+
+        if (this.hovered) {
             onHover.run();
         } else {
             onUnhover.run();

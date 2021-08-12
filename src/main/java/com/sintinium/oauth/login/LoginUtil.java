@@ -23,7 +23,7 @@ public class LoginUtil {
     public static boolean wasOnline = false;
     private static long lastCheck = -1L;
 
-    private static YggdrasilAuthenticationService authService = new YggdrasilAuthenticationService(Minecraft.getInstance().getProxy(), UUID.randomUUID().toString());
+    private static YggdrasilAuthenticationService authService = new YggdrasilAuthenticationService(Minecraft.getMinecraft().getProxy(), UUID.randomUUID().toString());
     private static YggdrasilUserAuthentication userAuth = (YggdrasilUserAuthentication) authService.createUserAuthentication(Agent.MINECRAFT);
     private static YggdrasilMinecraftSessionService minecraftSessionService = (YggdrasilMinecraftSessionService) authService.createMinecraftSessionService();
 
@@ -36,13 +36,13 @@ public class LoginUtil {
         if (!needsRefresh && System.currentTimeMillis() - lastCheck < 1000 * 10) {
             return wasOnline;
         }
-        Session session = Minecraft.getInstance().getUser();
+        Session session = Minecraft.getMinecraft().getSession();
         String uuid = UUID.randomUUID().toString();
         needsRefresh = false;
         lastCheck = System.currentTimeMillis();
         try {
-            minecraftSessionService.joinServer(session.getGameProfile(), session.getAccessToken(), uuid);
-            if (minecraftSessionService.hasJoinedServer(session.getGameProfile(), uuid, null).isComplete()) {
+            minecraftSessionService.joinServer(session.getProfile(), session.getToken(), uuid);
+            if (minecraftSessionService.hasJoinedServer(session.getProfile(), uuid, null).isComplete()) {
                 wasOnline = true;
                 return true;
             } else {
@@ -94,7 +94,7 @@ public class LoginUtil {
         Field field = ObfuscationReflectionHelper.findField(Minecraft.class, "field_71449_j");
         field.setAccessible(true);
         try {
-            field.set(Minecraft.getInstance(), session);
+            field.set(Minecraft.getMinecraft(), session);
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }

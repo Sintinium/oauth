@@ -1,23 +1,23 @@
 package com.sintinium.oauth.gui;
 
 import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.util.text.ITextComponent;
+import net.minecraft.client.gui.GuiTextField;
 
-public class UsernameFieldWidget extends TextFieldWidget {
+public class UsernameFieldWidget extends GuiTextField {
 
     private PasswordFieldWidget passwordFieldWidget;
 
-    public UsernameFieldWidget(FontRenderer p_i232260_1_, int p_i232260_2_, int p_i232260_3_, int p_i232260_4_, int p_i232260_5_, ITextComponent p_i232260_6_, PasswordFieldWidget passwordFieldWidget) {
-        super(p_i232260_1_, p_i232260_2_, p_i232260_3_, p_i232260_4_, p_i232260_5_, p_i232260_6_);
+    public UsernameFieldWidget(int componentId, FontRenderer fontrendererObj, int x, int y, int par5Width, int par6Height, PasswordFieldWidget passwordFieldWidget) {
+        super(componentId, fontrendererObj, x, y, par5Width, par6Height);
         this.passwordFieldWidget = passwordFieldWidget;
     }
 
+
     @Override
-    public boolean mouseClicked(double p_231044_1_, double p_231044_3_, int p_231044_5_) {
-        boolean result = super.mouseClicked(p_231044_1_, p_231044_3_, p_231044_5_);
+    public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) {
+        boolean result = super.mouseClicked(mouseX, mouseY, mouseButton);
         if (this.isFocused()) {
-            passwordFieldWidget.setFocus(false);
+            passwordFieldWidget.setFocused(false);
         }
         return result;
     }

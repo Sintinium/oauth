@@ -4,7 +4,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpServer;
-import net.minecraft.util.Util;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -19,9 +18,11 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
+import java.awt.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -159,7 +160,13 @@ public class MicrosoftLogin {
             server.setExecutor(null);
             server.start();
 //        Desktop.getDesktop().browse(new URI(msAuthUrl));
-            Util.getPlatform().openUri(msAuthUrl);
+
+            try {
+                Desktop.getDesktop().browse(new URI(msAuthUrl));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             latch.await();
 
             return msCode.get();

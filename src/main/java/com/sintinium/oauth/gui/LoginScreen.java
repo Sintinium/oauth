@@ -1,39 +1,58 @@
 package com.sintinium.oauth.gui;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.sintinium.oauth.login.LoginUtil;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.DialogTexts;
-import net.minecraft.client.gui.screen.MultiplayerScreen;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.client.gui.*;
+import org.lwjgl.input.Keyboard;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class LoginScreen extends Screen {
-    private final Screen lastScreen;
-    private final MultiplayerScreen multiplayerScreen;
-    private Button mojangLoginButton;
+public class LoginScreen extends GuiScreen {
+    private final GuiScreen lastScreen;
+    private final GuiMultiplayer multiplayerScreen;
+    private ActionButton mojangLoginButton;
     private PasswordFieldWidget passwordWidget;
-    private TextFieldWidget usernameWidget;
+    private GuiTextField usernameWidget;
     private AtomicReference<String> status = new AtomicReference<>();
+    private String title = "OAuth Login";
+
+    private GuiPageButtonList.GuiResponder guiResponder = new GuiPageButtonList.GuiResponder() {
+        @Override
+        public void setEntryValue(int id, boolean value) {
+            onEdited(id, String.valueOf(value));
+        }
+
+        @Override
+        public void setEntryValue(int id, float value) {
+            onEdited(id, String.valueOf(value));
+        }
+
+        @Override
+        public void setEntryValue(int id, String value) {
+            onEdited(id, value);
+        }
+    };
 
     private List<Runnable> toRun = new CopyOnWriteArrayList<>();
 
-    public LoginScreen(Screen last, MultiplayerScreen multiplayerScreen) {
-        super(new StringTextComponent("OAuth Login"));
+    public LoginScreen(GuiScreen last, GuiMultiplayer multiplayerScreen) {
         this.lastScreen = last;
         this.multiplayerScreen = multiplayerScreen;
     }
 
-    public void tick() {
-        this.usernameWidget.tick();
-        this.passwordWidget.tick();
+    @Override
+    public void onResize(Minecraft mcIn, int w, int h) {
+
+    }
+
+    @Override
+    public void updateScreen() {
+        this.usernameWidget.updateCursorCounter();
+        this.passwordWidget.updateCursorCounter();
         if (!toRun.isEmpty()) {
             for (Runnable r : toRun) {
                 r.run();
@@ -42,91 +61,111 @@ public class LoginScreen extends Screen {
         }
     }
 
-    protected void init() {
-        this.minecraft.keyboardHandler.setSendRepeatsToGui(true);
+    @Override
+    public void initGui() {
+        Keyboard.enableRepeatEvents(true);
 
-        this.passwordWidget = new PasswordFieldWidget(this.font, this.width / 2 - 100, 106, 200, 20, new StringTextComponent("Password"));
-        this.passwordWidget.setMaxLength(128);
-        this.passwordWidget.setResponder(this::onEdited);
+        this.passwordWidget = new PasswordFieldWidget(0, this.mc.fontRenderer, this.width / 2 - 100, 106, 200, 20);
+        this.passwordWidget.setMaxStringLength(128);
+        this.passwordWidget.setGuiResponder(guiResponder);
 
-        this.usernameWidget = new UsernameFieldWidget(this.font, this.width / 2 - 100, 66, 200, 20, new StringTextComponent("Username/Email"), passwordWidget);
-        this.usernameWidget.setFocus(true);
+        this.usernameWidget = new UsernameFieldWidget(1, this.mc.fontRenderer, this.width / 2 - 100, 66, 200, 20, passwordWidget);
+        this.usernameWidget.setFocused(true);
         if (LoginUtil.lastMojangUsername != null) {
-            this.usernameWidget.setValue(LoginUtil.lastMojangUsername);
+            this.usernameWidget.setText(LoginUtil.lastMojangUsername);
         }
-        this.usernameWidget.setResponder(this::onEdited);
+        this.usernameWidget.setGuiResponder(guiResponder);
 
-        this.children.add(this.usernameWidget);
-        this.children.add(this.passwordWidget);
 
-        this.mojangLoginButton = this.addButton(new ResponsiveButton(this.width / 2 - 100, this.height / 4 + 96 + 18, 200, 20, new StringTextComponent("Login"), (p_213030_1_) -> {
+        this.mojangLoginButton = this.addButton(new ResponsiveButton(2, this.width / 2 - 100, this.height / 4 + 96 + 18, 200, 20, "Login", () -> {
             Thread thread = new Thread(() -> {
-                if (usernameWidget.getValue().isEmpty()) {
+                if (usernameWidget.getText().isEmpty()) {
                     toRun.add(() -> this.status.set("Missing username!"));
                 } else {
-                    Optional<Boolean> didSuccessfullyLogIn = LoginUtil.loginMojangOrLegacy(usernameWidget.getValue(), passwordWidget.getValue());
+                    Optional<Boolean> didSuccessfullyLogIn = LoginUtil.loginMojangOrLegacy(usernameWidget.getText(), passwordWidget.getText());
                     if (!didSuccessfullyLogIn.isPresent()) {
                         toRun.add(() -> this.status.set("You seem to be offline. Check your connection!"));
                     } else if (!didSuccessfullyLogIn.get()) {
                         toRun.add(() -> this.status.set("Wrong password or username!"));
                     } else {
                         LoginUtil.updateOnlineStatus();
-                        toRun.add(() -> Minecraft.getInstance().setScreen(multiplayerScreen));
+                        toRun.add(() -> Minecraft.getMinecraft().displayGuiScreen(multiplayerScreen));
                     }
                 }
             });
             thread.start();
-        }, this::updateLoginButton, () -> this.mojangLoginButton.setMessage(new StringTextComponent("Login"))));
+        }, this::updateLoginButton, () -> this.mojangLoginButton.displayString = "Login"));
 
-        this.addButton(new Button(this.width / 2 - 100, this.height / 4 + 120 + 18, 200, 20, DialogTexts.GUI_CANCEL, (p_213029_1_) -> {
-            Minecraft.getInstance().setScreen(lastScreen);
+        this.addButton(new ActionButton(3, this.width / 2 - 100, this.height / 4 + 120 + 18, 200, 20, "Cancel", () -> {
+            Minecraft.getMinecraft().displayGuiScreen(lastScreen);
         }));
         this.cleanUp();
     }
 
-    public void resize(Minecraft p_231152_1_, int p_231152_2_, int p_231152_3_) {
-        String s = this.passwordWidget.getValue();
-        String s1 = this.usernameWidget.getValue();
-        this.init(p_231152_1_, p_231152_2_, p_231152_3_);
-        this.passwordWidget.setValue(s);
-        this.usernameWidget.setValue(s1);
-    }
-
-    private void onEdited(String p_213028_1_) {
+    private void onEdited(int id, String value) {
         this.cleanUp();
     }
 
     private void updateLoginButton() {
-        if (this.passwordWidget.getValue().isEmpty()) {
-            this.mojangLoginButton.setMessage(new StringTextComponent("Login Offline"));
+        if (this.passwordWidget.getText().isEmpty()) {
+            this.mojangLoginButton.displayString = "Login Offline";
         } else {
-            this.mojangLoginButton.setMessage(new StringTextComponent("Login"));
+            this.mojangLoginButton.displayString = "Login";
         }
     }
 
-    public void removed() {
-        this.minecraft.keyboardHandler.setSendRepeatsToGui(false);
-    }
-
-    public void onClose() {
-        this.cleanUp();
-        this.minecraft.setScreen(this.lastScreen);
+    @Override
+    public void onGuiClosed() {
+        Keyboard.enableRepeatEvents(false);
     }
 
     private void cleanUp() {
-        this.mojangLoginButton.active = !this.usernameWidget.getValue().isEmpty();
+        this.mojangLoginButton.enabled = !this.usernameWidget.getText().isEmpty();
     }
 
-    public void render(MatrixStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
-        this.renderBackground(p_230430_1_);
-        drawCenteredString(p_230430_1_, this.font, this.title, this.width / 2, 17, 16777215);
-        drawString(p_230430_1_, this.font, "Username/Email", this.width / 2 - 100, 53, 10526880);
-        drawString(p_230430_1_, this.font, "Password", this.width / 2 - 100, 94, 10526880);
-        if (status.get() != null) {
-            drawCenteredString(p_230430_1_, Minecraft.getInstance().font, status.get(), this.width / 2, this.height / 2 + 10, 0xFF0000);
+    @Override
+    protected void actionPerformed(GuiButton button) {
+        if (button instanceof ActionButton) {
+            ((ActionButton) button).onClicked();
+        } else {
+            throw new RuntimeException("Missing button action");
         }
-        this.usernameWidget.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-        this.passwordWidget.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-        super.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
     }
+
+    @Override
+    protected void keyTyped(char typedChar, int keyCode) throws IOException {
+        this.usernameWidget.textboxKeyTyped(typedChar, keyCode);
+        this.passwordWidget.textboxKeyTyped(typedChar, keyCode);
+
+        if (keyCode == Keyboard.KEY_TAB) {
+            this.usernameWidget.setFocused(!this.passwordWidget.isFocused());
+            this.passwordWidget.setFocused(!this.usernameWidget.isFocused());
+        }
+
+        super.keyTyped(typedChar, keyCode);
+    }
+
+    @Override
+    protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
+        usernameWidget.mouseClicked(mouseX, mouseY, mouseButton);
+        passwordWidget.mouseClicked(mouseX, mouseY, mouseButton);
+        super.mouseClicked(mouseX, mouseY, mouseButton);
+    }
+
+    @Override
+    public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+        this.drawBackground(0);
+        drawCenteredString(mc.fontRenderer, title, width / 2, 17, 16777215);
+        drawString(mc.fontRenderer, "Username/Email", this.width / 2 - 100, 53, 10526880);
+        drawString(mc.fontRenderer, "Password", this.width / 2 - 100, 94, 10526880);
+
+        if (status.get() != null) {
+            drawCenteredString(mc.fontRenderer, status.get(), width / 2, height / 2 + 10, 0xFF0000);
+        }
+        this.usernameWidget.drawTextBox();
+        this.passwordWidget.drawTextBox();
+
+        super.drawScreen(mouseX, mouseY, partialTicks);
+    }
+
 }

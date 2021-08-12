@@ -1,53 +1,65 @@
 package com.sintinium.oauth.gui;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.sintinium.oauth.login.LoginUtil;
 import com.sintinium.oauth.login.MicrosoftLogin;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.DialogTexts;
-import net.minecraft.client.gui.screen.MultiplayerScreen;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.gui.GuiMultiplayer;
+import net.minecraft.client.gui.GuiScreen;
 
-public class LoginTypeScreen extends Screen {
+public class LoginTypeScreen extends GuiScreen {
 
-    private MultiplayerScreen lastScreen;
+    private GuiMultiplayer lastScreen;
 
-    public LoginTypeScreen(MultiplayerScreen last) {
-        super(new StringTextComponent("Select Account Type"));
+    private int mojangButtonId = 0;
+    private int microsoftLoginId = 1;
+    private int cancelId = 2;
+
+    public LoginTypeScreen(GuiMultiplayer last) {
         lastScreen = last;
     }
 
+
     @Override
-    protected void init() {
-        this.addButton(new Button(this.width / 2 - 100, this.height / 2 - 20 - 2, 200, 20, new StringTextComponent("Mojang Login"), p_onPress_1_ -> {
-            Minecraft.getInstance().setScreen(new LoginScreen(this, lastScreen));
+    public void initGui() {
+        this.addButton(new ActionButton(mojangButtonId, this.width / 2 - 100, this.height / 2 - 20 - 2, 200, 20, "Mojang Login", () -> {
+            Minecraft.getMinecraft().displayGuiScreen(new LoginScreen(this, lastScreen));
         }));
-        this.addButton(new Button(this.width / 2 - 100, this.height / 2 + 2, 200, 20, new StringTextComponent("Microsoft Login"), (p_213031_1_) -> {
+        this.addButton(new ActionButton(microsoftLoginId, this.width / 2 - 100, this.height / 2 + 2, 200, 20, "Microsoft Login", () -> {
             final MicrosoftLogin login = new MicrosoftLogin();
             Thread thread = new Thread(() -> {
                 login.login(() -> {
                     LoginUtil.updateOnlineStatus();
-                    Minecraft.getInstance().setScreen(lastScreen);
+                    Minecraft.getMinecraft().displayGuiScreen(lastScreen);
                 });
             });
             if (login.getErrorMsg() != null) {
                 System.err.println(login.getErrorMsg());
             }
-            Minecraft.getInstance().setScreen(new LoginLoadingScreen(lastScreen, this, login::cancelLogin, true));
+            Minecraft.getMinecraft().displayGuiScreen(new LoginLoadingScreen(lastScreen, this, login::cancelLogin, true));
             thread.start();
         }));
 
-        this.addButton(new Button(this.width / 2 - 100, this.height / 4 + 120 + 18, 200, 20, DialogTexts.GUI_CANCEL, (p_213029_1_) -> {
-            Minecraft.getInstance().setScreen(lastScreen);
+        this.addButton(new ActionButton(cancelId, this.width / 2 - 100, this.height / 4 + 120 + 18, 200, 20, "Cancel", () -> {
+            Minecraft.getMinecraft().displayGuiScreen(lastScreen);
         }));
     }
 
     @Override
-    public void render(MatrixStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
-        this.renderBackground(p_230430_1_);
-        drawCenteredString(p_230430_1_, this.font, this.title, this.width / 2, this.height / 2 - 60, 16777215);
-        super.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
+    protected void actionPerformed(GuiButton button) {
+        if (button instanceof ActionButton) {
+            ((ActionButton) button).onClicked();
+        } else {
+            throw new RuntimeException("Missing button action!");
+        }
     }
+
+    @Override
+    public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+        this.drawBackground(0);
+        drawCenteredString(Minecraft.getMinecraft().fontRenderer, "Select Account Type", this.width / 2, this.height / 2 - 60, 0xFFFFFF);
+        super.drawScreen(mouseX, mouseY, partialTicks);
+    }
+
+
 }
