@@ -40,7 +40,7 @@ public class LoginTypeScreen extends GuiScreen {
             thread.start();
         }));
 
-        this.addButton(new ActionButton(cancelId, this.width / 2 - 100, this.height / 4 + 120 + 18, 200, 20, "Cancel", () -> {
+        this.addButton(new ActionButton(cancelId, this.width / 2 - 100, this.height / 2 + 60, 200, 20, "Cancel", () -> {
             Minecraft.getMinecraft().displayGuiScreen(lastScreen);
         }));
     }

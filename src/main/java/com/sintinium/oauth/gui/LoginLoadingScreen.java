@@ -26,7 +26,7 @@ public class LoginLoadingScreen extends GuiScreen {
 
     @Override
     public void initGui() {
-        this.addButton(new ActionButton(0, this.width / 2 - 100, this.height / 4 + 120 + 18, 200, 20, "Cancel", () -> {
+        this.addButton(new ActionButton(0, this.width / 2 - 100, this.height / 2 + 60, 200, 20, "Cancel", () -> {
             onCancel.run();
             Minecraft.getMinecraft().displayGuiScreen(lastScreen);
         }));
@@ -62,7 +62,7 @@ public class LoginLoadingScreen extends GuiScreen {
         this.drawBackground(0);
         drawCenteredString(Minecraft.getMinecraft().fontRenderer, renderText, this.width / 2, this.height / 2 - 40, 0xFFFFFF);
         if (this.isMicrosoft) {
-            drawCenteredString(Minecraft.getMinecraft().fontRenderer, "Check your browser", this.width / 2, this.height / 2 - 30, 0xFFFFFF);
+            drawCenteredString(Minecraft.getMinecraft().fontRenderer, "Check your browser", this.width / 2, this.height / 2 - 28, 0xFFFFFF);
         }
         super.drawScreen(mouseX, mouseY, partialTicks);
     }

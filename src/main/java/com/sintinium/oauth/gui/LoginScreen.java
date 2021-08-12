@@ -46,7 +46,12 @@ public class LoginScreen extends GuiScreen {
 
     @Override
     public void onResize(Minecraft mcIn, int w, int h) {
-
+        String user = usernameWidget.getText();
+        String pass = passwordWidget.getText();
+        super.onResize(mcIn, w, h);
+        initGui();
+        usernameWidget.setText(user);
+        passwordWidget.setText(pass);
     }
 
     @Override
@@ -64,12 +69,14 @@ public class LoginScreen extends GuiScreen {
     @Override
     public void initGui() {
         Keyboard.enableRepeatEvents(true);
+        buttonList.clear();
 
-        this.passwordWidget = new PasswordFieldWidget(0, this.mc.fontRenderer, this.width / 2 - 100, 106, 200, 20);
+        System.out.println(this.height / 2);
+        this.passwordWidget = new PasswordFieldWidget(0, this.mc.fontRenderer, this.width / 2 - 100, this.height / 2 - 20, 200, 20);
         this.passwordWidget.setMaxStringLength(128);
         this.passwordWidget.setGuiResponder(guiResponder);
 
-        this.usernameWidget = new UsernameFieldWidget(1, this.mc.fontRenderer, this.width / 2 - 100, 66, 200, 20, passwordWidget);
+        this.usernameWidget = new UsernameFieldWidget(1, this.mc.fontRenderer, this.width / 2 - 100, this.height / 2 - 60, 200, 20, passwordWidget);
         this.usernameWidget.setFocused(true);
         if (LoginUtil.lastMojangUsername != null) {
             this.usernameWidget.setText(LoginUtil.lastMojangUsername);
@@ -77,7 +84,7 @@ public class LoginScreen extends GuiScreen {
         this.usernameWidget.setGuiResponder(guiResponder);
 
 
-        this.mojangLoginButton = this.addButton(new ResponsiveButton(2, this.width / 2 - 100, this.height / 4 + 96 + 18, 200, 20, "Login", () -> {
+        this.mojangLoginButton = this.addButton(new ResponsiveButton(2, this.width / 2 - 100, this.height / 2 + 36, 200, 20, "Login", () -> {
             Thread thread = new Thread(() -> {
                 if (usernameWidget.getText().isEmpty()) {
                     toRun.add(() -> this.status.set("Missing username!"));
@@ -96,7 +103,7 @@ public class LoginScreen extends GuiScreen {
             thread.start();
         }, this::updateLoginButton, () -> this.mojangLoginButton.displayString = "Login"));
 
-        this.addButton(new ActionButton(3, this.width / 2 - 100, this.height / 4 + 120 + 18, 200, 20, "Cancel", () -> {
+        this.addButton(new ActionButton(3, this.width / 2 - 100, this.height / 2 + 60, 200, 20, "Cancel", () -> {
             Minecraft.getMinecraft().displayGuiScreen(lastScreen);
         }));
         this.cleanUp();
@@ -156,8 +163,8 @@ public class LoginScreen extends GuiScreen {
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         this.drawBackground(0);
         drawCenteredString(mc.fontRenderer, title, width / 2, 17, 16777215);
-        drawString(mc.fontRenderer, "Username/Email", this.width / 2 - 100, 53, 10526880);
-        drawString(mc.fontRenderer, "Password", this.width / 2 - 100, 94, 10526880);
+        drawString(mc.fontRenderer, "Username/Email", this.width / 2 - 100, this.height / 2 - 20 - 12, 10526880);
+        drawString(mc.fontRenderer, "Password", this.width / 2 - 100, this.height / 2 - 60 - 12, 10526880);
 
         if (status.get() != null) {
             drawCenteredString(mc.fontRenderer, status.get(), width / 2, height / 2 + 10, 0xFF0000);
