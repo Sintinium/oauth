@@ -45,11 +45,11 @@ public class LoginScreen extends Screen {
     protected void init() {
         this.minecraft.keyboardHandler.setSendRepeatsToGui(true);
 
-        this.passwordWidget = new PasswordFieldWidget(this.font, this.width / 2 - 100, 106, 200, 20, new StringTextComponent("Password"));
+        this.passwordWidget = new PasswordFieldWidget(this.font, this.width / 2 - 100, this.height / 2 - 20, 200, 20, new StringTextComponent("Password"));
         this.passwordWidget.setMaxLength(128);
         this.passwordWidget.setResponder(this::onEdited);
 
-        this.usernameWidget = new UsernameFieldWidget(this.font, this.width / 2 - 100, 66, 200, 20, new StringTextComponent("Username/Email"), passwordWidget);
+        this.usernameWidget = new UsernameFieldWidget(this.font, this.width / 2 - 100, this.height / 2 - 60, 200, 20, new StringTextComponent("Username/Email"), passwordWidget);
         this.usernameWidget.setFocus(true);
         if (LoginUtil.lastMojangUsername != null) {
             this.usernameWidget.setValue(LoginUtil.lastMojangUsername);
@@ -59,7 +59,7 @@ public class LoginScreen extends Screen {
         this.children.add(this.usernameWidget);
         this.children.add(this.passwordWidget);
 
-        this.mojangLoginButton = this.addButton(new ResponsiveButton(this.width / 2 - 100, this.height / 4 + 96 + 18, 200, 20, new StringTextComponent("Login"), (p_213030_1_) -> {
+        this.mojangLoginButton = this.addButton(new ResponsiveButton(this.width / 2 - 100, this.height / 2 + 36, 200, 20, new StringTextComponent("Login"), (p_213030_1_) -> {
             Thread thread = new Thread(() -> {
                 if (usernameWidget.getValue().isEmpty()) {
                     toRun.add(() -> this.status.set("Missing username!"));
@@ -78,7 +78,7 @@ public class LoginScreen extends Screen {
             thread.start();
         }, this::updateLoginButton, () -> this.mojangLoginButton.setMessage(new StringTextComponent("Login"))));
 
-        this.addButton(new Button(this.width / 2 - 100, this.height / 4 + 120 + 18, 200, 20, DialogTexts.GUI_CANCEL, (p_213029_1_) -> {
+        this.addButton(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, DialogTexts.GUI_CANCEL, (p_213029_1_) -> {
             Minecraft.getInstance().setScreen(lastScreen);
         }));
         this.cleanUp();
@@ -120,8 +120,8 @@ public class LoginScreen extends Screen {
     public void render(MatrixStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
         this.renderBackground(p_230430_1_);
         drawCenteredString(p_230430_1_, this.font, this.title, this.width / 2, 17, 16777215);
-        drawString(p_230430_1_, this.font, "Username/Email", this.width / 2 - 100, 53, 10526880);
-        drawString(p_230430_1_, this.font, "Password", this.width / 2 - 100, 94, 10526880);
+        drawString(p_230430_1_, this.font, "Username/Email", this.width / 2 - 100, this.height / 2 - 20 - 12, 10526880);
+        drawString(p_230430_1_, this.font, "Password", this.width / 2 - 100, this.height / 2 - 60 - 12, 10526880);
         if (status.get() != null) {
             drawCenteredString(p_230430_1_, Minecraft.getInstance().font, status.get(), this.width / 2, this.height / 2 + 10, 0xFF0000);
         }

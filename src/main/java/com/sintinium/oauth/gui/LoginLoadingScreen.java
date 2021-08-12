@@ -29,7 +29,7 @@ public class LoginLoadingScreen extends Screen {
 
     @Override
     protected void init() {
-        this.addButton(new Button(this.width / 2 - 100, this.height / 4 + 120 + 18, 200, 20, DialogTexts.GUI_CANCEL, (p_213029_1_) -> {
+        this.addButton(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, DialogTexts.GUI_CANCEL, (p_213029_1_) -> {
             onCancel.run();
             Minecraft.getInstance().setScreen(lastScreen);
         }));
@@ -56,7 +56,7 @@ public class LoginLoadingScreen extends Screen {
         this.renderBackground(p_230430_1_);
         drawCenteredString(p_230430_1_, Minecraft.getInstance().font, renderText, this.width / 2, this.height / 2 - 40, 0xFFFFFF);
         if (this.isMicrosoft) {
-            drawCenteredString(p_230430_1_, Minecraft.getInstance().font, "Check your browser", this.width / 2, this.height / 2 - 30, 0xFFFFFF);
+            drawCenteredString(p_230430_1_, Minecraft.getInstance().font, "Check your browser", this.width / 2, this.height / 2 - 28, 0xFFFFFF);
         }
         super.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
     }
