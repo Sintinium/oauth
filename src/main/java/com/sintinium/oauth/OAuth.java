@@ -25,6 +25,7 @@ import org.apache.logging.log4j.Logger;
 public class OAuth {
     // Directly reference a log4j logger.
     private static final Logger LOGGER = LogManager.getLogger();
+    public static boolean savePassword = false;
 
     public OAuth() {
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::doClientStuff);

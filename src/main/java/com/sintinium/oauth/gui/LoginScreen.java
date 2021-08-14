@@ -1,6 +1,7 @@
 package com.sintinium.oauth.gui;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
+import com.sintinium.oauth.OAuth;
 import com.sintinium.oauth.login.LoginUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.DialogTexts;
@@ -8,8 +9,11 @@ import net.minecraft.client.gui.screen.MultiplayerScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.client.gui.widget.button.CheckboxButton;
+import net.minecraft.util.text.ITextProperties;
 import net.minecraft.util.text.StringTextComponent;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -21,6 +25,7 @@ public class LoginScreen extends Screen {
     private Button mojangLoginButton;
     private PasswordFieldWidget passwordWidget;
     private TextFieldWidget usernameWidget;
+    private CheckboxButton savePasswordButton;
     private AtomicReference<String> status = new AtomicReference<>();
 
     private List<Runnable> toRun = new CopyOnWriteArrayList<>();
@@ -40,6 +45,7 @@ public class LoginScreen extends Screen {
             }
             toRun.clear();
         }
+        OAuth.savePassword = this.savePasswordButton.selected();
     }
 
     protected void init() {
@@ -81,6 +87,9 @@ public class LoginScreen extends Screen {
         this.addButton(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, DialogTexts.GUI_CANCEL, (p_213029_1_) -> {
             Minecraft.getInstance().setScreen(lastScreen);
         }));
+
+//        this.savePasswordButton = this.addButton(new CheckboxButton(this.width / 2 - 101, this.height / 2 + 4, 170, 20, new StringTextComponent("Save password (Not Secure!)"), OAuth.savePassword));
+
         this.cleanUp();
     }
 
@@ -120,13 +129,20 @@ public class LoginScreen extends Screen {
     public void render(MatrixStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
         this.renderBackground(p_230430_1_);
         drawCenteredString(p_230430_1_, this.font, this.title, this.width / 2, 17, 16777215);
-        drawString(p_230430_1_, this.font, "Username/Email", this.width / 2 - 100, this.height / 2 - 20 - 12, 10526880);
-        drawString(p_230430_1_, this.font, "Password", this.width / 2 - 100, this.height / 2 - 60 - 12, 10526880);
+        drawString(p_230430_1_, this.font, "Username/Email", this.width / 2 - 100, this.height / 2 - 60 - 12, 10526880);
+        drawString(p_230430_1_, this.font, "Password", this.width / 2 - 100, this.height / 2 - 20 - 12, 10526880);
         if (status.get() != null) {
             drawCenteredString(p_230430_1_, Minecraft.getInstance().font, status.get(), this.width / 2, this.height / 2 + 10, 0xFF0000);
         }
         this.usernameWidget.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
         this.passwordWidget.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
+        if (this.savePasswordButton.isHovered()) {
+            List<ITextProperties> tooltips = new ArrayList<>();
+            String tooltip = "This will save your password encrypted to your config file. While the password is encrypted if a hacker accesses your computer they could easily unencrypt it.";
+            tooltips.add(ITextProperties.of(tooltip));
+            renderWrappedToolTip(p_230430_1_, tooltips, p_230430_2_, p_230430_3_, this.font);
+        }
+
         super.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
     }
 }
