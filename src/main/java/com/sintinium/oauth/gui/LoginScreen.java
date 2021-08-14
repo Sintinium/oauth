@@ -163,8 +163,8 @@ public class LoginScreen extends GuiScreen {
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         this.drawBackground(0);
         drawCenteredString(mc.fontRenderer, title, width / 2, 17, 16777215);
-        drawString(mc.fontRenderer, "Username/Email", this.width / 2 - 100, this.height / 2 - 20 - 12, 10526880);
-        drawString(mc.fontRenderer, "Password", this.width / 2 - 100, this.height / 2 - 60 - 12, 10526880);
+        drawString(mc.fontRenderer, "Username/Email", this.width / 2 - 100, this.height / 2 - 60 - 12, 10526880);
+        drawString(mc.fontRenderer, "Password", this.width / 2 - 100, this.height / 2 - 20 - 12, 10526880);
 
         if (status.get() != null) {
             drawCenteredString(mc.fontRenderer, status.get(), width / 2, height / 2 + 10, 0xFF0000);
