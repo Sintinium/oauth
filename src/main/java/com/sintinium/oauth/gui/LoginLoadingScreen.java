@@ -7,6 +7,8 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.util.text.StringTextComponent;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 public class LoginLoadingScreen extends Screen {
 
     private String loadingText = "Loading";
@@ -18,6 +20,7 @@ public class LoginLoadingScreen extends Screen {
     private int tick = 0;
     private Runnable onCancel;
     private boolean isMicrosoft;
+    private AtomicReference<String> updateText = new AtomicReference<>();
 
     protected LoginLoadingScreen(Screen multiplayerScreen, Screen callingScreen, Runnable onCancel, boolean isMicrosoft) {
         super(new StringTextComponent("Logging in"));
@@ -25,6 +28,16 @@ public class LoginLoadingScreen extends Screen {
         this.lastScreen = callingScreen;
         this.onCancel = onCancel;
         this.isMicrosoft = isMicrosoft;
+
+        if (this.isMicrosoft) {
+            updateText.set("Check your browser");
+        } else {
+            updateText.set("Authorizing you with Mojang");
+        }
+    }
+
+    public void updateText(String text) {
+        updateText.set(text);
     }
 
     @Override
@@ -40,7 +53,7 @@ public class LoginLoadingScreen extends Screen {
         tick++;
         if (tick % 20 != 0) return;
         dots++;
-        if (dots >= 3) {
+        if (dots > 3) {
             dots = 0;
         }
         StringBuilder builder = new StringBuilder();
@@ -56,7 +69,7 @@ public class LoginLoadingScreen extends Screen {
         this.renderBackground(p_230430_1_);
         drawCenteredString(p_230430_1_, Minecraft.getInstance().font, renderText, this.width / 2, this.height / 2 - 40, 0xFFFFFF);
         if (this.isMicrosoft) {
-            drawCenteredString(p_230430_1_, Minecraft.getInstance().font, "Check your browser", this.width / 2, this.height / 2 - 28, 0xFFFFFF);
+            drawCenteredString(p_230430_1_, Minecraft.getInstance().font, updateText.get(), this.width / 2, this.height / 2 - 28, 0xFFFFFF);
         }
         super.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
     }

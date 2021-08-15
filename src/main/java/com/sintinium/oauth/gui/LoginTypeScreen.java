@@ -26,6 +26,8 @@ public class LoginTypeScreen extends Screen {
         }));
         this.addButton(new Button(this.width / 2 - 100, this.height / 2 + 2, 200, 20, new StringTextComponent("Microsoft Login"), (p_213031_1_) -> {
             final MicrosoftLogin login = new MicrosoftLogin();
+            LoginLoadingScreen loadingScreen = new LoginLoadingScreen(lastScreen, this, login::cancelLogin, true);
+            login.setUpdateStatusConsumer(loadingScreen::updateText);
             Thread thread = new Thread(() -> {
                 login.login(() -> {
                     LoginUtil.updateOnlineStatus();
@@ -35,7 +37,7 @@ public class LoginTypeScreen extends Screen {
             if (login.getErrorMsg() != null) {
                 System.err.println(login.getErrorMsg());
             }
-            Minecraft.getInstance().setScreen(new LoginLoadingScreen(lastScreen, this, login::cancelLogin, true));
+            Minecraft.getInstance().setScreen(loadingScreen);
             thread.start();
         }));
 
