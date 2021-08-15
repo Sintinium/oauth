@@ -1,7 +1,6 @@
 package com.sintinium.oauth.gui;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.sintinium.oauth.OAuth;
 import com.sintinium.oauth.login.LoginUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.DialogTexts;
@@ -9,11 +8,8 @@ import net.minecraft.client.gui.screen.MultiplayerScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.gui.widget.button.CheckboxButton;
-import net.minecraft.util.text.ITextProperties;
 import net.minecraft.util.text.StringTextComponent;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -25,7 +21,7 @@ public class LoginScreen extends Screen {
     private Button mojangLoginButton;
     private PasswordFieldWidget passwordWidget;
     private TextFieldWidget usernameWidget;
-    private CheckboxButton savePasswordButton;
+//    private CheckboxButton savePasswordButton;
     private AtomicReference<String> status = new AtomicReference<>();
 
     private List<Runnable> toRun = new CopyOnWriteArrayList<>();
@@ -45,7 +41,7 @@ public class LoginScreen extends Screen {
             }
             toRun.clear();
         }
-        OAuth.savePassword = this.savePasswordButton.selected();
+//        OAuth.savePassword = this.savePasswordButton.selected();
     }
 
     protected void init() {
@@ -65,6 +61,8 @@ public class LoginScreen extends Screen {
         this.children.add(this.usernameWidget);
         this.children.add(this.passwordWidget);
 
+//        this.savePasswordButton = this.addButton(new CheckboxButton(this.width / 2 - 101, this.height / 2 + 4, 170, 20, new StringTextComponent("Save password (Not Secure!)"), OAuth.savePassword));
+
         this.mojangLoginButton = this.addButton(new ResponsiveButton(this.width / 2 - 100, this.height / 2 + 36, 200, 20, new StringTextComponent("Login"), (p_213030_1_) -> {
             Thread thread = new Thread(() -> {
                 if (usernameWidget.getValue().isEmpty()) {
@@ -78,6 +76,10 @@ public class LoginScreen extends Screen {
                     } else {
                         LoginUtil.updateOnlineStatus();
                         toRun.add(() -> Minecraft.getInstance().setScreen(multiplayerScreen));
+//                        if (this.savePasswordButton.selected()) {
+//                            OAuth.getInstance().config.setUsername(usernameWidget.getValue());
+//                            OAuth.getInstance().config.setPassword(passwordWidget.getValue());
+//                        }
                     }
                 }
             });
@@ -87,8 +89,6 @@ public class LoginScreen extends Screen {
         this.addButton(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, DialogTexts.GUI_CANCEL, (p_213029_1_) -> {
             Minecraft.getInstance().setScreen(lastScreen);
         }));
-
-//        this.savePasswordButton = this.addButton(new CheckboxButton(this.width / 2 - 101, this.height / 2 + 4, 170, 20, new StringTextComponent("Save password (Not Secure!)"), OAuth.savePassword));
 
         this.cleanUp();
     }
@@ -136,12 +136,12 @@ public class LoginScreen extends Screen {
         }
         this.usernameWidget.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
         this.passwordWidget.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-        if (this.savePasswordButton.isHovered()) {
-            List<ITextProperties> tooltips = new ArrayList<>();
-            String tooltip = "This will save your password encrypted to your config file. While the password is encrypted if a hacker accesses your computer they could easily unencrypt it.";
-            tooltips.add(ITextProperties.of(tooltip));
-            renderWrappedToolTip(p_230430_1_, tooltips, p_230430_2_, p_230430_3_, this.font);
-        }
+//        if (this.savePasswordButton.isHovered()) {
+//            List<ITextProperties> tooltips = new ArrayList<>();
+//            String tooltip = "This will save your password encrypted to your config file. While the password is encrypted if a hacker accesses your computer they could easily unencrypt it.";
+//            tooltips.add(ITextProperties.of(tooltip));
+//            renderWrappedToolTip(p_230430_1_, tooltips, p_230430_2_, p_230430_3_, this.font);
+//        }
 
         super.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
     }

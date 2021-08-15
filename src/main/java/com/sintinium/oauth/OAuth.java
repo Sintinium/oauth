@@ -24,19 +24,40 @@ import org.apache.logging.log4j.Logger;
 @Mod("oauth")
 public class OAuth {
     // Directly reference a log4j logger.
+    private static OAuth INSTANCE;
     private static final Logger LOGGER = LogManager.getLogger();
     public static boolean savePassword = false;
+//    public final Config config;
 
     public OAuth() {
+        INSTANCE = this;
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::doClientStuff);
-
         MinecraftForge.EVENT_BUS.register(this);
+
+//        if (FMLEnvironment.dist == Dist.CLIENT) {
+//            config = new Config();
+//            ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, config.getSpec(), "oauth.toml");
+//        } else {
+//            config = null;
+//        }
+    }
+
+    public static OAuth getInstance() {
+        return INSTANCE;
     }
 
     private void doClientStuff(final FMLClientSetupEvent event) {
         // Set the mod to only run client side
         ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST, () -> Pair.of(() -> FMLNetworkConstants.IGNORESERVERONLY, (a, b) -> true));
     }
+
+//    @SubscribeEvent
+//    private void configSetup(ModConfig.ModConfigEvent event) {
+//        if (event.getConfig().getType() != ModConfig.Type.CLIENT) return;
+//
+//        config.setup(event.getConfig());
+//    }
+
 
     @SubscribeEvent
     public void multiplayerScreenOpen(GuiScreenEvent.InitGuiEvent.Post event) {
