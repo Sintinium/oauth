@@ -1,14 +1,14 @@
 package com.sintinium.oauth.gui;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.sintinium.oauth.login.LoginUtil;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.DialogTexts;
-import net.minecraft.client.gui.screen.MultiplayerScreen;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.TextComponent;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,17 +17,17 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class LoginScreen extends Screen {
     private final Screen lastScreen;
-    private final MultiplayerScreen multiplayerScreen;
+    private final JoinMultiplayerScreen multiplayerScreen;
     private Button mojangLoginButton;
     private PasswordFieldWidget passwordWidget;
-    private TextFieldWidget usernameWidget;
-//    private CheckboxButton savePasswordButton;
+    private EditBox usernameWidget;
+    //    private CheckboxButton savePasswordButton;
     private AtomicReference<String> status = new AtomicReference<>();
 
     private List<Runnable> toRun = new CopyOnWriteArrayList<>();
 
-    public LoginScreen(Screen last, MultiplayerScreen multiplayerScreen) {
-        super(new StringTextComponent("OAuth Login"));
+    public LoginScreen(Screen last, JoinMultiplayerScreen multiplayerScreen) {
+        super(new TextComponent("OAuth Login"));
         this.lastScreen = last;
         this.multiplayerScreen = multiplayerScreen;
     }
@@ -47,23 +47,23 @@ public class LoginScreen extends Screen {
     protected void init() {
         this.minecraft.keyboardHandler.setSendRepeatsToGui(true);
 
-        this.passwordWidget = new PasswordFieldWidget(this.font, this.width / 2 - 100, this.height / 2 - 20, 200, 20, new StringTextComponent("Password"));
+        this.passwordWidget = new PasswordFieldWidget(this.font, this.width / 2 - 100, this.height / 2 - 20, 200, 20, new TextComponent("Password"));
         this.passwordWidget.setMaxLength(128);
         this.passwordWidget.setResponder(this::onEdited);
 
-        this.usernameWidget = new UsernameFieldWidget(this.font, this.width / 2 - 100, this.height / 2 - 60, 200, 20, new StringTextComponent("Username/Email"), passwordWidget);
+        this.usernameWidget = new UsernameFieldWidget(this.font, this.width / 2 - 100, this.height / 2 - 60, 200, 20, new TextComponent("Username/Email"), passwordWidget);
         this.usernameWidget.setFocus(true);
         if (LoginUtil.lastMojangUsername != null) {
             this.usernameWidget.setValue(LoginUtil.lastMojangUsername);
         }
         this.usernameWidget.setResponder(this::onEdited);
 
-        this.children.add(this.usernameWidget);
-        this.children.add(this.passwordWidget);
+        this.addWidget(this.usernameWidget);
+        this.addWidget(this.passwordWidget);
 
 //        this.savePasswordButton = this.addButton(new CheckboxButton(this.width / 2 - 101, this.height / 2 + 4, 170, 20, new StringTextComponent("Save password (Not Secure!)"), OAuth.savePassword));
 
-        this.mojangLoginButton = this.addButton(new ResponsiveButton(this.width / 2 - 100, this.height / 2 + 36, 200, 20, new StringTextComponent("Login"), (p_213030_1_) -> {
+        this.mojangLoginButton = this.addRenderableWidget(new ResponsiveButton(this.width / 2 - 100, this.height / 2 + 36, 200, 20, new TextComponent("Login"), (p_213030_1_) -> {
             Thread thread = new Thread(() -> {
                 if (usernameWidget.getValue().isEmpty()) {
                     toRun.add(() -> this.status.set("Missing username!"));
@@ -84,9 +84,9 @@ public class LoginScreen extends Screen {
                 }
             });
             thread.start();
-        }, this::updateLoginButton, () -> this.mojangLoginButton.setMessage(new StringTextComponent("Login"))));
+        }, this::updateLoginButton, () -> this.mojangLoginButton.setMessage(new TextComponent("Login"))));
 
-        this.addButton(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, DialogTexts.GUI_CANCEL, (p_213029_1_) -> {
+        this.addRenderableWidget(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, CommonComponents.GUI_CANCEL, (p_213029_1_) -> {
             Minecraft.getInstance().setScreen(lastScreen);
         }));
 
@@ -107,9 +107,9 @@ public class LoginScreen extends Screen {
 
     private void updateLoginButton() {
         if (this.passwordWidget.getValue().isEmpty()) {
-            this.mojangLoginButton.setMessage(new StringTextComponent("Login Offline"));
+            this.mojangLoginButton.setMessage(new TextComponent("Login Offline"));
         } else {
-            this.mojangLoginButton.setMessage(new StringTextComponent("Login"));
+            this.mojangLoginButton.setMessage(new TextComponent("Login"));
         }
     }
 
@@ -126,7 +126,7 @@ public class LoginScreen extends Screen {
         this.mojangLoginButton.active = !this.usernameWidget.getValue().isEmpty();
     }
 
-    public void render(MatrixStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
+    public void render(PoseStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
         this.renderBackground(p_230430_1_);
         drawCenteredString(p_230430_1_, this.font, this.title, this.width / 2, 17, 16777215);
         drawString(p_230430_1_, this.font, "Username/Email", this.width / 2 - 100, this.height / 2 - 60 - 12, 10526880);

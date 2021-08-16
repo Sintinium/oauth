@@ -9,8 +9,7 @@ import com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService;
 import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
 import com.mojang.util.UUIDTypeAdapter;
 import net.minecraft.client.Minecraft;
-import net.minecraft.util.Session;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+import net.minecraft.client.User;
 
 import java.lang.reflect.Field;
 import java.util.Optional;
@@ -36,7 +35,7 @@ public class LoginUtil {
         if (!needsRefresh && System.currentTimeMillis() - lastCheck < 1000 * 10) {
             return wasOnline;
         }
-        Session session = Minecraft.getInstance().getUser();
+        User session = Minecraft.getInstance().getUser();
         String uuid = UUID.randomUUID().toString();
         needsRefresh = false;
         lastCheck = System.currentTimeMillis();
@@ -56,14 +55,14 @@ public class LoginUtil {
     }
 
     public static void loginMs(MicrosoftLogin.MinecraftProfile profile) {
-        Session session = new Session(profile.name, profile.id, profile.token.accessToken, Session.Type.MOJANG.name());
+        User session = new User(profile.name, profile.id, profile.token.accessToken, User.Type.MOJANG.name());
         setSession(session);
     }
 
     public static Optional<Boolean> loginMojangOrLegacy(String username, String password) {
         try {
             if (password.isEmpty()) {
-                Session session = new Session(username, UUID.nameUUIDFromBytes(username.getBytes()).toString(), null, UserType.LEGACY.getName());
+                User session = new User(username, UUID.nameUUIDFromBytes(username.getBytes()).toString(), null, UserType.LEGACY.getName());
                 setSession(session);
                 return Optional.of(true);
             }
@@ -77,7 +76,7 @@ public class LoginUtil {
             String type = userAuth.getUserType().getName();
             userAuth.logOut();
 
-            Session session = new Session(name, uuid, token, type);
+            User session = new User(name, uuid, token, type);
             setSession(session);
             lastMojangUsername = username;
             return Optional.of(true);
@@ -88,10 +87,16 @@ public class LoginUtil {
         }
     }
 
-    private static void setSession(Session session) {
+    private static void setSession(User session) {
         needsRefresh = true;
         updateOnlineStatus();
-        Field field = ObfuscationReflectionHelper.findField(Minecraft.class, "field_71449_j");
+        Field field = null;
+        for (Field f : Minecraft.class.getDeclaredFields()) {
+            if (f.getType() == User.class) {
+                field = f;
+                break;
+            }
+        }
         field.setAccessible(true);
         try {
             field.set(Minecraft.getInstance(), session);
