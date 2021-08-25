@@ -67,8 +67,8 @@ public class OAuth {
 //            Method addButtonMethod = ObfuscationReflectionHelper.findMethod(Screen.class, "addButton", Widget.class);
 //            Method addButtonMethod = ObfuscationReflectionHelper.findMethod(Screen.class, "func_230480_a_", Widget.class);
             event.addWidget(new Button(10, 6, 66, 20, new StringTextComponent("Oauth Login"), p_onPress_1_ -> Minecraft.getInstance().setScreen(new LoginTypeScreen(multiplayerScreen))));
-            final TextWidget textWidget = new TextWidget(10 + 66 + 3, 6, 0, 20, "Status: offline");
-            textWidget.setFGColor(0xFF5555);
+            final TextWidget textWidget = new TextWidget(10 + 66 + 3, 6, 0, 20, "Status: loading");
+            textWidget.setFGColor(0x55FF55);
             Thread thread = new Thread(() -> {
                 boolean isOnline = LoginUtil.isOnline();
                 if (isOnline) {
