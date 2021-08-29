@@ -369,7 +369,8 @@ public class PasswordFieldWidget extends Gui {
             int i = this.isEnabled ? this.enabledColor : this.disabledColor;
             int j = this.cursorPosition - this.lineScrollOffset;
             int k = this.selectionEnd - this.lineScrollOffset;
-            String s = this.fontRenderer.trimStringToWidth(getHiddenValue().substring(this.lineScrollOffset), this.getWidth());
+//            String s = this.fontRenderer.trimStringToWidth(getHiddenValue().substring(this.lineScrollOffset), this.getWidth());
+            String s = this.fontRenderer.trimStringToWidth(text.substring(this.lineScrollOffset), this.getWidth());
             boolean flag = j >= 0 && j <= s.length();
             boolean flag1 = this.isFocused && this.cursorCounter / 6 % 2 == 0 && flag;
             int l = this.enableBackgroundDrawing ? this.x + 4 : this.x;

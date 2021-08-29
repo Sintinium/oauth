@@ -23,6 +23,7 @@ public class OAuth {
     private static final Logger LOGGER = LogManager.getLogger();
 
     private static TextWidget statusText = new TextWidget(10 + 66 + 3, 12, "Status: offline");
+    public static boolean savePassword = false;
 
     public OAuth() {
         MinecraftForge.EVENT_BUS.register(this);
