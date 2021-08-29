@@ -150,6 +150,10 @@ public class MicrosoftLogin {
         return errorMsg;
     }
 
+    public static void logout() {
+        Util.getPlatform().openUri("https://www.microsoft.com/mscomhp/onerf/signout");
+    }
+
     // 1st
     private String authorizeUser() {
         try {

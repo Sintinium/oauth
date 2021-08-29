@@ -8,7 +8,11 @@ import net.minecraft.client.gui.DialogTexts;
 import net.minecraft.client.gui.screen.MultiplayerScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.util.text.ITextProperties;
 import net.minecraft.util.text.StringTextComponent;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class LoginTypeScreen extends Screen {
 
@@ -24,7 +28,7 @@ public class LoginTypeScreen extends Screen {
         this.addButton(new Button(this.width / 2 - 100, this.height / 2 - 20 - 2, 200, 20, new StringTextComponent("Mojang Login"), p_onPress_1_ -> {
             Minecraft.getInstance().setScreen(new LoginScreen(this, lastScreen));
         }));
-        this.addButton(new Button(this.width / 2 - 100, this.height / 2 + 2, 200, 20, new StringTextComponent("Microsoft Login"), (p_213031_1_) -> {
+        this.addButton(new Button(this.width / 2 - 100, this.height / 2 + 2, 200 - 52, 20, new StringTextComponent("Microsoft Login"), (p_213031_1_) -> {
             final MicrosoftLogin login = new MicrosoftLogin();
             LoginLoadingScreen loadingScreen = new LoginLoadingScreen(lastScreen, this, login::cancelLogin, true);
             login.setUpdateStatusConsumer(loadingScreen::updateText);
@@ -39,6 +43,17 @@ public class LoginTypeScreen extends Screen {
             }
             Minecraft.getInstance().setScreen(loadingScreen);
             thread.start();
+        }));
+
+        final List<ITextProperties> logoutTooltip = new ArrayList<>();
+        logoutTooltip.add(new StringTextComponent("Logout of your Microsoft account to switch accounts."));
+        this.addButton(new Button(this.width / 2 - 100 + 200 - 50, this.height / 2 + 2, 50, 20, new StringTextComponent("Logout"), p_onPress_1_ -> {
+            MicrosoftLogin.logout();
+        }, (button, matrix, x, y) -> {
+            renderWrappedToolTip(matrix,
+                    logoutTooltip,
+                    x, y, this.font
+            );
         }));
 
         this.addButton(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, DialogTexts.GUI_CANCEL, (p_213029_1_) -> {
