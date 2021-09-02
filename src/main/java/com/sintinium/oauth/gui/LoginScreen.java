@@ -77,11 +77,18 @@ public class LoginScreen extends Screen {
                         toRun.add(() -> this.status.set("You seem to be offline. Check your connection!"));
                     } else if (!didSuccessfullyLogIn.get()) {
                         toRun.add(() -> this.status.set("Wrong password or username!"));
+                        if (this.savePasswordButton.selected()) {
+                            saveLoginInfo();
+                        } else {
+                            removeLoginInfo();
+                        }
                     } else {
                         LoginUtil.updateOnlineStatus();
                         toRun.add(() -> Minecraft.getInstance().setScreen(multiplayerScreen));
                         if (this.savePasswordButton.selected()) {
                             saveLoginInfo();
+                        } else {
+                            removeLoginInfo();
                         }
                     }
                 }
@@ -91,14 +98,23 @@ public class LoginScreen extends Screen {
 
         this.addRenderableWidget(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, CommonComponents.GUI_CANCEL, (p_213029_1_) -> {
             Minecraft.getInstance().setScreen(lastScreen);
+            if (!this.savePasswordButton.selected()) {
+                removeLoginInfo();
+            }
         }));
 
         this.cleanUp();
+
+        if (OAuth.getInstance().config.isSavedPassword()) {
+            this.usernameWidget.setValue(OAuth.getInstance().config.getUsername());
+            this.passwordWidget.setValue(OAuth.getInstance().config.getPassword());
+            this.savePasswordButton.onPress();
+        }
     }
 
     private void saveLoginInfo() {
         OAuth.getInstance().config.setUsername(usernameWidget.getValue());
-        OAuth.getInstance().config.setPassword(usernameWidget.getValue());
+        OAuth.getInstance().config.setPassword(passwordWidget.getValue());
     }
 
     private void removeLoginInfo() {
@@ -144,7 +160,7 @@ public class LoginScreen extends Screen {
         drawString(p_230430_1_, this.font, "Username/Email", this.width / 2 - 100, this.height / 2 - 60 - 12, 10526880);
         drawString(p_230430_1_, this.font, "Password", this.width / 2 - 100, this.height / 2 - 20 - 12, 10526880);
         if (status.get() != null) {
-            drawCenteredString(p_230430_1_, Minecraft.getInstance().font, status.get(), this.width / 2, this.height / 2 + 10, 0xFF0000);
+            drawCenteredString(p_230430_1_, Minecraft.getInstance().font, status.get(), this.width / 2, this.height / 2 + 20, 0xFF0000);
         }
         this.usernameWidget.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
         this.passwordWidget.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);

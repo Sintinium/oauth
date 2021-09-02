@@ -36,6 +36,8 @@ public class OAuth {
         INSTANCE = this;
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::doClientStuff);
         MinecraftForge.EVENT_BUS.register(this);
+        config = new Config();
+        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, config.getSpec());
     }
 
     public static OAuth getInstance() {
@@ -50,8 +52,6 @@ public class OAuth {
                 IExtensionPoint.DisplayTest.class,
                 () -> new IExtensionPoint.DisplayTest(() -> FMLNetworkConstants.IGNORESERVERONLY, (a, b) -> true)
         );
-        config = new Config();
-        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, config.getSpec());
     }
 
     @SubscribeEvent

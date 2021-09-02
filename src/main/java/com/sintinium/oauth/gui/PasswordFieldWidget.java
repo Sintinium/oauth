@@ -406,6 +406,7 @@ public class PasswordFieldWidget extends AbstractWidget implements Widget, GuiEv
             // edit
 //            String var8 = this.font.plainSubstrByWidth(this.value.substring(this.displayPos), this.getInnerWidth());
             String var8 = this.font.plainSubstrByWidth(this.getHiddenValue().substring(this.displayPos), this.getInnerWidth());
+//            String var8 = this.font.plainSubstrByWidth(this.value.substring(this.displayPos), this.getInnerWidth());
             boolean var9 = var6 >= 0 && var6 <= var8.length();
             boolean var10 = this.isFocused() && this.frame / 6 % 2 == 0 && var9;
             int var11 = this.bordered ? this.x + 4 : this.x;
