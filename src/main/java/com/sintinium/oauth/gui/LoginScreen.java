@@ -1,6 +1,8 @@
 package com.sintinium.oauth.gui;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.sintinium.oauth.OAuth;
+import com.sintinium.oauth.gui.components.OAuthCheckbox;
 import com.sintinium.oauth.login.LoginUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
@@ -21,7 +23,7 @@ public class LoginScreen extends Screen {
     private Button mojangLoginButton;
     private PasswordFieldWidget passwordWidget;
     private EditBox usernameWidget;
-    //    private CheckboxButton savePasswordButton;
+    private OAuthCheckbox savePasswordButton;
     private AtomicReference<String> status = new AtomicReference<>();
 
     private List<Runnable> toRun = new CopyOnWriteArrayList<>();
@@ -61,6 +63,8 @@ public class LoginScreen extends Screen {
         this.addWidget(this.usernameWidget);
         this.addWidget(this.passwordWidget);
 
+        this.savePasswordButton = this.addRenderableWidget(new OAuthCheckbox(this.width / 2 - 101, this.height / 2 + 3, 150, 20, new TextComponent("Save Password"), false));
+
 //        this.savePasswordButton = this.addButton(new CheckboxButton(this.width / 2 - 101, this.height / 2 + 4, 170, 20, new StringTextComponent("Save password (Not Secure!)"), OAuth.savePassword));
 
         this.mojangLoginButton = this.addRenderableWidget(new ResponsiveButton(this.width / 2 - 100, this.height / 2 + 36, 200, 20, new TextComponent("Login"), (p_213030_1_) -> {
@@ -76,10 +80,9 @@ public class LoginScreen extends Screen {
                     } else {
                         LoginUtil.updateOnlineStatus();
                         toRun.add(() -> Minecraft.getInstance().setScreen(multiplayerScreen));
-//                        if (this.savePasswordButton.selected()) {
-//                            OAuth.getInstance().config.setUsername(usernameWidget.getValue());
-//                            OAuth.getInstance().config.setPassword(passwordWidget.getValue());
-//                        }
+                        if (this.savePasswordButton.selected()) {
+                            saveLoginInfo();
+                        }
                     }
                 }
             });
@@ -91,6 +94,15 @@ public class LoginScreen extends Screen {
         }));
 
         this.cleanUp();
+    }
+
+    private void saveLoginInfo() {
+        OAuth.getInstance().config.setUsername(usernameWidget.getValue());
+        OAuth.getInstance().config.setPassword(usernameWidget.getValue());
+    }
+
+    private void removeLoginInfo() {
+        OAuth.getInstance().config.removeUsernamePassword();
     }
 
     public void resize(Minecraft p_231152_1_, int p_231152_2_, int p_231152_3_) {

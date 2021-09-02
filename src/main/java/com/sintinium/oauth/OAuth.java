@@ -13,6 +13,8 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.IExtensionPoint;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.event.config.ModConfigEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fmllegacy.network.FMLNetworkConstants;
@@ -28,20 +30,12 @@ public class OAuth {
     // Directly reference a log4j logger.
     private static OAuth INSTANCE;
     private static final Logger LOGGER = LogManager.getLogger();
-    public static boolean savePassword = false;
-//    public final Config config;
+    public Config config;
 
     public OAuth() {
         INSTANCE = this;
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::doClientStuff);
         MinecraftForge.EVENT_BUS.register(this);
-
-//        if (FMLEnvironment.dist == Dist.CLIENT) {
-//            config = new Config();
-//            ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, config.getSpec(), "oauth.toml");
-//        } else {
-//            config = null;
-//        }
     }
 
     public static OAuth getInstance() {
@@ -56,6 +50,14 @@ public class OAuth {
                 IExtensionPoint.DisplayTest.class,
                 () -> new IExtensionPoint.DisplayTest(() -> FMLNetworkConstants.IGNORESERVERONLY, (a, b) -> true)
         );
+        config = new Config();
+        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, config.getSpec());
+    }
+
+    @SubscribeEvent
+    public void configSetup(ModConfigEvent event) {
+        if (event.getConfig().getType() != ModConfig.Type.CLIENT) return;
+        config.setup(event.getConfig());
     }
 
 //    @SubscribeEvent
