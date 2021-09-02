@@ -17,7 +17,6 @@ public class OAuth {
     // Directly reference a log4j logger.
     private static OAuth INSTANCE;
     private static final Logger LOGGER = LogManager.getLogger();
-    public static boolean savePassword = false;
 //    public final Config config;
 
     public OAuth() {
