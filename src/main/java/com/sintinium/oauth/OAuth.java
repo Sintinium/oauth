@@ -1,9 +1,11 @@
 package com.sintinium.oauth;
 
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ExtensionPoint;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.network.FMLNetworkConstants;
@@ -17,19 +19,14 @@ public class OAuth {
     // Directly reference a log4j logger.
     private static OAuth INSTANCE;
     private static final Logger LOGGER = LogManager.getLogger();
-//    public final Config config;
+    public Config config;
 
     public OAuth() {
         INSTANCE = this;
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::doClientStuff);
         MinecraftForge.EVENT_BUS.register(this);
-
-//        if (FMLEnvironment.dist == Dist.CLIENT) {
-//            config = new Config();
-//            ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, config.getSpec(), "oauth.toml");
-//        } else {
-//            config = null;
-//        }
+        config = new Config();
+        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, config.getSpec());
     }
 
     public static OAuth getInstance() {
@@ -41,10 +38,9 @@ public class OAuth {
         ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST, () -> Pair.of(() -> FMLNetworkConstants.IGNORESERVERONLY, (a, b) -> true));
     }
 
-//    @SubscribeEvent
-//    private void configSetup(ModConfig.ModConfigEvent event) {
-//        if (event.getConfig().getType() != ModConfig.Type.CLIENT) return;
-//
-//        config.setup(event.getConfig());
-//    }
+    @SubscribeEvent
+    public void configSetup(ModConfig.ModConfigEvent event) {
+        if (event.getConfig().getType() != ModConfig.Type.CLIENT) return;
+        config.setup(event.getConfig());
+    }
 }

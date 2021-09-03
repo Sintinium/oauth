@@ -384,6 +384,7 @@ public class PasswordFieldWidget extends Widget implements IRenderable, IGuiEven
             int j = this.cursorPos - this.displayPos;
             int k = this.highlightPos - this.displayPos;
             String s = this.font.plainSubstrByWidth(this.getHiddenValue().substring(this.displayPos), this.getInnerWidth());
+//            String s = this.font.plainSubstrByWidth(this.value.substring(this.displayPos), this.getInnerWidth());
             boolean flag = j >= 0 && j <= s.length();
             boolean flag1 = this.isFocused() && this.frame / 6 % 2 == 0 && flag;
             int l = this.bordered ? this.x + 4 : this.x;
