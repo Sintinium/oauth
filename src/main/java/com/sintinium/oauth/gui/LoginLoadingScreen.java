@@ -4,6 +4,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 public class LoginLoadingScreen extends GuiScreen {
 
     private String loadingText = "Loading";
@@ -16,12 +18,18 @@ public class LoginLoadingScreen extends GuiScreen {
     private Runnable onCancel;
     private boolean isMicrosoft;
     private String title = "Logging in";
+    private AtomicReference<String> updateText = new AtomicReference<>();
 
     protected LoginLoadingScreen(GuiScreen multiplayerScreen, GuiScreen callingScreen, Runnable onCancel, boolean isMicrosoft) {
         this.multiplayerScreen = multiplayerScreen;
         this.lastScreen = callingScreen;
         this.onCancel = onCancel;
         this.isMicrosoft = isMicrosoft;
+        updateText.set("Check your browser");
+    }
+
+    public void updateText(String text) {
+        updateText.set(text);
     }
 
     @Override
@@ -62,7 +70,7 @@ public class LoginLoadingScreen extends GuiScreen {
         this.drawBackground(0);
         drawCenteredString(Minecraft.getMinecraft().fontRenderer, renderText, this.width / 2, this.height / 2 - 40, 0xFFFFFF);
         if (this.isMicrosoft) {
-            drawCenteredString(Minecraft.getMinecraft().fontRenderer, "Check your browser", this.width / 2, this.height / 2 - 28, 0xFFFFFF);
+            drawCenteredString(Minecraft.getMinecraft().fontRenderer, updateText.get(), this.width / 2, this.height / 2 - 28, 0xFFFFFF);
         }
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
