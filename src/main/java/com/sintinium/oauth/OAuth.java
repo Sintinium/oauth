@@ -11,8 +11,6 @@ public class OAuth {
     // Directly reference a log4j logger.
     private static final Logger LOGGER = LogManager.getLogger();
 
-    public static boolean savePassword = false;
-
     public OAuth() {
         MinecraftForge.EVENT_BUS.register(this);
     }
