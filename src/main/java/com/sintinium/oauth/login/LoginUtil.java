@@ -8,9 +8,9 @@ import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService;
 import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
 import com.mojang.util.UUIDTypeAdapter;
+import cpw.mods.fml.relauncher.ReflectionHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Session;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 
 import java.lang.reflect.Field;
 import java.util.Optional;
@@ -41,8 +41,8 @@ public class LoginUtil {
         needsRefresh = false;
         lastCheck = System.currentTimeMillis();
         try {
-            minecraftSessionService.joinServer(session.getProfile(), session.getToken(), uuid);
-            if (minecraftSessionService.hasJoinedServer(session.getProfile(), uuid, null).isComplete()) {
+            minecraftSessionService.joinServer(session.func_148256_e(), session.getToken(), uuid);
+            if (minecraftSessionService.hasJoinedServer(session.func_148256_e(), uuid).isComplete()) {
                 wasOnline = true;
                 return true;
             } else {
@@ -91,7 +91,7 @@ public class LoginUtil {
     private static void setSession(Session session) {
         needsRefresh = true;
         updateOnlineStatus();
-        Field field = ObfuscationReflectionHelper.findField(Minecraft.class, "field_71449_j");
+        Field field = ReflectionHelper.findField(Minecraft.class, "field_71449_j", "session");
         field.setAccessible(true);
         try {
             field.set(Minecraft.getMinecraft(), session);

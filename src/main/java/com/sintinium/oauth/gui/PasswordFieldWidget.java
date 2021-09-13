@@ -3,23 +3,19 @@ package com.sintinium.oauth.gui;
 
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
-import net.minecraft.client.Minecraft;
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
-import net.minecraft.client.gui.GuiPageButtonList;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ChatAllowedCharacters;
-import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.util.MathHelper;
+import org.lwjgl.opengl.GL11;
 
 @SideOnly(Side.CLIENT)
-public class PasswordFieldWidget extends Gui {
-    private final int id;
+public class PasswordFieldWidget extends GuiTextField {
     private final FontRenderer fontRenderer;
     public int x;
     public int y;
@@ -38,20 +34,15 @@ public class PasswordFieldWidget extends Gui {
     private int enabledColor = 14737632;
     private int disabledColor = 7368816;
     private boolean visible = true;
-    private GuiPageButtonList.GuiResponder guiResponder;
-    private Predicate<String> validator = Predicates.<String>alwaysTrue();
+    private Predicate<String> validator = Predicates.alwaysTrue();
 
-    public PasswordFieldWidget(int componentId, FontRenderer fontrendererObj, int x, int y, int par5Width, int par6Height) {
-        this.id = componentId;
-        this.fontRenderer = fontrendererObj;
+    public PasswordFieldWidget(FontRenderer fontRendererObj, int x, int y, int par5Width, int par6Height) {
+        super(fontRendererObj, x, y, par5Width, par6Height);
+        this.fontRenderer = fontRendererObj;
         this.x = x;
         this.y = y;
         this.width = par5Width;
         this.height = par6Height;
-    }
-
-    public void setGuiResponder(GuiPageButtonList.GuiResponder guiResponderIn) {
-        this.guiResponder = guiResponderIn;
     }
 
     public void updateCursorCounter() {
@@ -86,7 +77,7 @@ public class PasswordFieldWidget extends Gui {
 
     public void writeText(String textToWrite) {
         String s = "";
-        String s1 = ChatAllowedCharacters.filterAllowedCharacters(textToWrite);
+        String s1 = ChatAllowedCharacters.filerAllowedCharacters(textToWrite);
         int i = this.cursorPosition < this.selectionEnd ? this.cursorPosition : this.selectionEnd;
         int j = this.cursorPosition < this.selectionEnd ? this.selectionEnd : this.cursorPosition;
         int k = this.maxStringLength - this.text.length() - (i - j);
@@ -112,13 +103,6 @@ public class PasswordFieldWidget extends Gui {
         if (this.validator.apply(s)) {
             this.text = s;
             this.moveCursorBy(i - this.selectionEnd + l);
-            this.setResponderEntryValue(this.id, this.text);
-        }
-    }
-
-    public void setResponderEntryValue(int idIn, String textIn) {
-        if (this.guiResponder != null) {
-            this.guiResponder.setEntryValue(idIn, textIn);
         }
     }
 
@@ -156,15 +140,9 @@ public class PasswordFieldWidget extends Gui {
                     if (flag) {
                         this.moveCursorBy(num);
                     }
-
-                    this.setResponderEntryValue(this.id, this.text);
                 }
             }
         }
-    }
-
-    public int getId() {
-        return this.id;
     }
 
     public int getNthWordFromCursor(int numWords) {
@@ -221,20 +199,20 @@ public class PasswordFieldWidget extends Gui {
     public boolean textboxKeyTyped(char typedChar, int keyCode) {
         if (!this.isFocused) {
             return false;
-        } else if (GuiScreen.isKeyComboCtrlA(keyCode)) {
+        } else if (GuiScreenCustom.isKeyComboCtrlA(keyCode)) {
             this.setCursorPositionEnd();
             this.setSelectionPos(0);
             return true;
-        } else if (GuiScreen.isKeyComboCtrlC(keyCode)) {
+        } else if (GuiScreenCustom.isKeyComboCtrlC(keyCode)) {
             GuiScreen.setClipboardString(this.getSelectedText());
             return true;
-        } else if (GuiScreen.isKeyComboCtrlV(keyCode)) {
+        } else if (GuiScreenCustom.isKeyComboCtrlV(keyCode)) {
             if (this.isEnabled) {
                 this.writeText(GuiScreen.getClipboardString());
             }
 
             return true;
-        } else if (GuiScreen.isKeyComboCtrlX(keyCode)) {
+        } else if (GuiScreenCustom.isKeyComboCtrlX(keyCode)) {
             GuiScreen.setClipboardString(this.getSelectedText());
 
             if (this.isEnabled) {
@@ -329,7 +307,7 @@ public class PasswordFieldWidget extends Gui {
         }
     }
 
-    public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) {
+    public void mouseClicked(int mouseX, int mouseY, int mouseButton) {
         boolean flag = mouseX >= this.x && mouseX < this.x + this.width && mouseY >= this.y && mouseY < this.y + this.height;
 
         if (this.canLoseFocus) {
@@ -345,9 +323,6 @@ public class PasswordFieldWidget extends Gui {
 
             String s = this.fontRenderer.trimStringToWidth(this.text.substring(this.lineScrollOffset), this.getWidth());
             this.setCursorPosition(this.fontRenderer.trimStringToWidth(s, i).length() + this.lineScrollOffset);
-            return true;
-        } else {
-            return false;
         }
     }
 
@@ -383,7 +358,7 @@ public class PasswordFieldWidget extends Gui {
 
             if (!s.isEmpty()) {
                 String s1 = flag ? s.substring(0, j) : s;
-                j1 = this.fontRenderer.drawStringWithShadow(s1, (float) l, (float) i1, i);
+                j1 = this.fontRenderer.drawStringWithShadow(s1, l, i1, i);
             }
 
             boolean flag2 = this.cursorPosition < this.text.length() || this.text.length() >= this.getMaxStringLength();
@@ -397,14 +372,14 @@ public class PasswordFieldWidget extends Gui {
             }
 
             if (!s.isEmpty() && flag && j < s.length()) {
-                j1 = this.fontRenderer.drawStringWithShadow(s.substring(j), (float) j1, (float) i1, i);
+                j1 = this.fontRenderer.drawStringWithShadow(s.substring(j), j1, i1, i);
             }
 
             if (flag1) {
                 if (flag2) {
                     Gui.drawRect(k1, i1 - 1, k1 + 1, i1 + 1 + this.fontRenderer.FONT_HEIGHT, -3092272);
                 } else {
-                    this.fontRenderer.drawStringWithShadow("_", (float) k1, (float) i1, i);
+                    this.fontRenderer.drawStringWithShadow("_", k1, i1, i);
                 }
             }
 
@@ -436,20 +411,14 @@ public class PasswordFieldWidget extends Gui {
             startX = this.x + this.width;
         }
 
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuffer();
-        GlStateManager.color(0.0F, 0.0F, 255.0F, 255.0F);
-        GlStateManager.disableTexture2D();
-        GlStateManager.enableColorLogic();
-        GlStateManager.colorLogicOp(GlStateManager.LogicOp.OR_REVERSE);
-        bufferbuilder.begin(7, DefaultVertexFormats.POSITION);
-        bufferbuilder.pos((double) startX, (double) endY, 0.0D).endVertex();
-        bufferbuilder.pos((double) endX, (double) endY, 0.0D).endVertex();
-        bufferbuilder.pos((double) endX, (double) startY, 0.0D).endVertex();
-        bufferbuilder.pos((double) startX, (double) startY, 0.0D).endVertex();
+        Tessellator tessellator = Tessellator.instance;
+        GL11.glColor4f(0.0F, 0.0F, 255.0F, 255.0F);
+        tessellator.startDrawingQuads();
+        tessellator.addVertex(startX, endY, 0.0D);
+        tessellator.addVertex(endX, endY, 0.0D);
+        tessellator.addVertex(endX, startY, 0.0D);
+        tessellator.addVertex(startX, startY, 0.0D);
         tessellator.draw();
-        GlStateManager.disableColorLogic();
-        GlStateManager.enableTexture2D();
     }
 
     public int getMaxStringLength() {
@@ -471,7 +440,7 @@ public class PasswordFieldWidget extends Gui {
     public void setCursorPosition(int pos) {
         this.cursorPosition = pos;
         int i = this.text.length();
-        this.cursorPosition = MathHelper.clamp(this.cursorPosition, 0, i);
+        this.cursorPosition = MathHelper.clamp_int(this.cursorPosition, 0, i);
         this.setSelectionPos(this.cursorPosition);
     }
 
@@ -501,10 +470,6 @@ public class PasswordFieldWidget extends Gui {
         }
 
         this.isFocused = isFocusedIn;
-
-        if (Minecraft.getMinecraft().currentScreen != null) {
-            Minecraft.getMinecraft().currentScreen.setFocused(isFocusedIn);
-        }
     }
 
     public void setEnabled(boolean enabled) {
@@ -551,7 +516,7 @@ public class PasswordFieldWidget extends Gui {
                 this.lineScrollOffset -= this.lineScrollOffset - position;
             }
 
-            this.lineScrollOffset = MathHelper.clamp(this.lineScrollOffset, 0, i);
+            this.lineScrollOffset = MathHelper.clamp_int(this.lineScrollOffset, 0, i);
         }
     }
 

@@ -6,7 +6,7 @@ import net.minecraft.client.gui.GuiScreen;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-public class LoginLoadingScreen extends GuiScreen {
+public class LoginLoadingScreen extends GuiScreenCustom {
 
     private String loadingText = "Loading";
     private int dots = 0;

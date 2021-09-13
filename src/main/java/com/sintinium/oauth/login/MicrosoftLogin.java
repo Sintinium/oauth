@@ -3,6 +3,7 @@ package com.sintinium.oauth.login;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import com.sun.net.httpserver.HttpServer;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.http.HttpResponse;
@@ -256,7 +257,7 @@ public class MicrosoftLogin {
             JsonObject obj = new JsonObject();
             JsonObject props = new JsonObject();
             JsonArray token = new JsonArray();
-            token.add(xblToken.token);
+            token.add(new JsonPrimitive(xblToken.token));
             props.addProperty("SandboxId", "RETAIL");
             props.add("UserTokens", token);
             obj.add("Properties", props);
