@@ -3,18 +3,18 @@ package com.sintinium.oauth.gui;
 import com.sintinium.oauth.OAuthConfig;
 import com.sintinium.oauth.login.LoginUtil;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.*;
-import net.minecraftforge.common.config.Config;
-import net.minecraftforge.common.config.ConfigManager;
+import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.gui.GuiMultiplayer;
+import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.GuiTextField;
 import org.lwjgl.input.Keyboard;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class LoginScreen extends GuiScreen {
+public class LoginScreen extends GuiScreenCustom {
     private final GuiScreen lastScreen;
     private final GuiMultiplayer multiplayerScreen;
     private ActionButton mojangLoginButton;
@@ -24,23 +24,6 @@ public class LoginScreen extends GuiScreen {
     private AtomicReference<String> status = new AtomicReference<>();
     private String title = "OAuth Login";
 
-    private GuiPageButtonList.GuiResponder guiResponder = new GuiPageButtonList.GuiResponder() {
-        @Override
-        public void setEntryValue(int id, boolean value) {
-            onEdited(id, String.valueOf(value));
-        }
-
-        @Override
-        public void setEntryValue(int id, float value) {
-            onEdited(id, String.valueOf(value));
-        }
-
-        @Override
-        public void setEntryValue(int id, String value) {
-            onEdited(id, value);
-        }
-    };
-
     private List<Runnable> toRun = new CopyOnWriteArrayList<>();
 
     public LoginScreen(GuiScreen last, GuiMultiplayer multiplayerScreen) {
@@ -49,10 +32,16 @@ public class LoginScreen extends GuiScreen {
     }
 
     @Override
-    public void onResize(Minecraft mcIn, int w, int h) {
-        String user = usernameWidget.getText();
-        String pass = passwordWidget.getText();
-        super.onResize(mcIn, w, h);
+    public void setWorldAndResolution(Minecraft mcIn, int w, int h) {
+        String user = "";
+        if (usernameWidget != null) {
+            user = usernameWidget.getText();
+        }
+        String pass = "";
+        if (passwordWidget != null) {
+            pass = passwordWidget.getText();
+        }
+        super.setWorldAndResolution(mcIn, w, h);
         initGui();
         usernameWidget.setText(user);
         passwordWidget.setText(pass);
@@ -75,18 +64,16 @@ public class LoginScreen extends GuiScreen {
         Keyboard.enableRepeatEvents(true);
         buttonList.clear();
 
-        this.passwordWidget = new PasswordFieldWidget(0, this.mc.fontRenderer, this.width / 2 - 100, this.height / 2 - 20, 200, 20);
+        this.passwordWidget = new PasswordFieldWidget(this.fontRendererObj, this.width / 2 - 100, this.height / 2 - 20, 200, 20);
         this.passwordWidget.setMaxStringLength(128);
-        this.passwordWidget.setGuiResponder(guiResponder);
 
-        this.usernameWidget = new UsernameFieldWidget(1, this.mc.fontRenderer, this.width / 2 - 100, this.height / 2 - 60, 200, 20, passwordWidget);
+        this.usernameWidget = new UsernameFieldWidget(this.fontRendererObj, this.width / 2 - 100, this.height / 2 - 60, 200, 20, passwordWidget);
         this.usernameWidget.setFocused(true);
         if (LoginUtil.lastMojangUsername != null) {
             this.usernameWidget.setText(LoginUtil.lastMojangUsername);
         }
-        this.usernameWidget.setGuiResponder(guiResponder);
 
-        savePasswordWidget = this.addButton(new OAuthCheckbox(4, this.width / 2 - fontRenderer.getStringWidth("Save password") - 25, this.height / 2 + 1 + 2, "Save password", false));
+        this.savePasswordWidget = this.addButton(new OAuthCheckbox(4, this.width / 2 - this.fontRendererObj.getStringWidth("Save password") - 25, this.height / 2 + 1 + 2, "Save password", false));
 
         Runnable savePw = () -> {
             if (savePasswordWidget.isChecked()) {
@@ -109,9 +96,7 @@ public class LoginScreen extends GuiScreen {
                         toRun.add(() -> this.status.set("Wrong password or username!"));
                     } else {
                         LoginUtil.updateOnlineStatus();
-                        toRun.add(() -> {
-                            Minecraft.getMinecraft().displayGuiScreen(multiplayerScreen);
-                        });
+                        toRun.add(() -> Minecraft.getMinecraft().displayGuiScreen(multiplayerScreen));
                     }
                 }
             });
@@ -138,12 +123,10 @@ public class LoginScreen extends GuiScreen {
     private void saveLoginInfo() {
         OAuthConfig.setUsername(usernameWidget.getText());
         OAuthConfig.setPassword(passwordWidget.getText());
-        ConfigManager.sync("oauth", Config.Type.INSTANCE);
     }
 
     private void removeLoginInfo() {
         OAuthConfig.removeUsernamePassword();
-        ConfigManager.sync("oauth", Config.Type.INSTANCE);
     }
 
     private void onEdited(int id, String value) {
@@ -179,9 +162,10 @@ public class LoginScreen extends GuiScreen {
     }
 
     @Override
-    protected void keyTyped(char typedChar, int keyCode) throws IOException {
+    protected void keyTyped(char typedChar, int keyCode) {
         this.usernameWidget.textboxKeyTyped(typedChar, keyCode);
         this.passwordWidget.textboxKeyTyped(typedChar, keyCode);
+        this.cleanUp();
 
         if (keyCode == Keyboard.KEY_TAB) {
             this.usernameWidget.setFocused(!this.passwordWidget.isFocused());
@@ -192,10 +176,10 @@ public class LoginScreen extends GuiScreen {
     }
 
     @Override
-    protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
+    protected void mouseClicked(int mouseX, int mouseY, int mouseButton) {
+        super.mouseClicked(mouseX, mouseY, mouseButton);
         usernameWidget.mouseClicked(mouseX, mouseY, mouseButton);
         passwordWidget.mouseClicked(mouseX, mouseY, mouseButton);
-        super.mouseClicked(mouseX, mouseY, mouseButton);
     }
 
     @Override

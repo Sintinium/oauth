@@ -5,9 +5,8 @@ import com.sintinium.oauth.login.MicrosoftLogin;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiMultiplayer;
-import net.minecraft.client.gui.GuiScreen;
 
-public class LoginTypeScreen extends GuiScreen {
+public class LoginTypeScreen extends GuiScreenCustom {
 
     private GuiMultiplayer lastScreen;
 
@@ -29,12 +28,10 @@ public class LoginTypeScreen extends GuiScreen {
             final MicrosoftLogin login = new MicrosoftLogin();
             LoginLoadingScreen loadingScreen = new LoginLoadingScreen(lastScreen, this, login::cancelLogin, true);
             login.setUpdateStatusConsumer(loadingScreen::updateText);
-            Thread thread = new Thread(() -> {
-                login.login(() -> {
-                    LoginUtil.updateOnlineStatus();
-                    Minecraft.getMinecraft().displayGuiScreen(lastScreen);
-                });
-            });
+            Thread thread = new Thread(() -> login.login(() -> {
+                LoginUtil.updateOnlineStatus();
+                Minecraft.getMinecraft().displayGuiScreen(lastScreen);
+            }));
             if (login.getErrorMsg() != null) {
                 System.err.println(login.getErrorMsg());
             }

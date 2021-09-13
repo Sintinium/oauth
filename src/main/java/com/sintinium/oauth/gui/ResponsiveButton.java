@@ -14,14 +14,14 @@ public class ResponsiveButton extends ActionButton {
     }
 
     @Override
-    public void drawButton(Minecraft mc, int mouseX, int mouseY, float partialTicks) {
-        super.drawButton(mc, mouseX, mouseY, partialTicks);
+    public void drawButton(Minecraft mc, int mouseX, int mouseY) {
+        super.drawButton(mc, mouseX, mouseY);
         if (!this.enabled) {
             onUnhover.run();
             return;
         }
 
-        if (this.hovered) {
+        if (this.field_146123_n) {
             onHover.run();
         } else {
             onUnhover.run();
