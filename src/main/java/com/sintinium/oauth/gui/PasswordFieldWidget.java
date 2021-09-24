@@ -63,6 +63,8 @@ public class PasswordFieldWidget extends Widget implements IRenderable, IGuiEven
 
     }
 
+    //region Unedited
+
     public void setResponder(Consumer<String> p_212954_1_) {
         this.responder = p_212954_1_;
     }
@@ -360,10 +362,11 @@ public class PasswordFieldWidget extends Widget implements IRenderable, IGuiEven
         super.setFocused(p_146195_1_);
     }
 
+    //endregion
+
     private String getHiddenValue() {
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < value.length(); i++) {
-//            builder.append("\u2022");
             builder.append("*");
         }
         return builder.toString();
@@ -377,14 +380,15 @@ public class PasswordFieldWidget extends Widget implements IRenderable, IGuiEven
                 fill(p_230431_1_, this.x, this.y, this.x + this.width, this.y + this.height, -16777216);
             }
 
-            p_230431_1_.pushPose();
-            p_230431_1_.scale(1.5f, 1.5f, 1.5f);
-            p_230431_1_.translate(0f, 0f, 0f);
             int i2 = this.isEditable ? this.textColor : this.textColorUneditable;
             int j = this.cursorPos - this.displayPos;
             int k = this.highlightPos - this.displayPos;
+
+            // Added
             String s = this.font.plainSubstrByWidth(this.getHiddenValue().substring(this.displayPos), this.getInnerWidth());
 //            String s = this.font.plainSubstrByWidth(this.value.substring(this.displayPos), this.getInnerWidth());
+            // End
+
             boolean flag = j >= 0 && j <= s.length();
             boolean flag1 = this.isFocused() && this.frame / 6 % 2 == 0 && flag;
             int l = this.bordered ? this.x + 4 : this.x;
@@ -394,8 +398,13 @@ public class PasswordFieldWidget extends Widget implements IRenderable, IGuiEven
                 k = s.length();
             }
 
+            // Added
+            p_230431_1_.pushPose();
+            p_230431_1_.scale(1.5f, 1.5f, 1.5f);
+            p_230431_1_.translate(0f, 0f, 0f);
             l /= 1.5;
             i1 /= 1.5;
+            // End
 
             if (!s.isEmpty()) {
                 String s1 = flag ? s.substring(0, j) : s;
@@ -419,6 +428,7 @@ public class PasswordFieldWidget extends Widget implements IRenderable, IGuiEven
                 this.font.drawShadow(p_230431_1_, this.suggestion, (float) (k1 - 1), (float) i1, -8355712);
             }
 
+            // Added
             p_230431_1_.popPose();
             l *= 1.5;
             i1 *= 1.5;
@@ -426,6 +436,8 @@ public class PasswordFieldWidget extends Widget implements IRenderable, IGuiEven
             if (s.isEmpty()) {
                 k1 /= 1.5;
             }
+            // End
+
             if (flag1) {
                 if (flag2) {
                     AbstractGui.fill(p_230431_1_, k1, i1 - 1, k1 + 1, i1 + 1 + 9, -3092272);
@@ -434,16 +446,22 @@ public class PasswordFieldWidget extends Widget implements IRenderable, IGuiEven
                 }
             }
 
+            // Added
             p_230431_1_.pushPose();
             p_230431_1_.scale(1.5f, 1.5f, 1.5f);
             l /= 1.5;
             i1 /= 1.5;
             k1 /= 1.5;
+            // End
+
             if (k != j) {
                 int l1 = l + this.font.width(s.substring(0, k));
                 this.renderHighlight(k1, i1 - 1, l1 - 1, i1 + 1 + 7);
             }
+
+            // Added
             p_230431_1_.popPose();
+            // End
         }
     }
 
@@ -471,7 +489,11 @@ public class PasswordFieldWidget extends Widget implements IRenderable, IGuiEven
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferbuilder = tessellator.getBuilder();
         RenderSystem.color4f(0.0F, 0.0F, 255.0F, 255.0F);
+
+        // Added
         RenderSystem.scalef(1.5f, 1.5f, 1.5f);
+        // End
+
         RenderSystem.disableTexture();
         RenderSystem.enableColorLogicOp();
         RenderSystem.logicOp(GlStateManager.LogicOp.OR_REVERSE);
@@ -481,10 +503,16 @@ public class PasswordFieldWidget extends Widget implements IRenderable, IGuiEven
         bufferbuilder.vertex((double) p_146188_3_, (double) p_146188_2_, 0.0D).endVertex();
         bufferbuilder.vertex((double) p_146188_1_, (double) p_146188_2_, 0.0D).endVertex();
         tessellator.end();
+
+        // Added
         RenderSystem.scalef(1f / 1.5f, 1f / 1.5f, 1f / 1.5f);
+        // End
+
         RenderSystem.disableColorLogicOp();
         RenderSystem.enableTexture();
     }
+
+    //region Unedited
 
     private int getMaxLength() {
         return this.maxLength;
@@ -599,4 +627,6 @@ public class PasswordFieldWidget extends Widget implements IRenderable, IGuiEven
     public void setX(int p_212952_1_) {
         this.x = p_212952_1_;
     }
+
+    //endregion
 }
