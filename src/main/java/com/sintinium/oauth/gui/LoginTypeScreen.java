@@ -37,11 +37,12 @@ public class LoginTypeScreen extends Screen {
                     LoginUtil.updateOnlineStatus();
                     Minecraft.getInstance().setScreen(lastScreen);
                 });
-            });
+            }, "Oauth microsoft");
             if (login.getErrorMsg() != null) {
                 System.err.println(login.getErrorMsg());
             }
             Minecraft.getInstance().setScreen(loadingScreen);
+            thread.setDaemon(true);
             thread.start();
         }));
 

@@ -8,6 +8,7 @@ import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService;
 import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
 import com.mojang.util.UUIDTypeAdapter;
+import com.sintinium.oauth.gui.ErrorScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Session;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
@@ -55,7 +56,7 @@ public class LoginUtil {
         }
     }
 
-    public static void loginMs(MicrosoftLogin.MinecraftProfile profile) {
+    public static void loginMs(MicrosoftLogin.MinecraftProfile profile) throws IllegalAccessException {
         Session session = new Session(profile.name, profile.id, profile.token.accessToken, Session.Type.MOJANG.name());
         setSession(session);
     }
@@ -85,19 +86,18 @@ public class LoginUtil {
             return Optional.empty();
         } catch (AuthenticationException e) {
             return Optional.of(false);
+        } catch (IllegalAccessException e) {
+            Minecraft.getInstance().setScreen(new ErrorScreen(false, e));
+            return Optional.empty();
         }
     }
 
-    private static void setSession(Session session) {
+    private static void setSession(Session session) throws IllegalAccessException {
         needsRefresh = true;
         updateOnlineStatus();
         Field field = ObfuscationReflectionHelper.findField(Minecraft.class, "field_71449_j");
         field.setAccessible(true);
-        try {
-            field.set(Minecraft.getInstance(), session);
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
+        field.set(Minecraft.getInstance(), session);
     }
 
 }

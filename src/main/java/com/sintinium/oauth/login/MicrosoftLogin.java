@@ -3,7 +3,9 @@ package com.sintinium.oauth.login;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.sintinium.oauth.gui.ErrorScreen;
 import com.sun.net.httpserver.HttpServer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.util.Util;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.http.HttpResponse;
@@ -107,10 +109,21 @@ public class MicrosoftLogin {
                 LoginUtil.loginMs(mcProfile);
             }
 
+            if (errorMsg != null) {
+                Minecraft.getInstance().setScreen(new ErrorScreen(true, errorMsg));
+                return null;
+            }
+
+            if (mcProfile == null) {
+                Minecraft.getInstance().setScreen(new ErrorScreen(true, "Failed to create Minecraft Profile."));
+                return null;
+            }
+
             callback.run();
             return mcProfile;
         } catch (Exception e) {
             e.printStackTrace();
+            Minecraft.getInstance().setScreen(new ErrorScreen(true, e));
         } finally {
             try {
                 client.close();

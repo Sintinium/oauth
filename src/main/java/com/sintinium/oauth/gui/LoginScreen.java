@@ -90,7 +90,8 @@ public class LoginScreen extends Screen {
                         }
                     }
                 }
-            });
+            }, "Oauth mojang");
+            thread.setDaemon(true);
             thread.start();
         }, this::updateLoginButton, () -> this.mojangLoginButton.setMessage(new StringTextComponent("Login"))));
 
