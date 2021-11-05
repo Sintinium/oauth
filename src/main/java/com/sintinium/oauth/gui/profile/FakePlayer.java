@@ -9,6 +9,8 @@ import net.minecraft.entity.player.PlayerModelPart;
 import net.minecraft.util.ResourceLocation;
 
 import javax.annotation.Nullable;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class FakePlayer extends ClientPlayerEntity {
 
@@ -16,6 +18,7 @@ public class FakePlayer extends ClientPlayerEntity {
     private ResourceLocation skin;
     private ResourceLocation cape = null;
     private String skinModel = "default";
+    private Map<UUID, PlayerData> cache = new ConcurrentHashMap<>();
 
     public FakePlayer() {
         super(Minecraft.getInstance(), FakeWorld.getInstance(), FakeClientPlayNetHandler.getInstance(), null, null, false, false);
@@ -32,6 +35,15 @@ public class FakePlayer extends ClientPlayerEntity {
     }
 
     public void setSkin(GameProfile profile) {
+        if (cache.containsKey(profile.getId())) {
+            PlayerData data = cache.get(profile.getId());
+            this.skin = data.skin;
+            this.cape = data.cape;
+            this.skinModel = data.skinModel;
+            return;
+        }
+
+        PlayerData data = new PlayerData();
         cape = null;
         Minecraft.getInstance().getSkinManager().registerSkins(profile, (type, resourceLocation, minecraftProfileTexture) -> {
             if (type == MinecraftProfileTexture.Type.SKIN) {
@@ -40,9 +52,13 @@ public class FakePlayer extends ClientPlayerEntity {
                 if (this.skinModel == null) {
                     this.skinModel = "default";
                 }
+                data.skin = skin;
+                data.skinModel = skinModel;
+                cache.put(profile.getId(), data);
             }
             if (type == MinecraftProfileTexture.Type.CAPE) {
                 cape = resourceLocation;
+                data.cape = cape;
             }
         }, true);
     }
@@ -82,5 +98,16 @@ public class FakePlayer extends ClientPlayerEntity {
     @Override
     public ResourceLocation getCloakTextureLocation() {
         return cape;
+    }
+
+    public void clearCache() {
+        // clear the cache so skins are updated
+        cache.clear();
+    }
+
+    private static class PlayerData {
+        private ResourceLocation skin;
+        private ResourceLocation cape;
+        private String skinModel;
     }
 }
