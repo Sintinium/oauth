@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "com.sintinium.oauth.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "oauth.refmap.json",
+  "mixins": [
+  ],
+  "minVersion": "0.8",
+  "client": [
+    "LivingRendererMixin"
+  ]
+}
