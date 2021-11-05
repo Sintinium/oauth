@@ -9,11 +9,11 @@ import net.minecraft.util.text.StringTextComponent;
 
 import java.util.UUID;
 
-public class ProfileScreen extends Screen {
+public class ProfileSelectionScreen extends Screen {
 
     private ProfileList profileList;
 
-    public ProfileScreen() {
+    public ProfileSelectionScreen() {
         super(new StringTextComponent("Profiles"));
     }
 
@@ -23,9 +23,6 @@ public class ProfileScreen extends Screen {
         FakePlayer.getInstance().clearCache();
 
         profileList = new ProfileList(this, this.minecraft, this.width, this.height, 32, this.height - 32, 16);
-        profileList.children().add(new ProfileEntry(profileList, UUID.fromString("108c89bc-ab51-4609-a9d5-13bb8808df98"), "Sintpai"));
-        profileList.children().add(new ProfileEntry(profileList, UUID.fromString("576f9fd6-11af-43fd-89af-bee7cbb7425b"), "Alphexon"));
-        profileList.children().add(new ProfileEntry(profileList, UUID.fromString("14906aa5-7c38-4ac2-989b-3bb4c9f83069"), "JoeBiden"));
         this.addWidget(profileList);
     }
 

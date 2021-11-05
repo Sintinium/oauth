@@ -1,7 +1,7 @@
 package com.sintinium.oauth.mixin;
 
 import com.sintinium.oauth.gui.profile.FakePlayer;
-import com.sintinium.oauth.gui.profile.ProfileScreen;
+import com.sintinium.oauth.gui.profile.ProfileSelectionScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.IEntityRenderer;
 import net.minecraft.client.renderer.entity.LivingRenderer;
@@ -17,7 +17,7 @@ public abstract class LivingRendererMixin<T extends LivingEntity, M extends Enti
 
     @Inject(method = "shouldShowName(Lnet/minecraft/entity/LivingEntity;)Z", at = @At("INVOKE"), remap = false, cancellable = true)
     public void shouldShowNameMixin(T livingEntity, CallbackInfoReturnable<Boolean> cir) {
-        if (livingEntity instanceof FakePlayer || Minecraft.getInstance().screen instanceof ProfileScreen) cir.setReturnValue(false);
+        if (livingEntity instanceof FakePlayer || Minecraft.getInstance().screen instanceof ProfileSelectionScreen) cir.setReturnValue(false);
     }
 
 }
