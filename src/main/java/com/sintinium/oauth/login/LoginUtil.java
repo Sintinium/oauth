@@ -1,6 +1,7 @@
 package com.sintinium.oauth.login;
 
 import com.mojang.authlib.Agent;
+import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.UserType;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
@@ -61,6 +62,22 @@ public class LoginUtil {
         }
     }
 
+    public static GameProfile getGameProfile(Session session) {
+        String serverId = UUID.randomUUID().toString();
+        needsRefresh = false;
+        lastCheck = System.currentTimeMillis();
+        try {
+            minecraftSessionService.joinServer(session.getGameProfile(), session.getAccessToken(), serverId);
+            GameProfile profile = minecraftSessionService.hasJoinedServer(session.getGameProfile(), serverId, null);
+            if (profile.isComplete()) {
+                return profile;
+            }
+        } catch (AuthenticationException e) {
+            return null;
+        }
+        return null;
+    }
+
     public static void loginMs(MicrosoftProfile profile) throws WrongMinecraftVersionException {
         Session session = new Session(profile.getName(), profile.getUUID().toString(), profile.getAccessToken(), Session.Type.MOJANG.name());
         setSession(session);
@@ -115,7 +132,7 @@ public class LoginUtil {
         return isOnline;
     }
 
-    private static void setSession(Session session) throws WrongMinecraftVersionException {
+    public static void setSession(Session session) throws WrongMinecraftVersionException {
         Field field = ObfuscationReflectionHelper.findField(Minecraft.class, "field_71449_j");
         field.setAccessible(true);
         try {

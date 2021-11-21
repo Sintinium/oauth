@@ -19,6 +19,7 @@ public class ErrorScreen extends OAuthScreen {
 
     private String message = null;
     private Throwable e = null;
+    private boolean isInfo = false;
 
     public ErrorScreen(boolean isMs, String message) {
         super(new StringTextComponent("Error logging into " + (isMs ? "Microsoft." : "Mojang.")));
@@ -30,6 +31,10 @@ public class ErrorScreen extends OAuthScreen {
         super(new StringTextComponent("Error logging into " + (isMs ? "Microsoft." : "Mojang.")));
         this.e = e;
         e.printStackTrace();
+    }
+
+    public void setInfo() {
+        this.isInfo = true;
     }
 
     @Override
@@ -48,7 +53,10 @@ public class ErrorScreen extends OAuthScreen {
     public void render(MatrixStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
         FontRenderer font = Minecraft.getInstance().font;
         this.renderBackground(p_230430_1_);
-        if (getMessage().toLowerCase().contains("no such host is known")) {
+        if (isInfo) {
+            drawCenteredString(p_230430_1_, Minecraft.getInstance().font, this.title, this.width / 2, this.height / 2 - 40, 0xFFFFFF);
+            drawCenteredString(p_230430_1_, Minecraft.getInstance().font, getMessage(), this.width / 2, this.height / 2 - 24, 0xFFFFFF);
+        } else if (getMessage().toLowerCase().contains("no such host is known") || getMessage().toLowerCase().contains("connection reset")) {
             drawCenteredString(p_230430_1_, Minecraft.getInstance().font, this.title, this.width / 2, this.height / 2 - 40, 0xFFFFFF);
             drawCenteredString(p_230430_1_, Minecraft.getInstance().font, "The servers could be down or it could be an internet problem.", this.width / 2, this.height / 2 - 28, 0xFFFFFF);
             drawCenteredString(p_230430_1_, Minecraft.getInstance().font, "If you believe this is a bug please create an issue at", this.width / 2, this.height / 2 - 12, 0xFFFFFF);
@@ -78,7 +86,7 @@ public class ErrorScreen extends OAuthScreen {
         if (message != null) {
             result = message;
         } else if (e != null) {
-            result = ExceptionUtils.getMessage(e);
+            result = ExceptionUtils.getStackTrace(e);
         } else {
             return "Error getting error message.";
         }

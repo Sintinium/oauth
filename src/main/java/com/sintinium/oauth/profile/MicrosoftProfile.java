@@ -9,7 +9,7 @@ import java.util.UUID;
 
 public class MicrosoftProfile implements IProfile {
 
-    private final String name;
+    private String name;
     private final UUID uuid;
     private String accessToken;
     private String refreshToken;
@@ -35,6 +35,11 @@ public class MicrosoftProfile implements IProfile {
     }
 
     @Override
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @Override
     public UUID getUUID() {
         return this.uuid;
     }
@@ -43,11 +48,14 @@ public class MicrosoftProfile implements IProfile {
     public boolean login() throws Exception {
         if (accessToken == null && refreshToken != null) {
             MicrosoftProfile profile = new MicrosoftLogin().loginFromRefresh(refreshToken);
-            if (accessToken == null) {
+            if (profile == null) {
                 return false;
             }
             accessToken = profile.accessToken;
             refreshToken = profile.refreshToken;
+            if (accessToken == null) {
+                return false;
+            }
             ProfileManager.getInstance().save();
         }
         LoginUtil.loginMs(this);

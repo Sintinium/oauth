@@ -26,15 +26,12 @@ public class OAuth {
     // Directly reference a log4j logger.
     private static OAuth INSTANCE;
     private static final Logger LOGGER = LogManager.getLogger();
-    public Config config;
     public AtomicReference<Screen> screenToSet = new AtomicReference<>(null);
 
     public OAuth() {
         INSTANCE = this;
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::doClientStuff);
         MinecraftForge.EVENT_BUS.register(this);
-        config = new Config();
-        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, config.getSpec());
     }
 
     public static OAuth getInstance() {
@@ -55,11 +52,5 @@ public class OAuth {
     private void doClientStuff(final FMLClientSetupEvent event) {
         // Set the mod to only run client side
         ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST, () -> Pair.of(() -> FMLNetworkConstants.IGNORESERVERONLY, (a, b) -> true));
-    }
-
-    @SubscribeEvent
-    public void configSetup(ModConfig.ModConfigEvent event) {
-        if (event.getConfig().getType() != ModConfig.Type.CLIENT) return;
-        config.setup(event.getConfig());
     }
 }

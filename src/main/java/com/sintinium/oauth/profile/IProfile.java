@@ -8,6 +8,8 @@ import java.util.UUID;
 public interface IProfile {
     String getName();
 
+    void setName(String name);
+
     UUID getUUID();
 
     /**

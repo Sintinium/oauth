@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public class MojangProfile implements IProfile {
 
-    private final String name;
+    private String name;
     private final String password;
     private final UUID uuid;
     private UserType userType;
@@ -25,6 +25,11 @@ public class MojangProfile implements IProfile {
     @Override
     public String getName() {
         return this.name;
+    }
+
+    @Override
+    public void setName(String name) {
+        this.name = name;
     }
 
     @Override

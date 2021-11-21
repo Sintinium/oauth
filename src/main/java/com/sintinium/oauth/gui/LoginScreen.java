@@ -29,7 +29,6 @@ public class LoginScreen extends OAuthScreen {
     private Button mojangLoginButton;
     private PasswordFieldWidget passwordWidget;
     private TextFieldWidget usernameWidget;
-    private OAuthCheckbox savePasswordButton;
     private AtomicReference<String> status = new AtomicReference<>();
 
     private List<Runnable> toRun = new CopyOnWriteArrayList<>();
@@ -60,17 +59,12 @@ public class LoginScreen extends OAuthScreen {
 
         this.usernameWidget = new UsernameFieldWidget(this.font, this.width / 2 - 100, this.height / 2 - 60, 200, 20, new StringTextComponent("Username/Email"), passwordWidget);
         this.usernameWidget.setFocus(true);
-        if (LoginUtil.lastMojangUsername != null) {
-            this.usernameWidget.setValue(LoginUtil.lastMojangUsername);
-        }
         this.usernameWidget.setResponder(this::onEdited);
 
         this.children.add(this.usernameWidget);
         this.children.add(this.passwordWidget);
 
-        this.savePasswordButton = this.addButton(new OAuthCheckbox(this.width / 2 - 101, this.height / 2 + 3, 150, 20, new StringTextComponent("Save Password"), false));
-
-        this.mojangLoginButton = this.addButton(new ResponsiveButton(this.width / 2 - 100, this.height / 2 + 36, 200, 20, new StringTextComponent("Login"), (p_213030_1_) -> {
+        this.mojangLoginButton = this.addButton(new ResponsiveButton(this.width / 2 - 100, this.height / 2 + 36, 200, 20, new StringTextComponent("Add Profile"), (p_213030_1_) -> {
             Thread thread = new Thread(() -> {
                 if (usernameWidget.getValue().isEmpty()) {
                     toRun.add(() -> this.status.set("Missing username!"));
@@ -78,6 +72,7 @@ public class LoginScreen extends OAuthScreen {
                     if (passwordWidget.getValue().isEmpty()) {
                         ProfileManager.getInstance().addProfile(new OfflineProfile(usernameWidget.getValue(), UUID.nameUUIDFromBytes(usernameWidget.getValue().getBytes())));
                         toRun.add(() -> OAuth.getInstance().setScreen(new ProfileSelectionScreen()));
+                        return;
                     }
                     MojangProfile profile;
                     try {
@@ -91,6 +86,7 @@ public class LoginScreen extends OAuthScreen {
                         return;
                     } catch (AuthenticationException e) {
                         toRun.add(() -> OAuth.getInstance().setScreen(new ErrorScreen(false, e)));
+                        e.printStackTrace();
                         return;
                     }
                     if (profile == null) {
@@ -104,19 +100,13 @@ public class LoginScreen extends OAuthScreen {
             }, "Oauth mojang");
             thread.setDaemon(true);
             thread.start();
-        }, this::updateLoginButton, () -> this.mojangLoginButton.setMessage(new StringTextComponent("Login"))));
+        }, this::updateLoginButton, () -> this.mojangLoginButton.setMessage(new StringTextComponent("Add Profile"))));
 
         this.addButton(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, DialogTexts.GUI_CANCEL, (p_213029_1_) -> {
             OAuth.getInstance().setScreen(new ProfileSelectionScreen());
         }));
 
         this.cleanUp();
-
-        if (OAuth.getInstance().config.isSavedPassword()) {
-            this.usernameWidget.setValue(OAuth.getInstance().config.getUsername());
-            this.passwordWidget.setValue(OAuth.getInstance().config.getPassword());
-            this.savePasswordButton.onPress();
-        }
     }
 
     public void resize(Minecraft p_231152_1_, int p_231152_2_, int p_231152_3_) {
@@ -133,9 +123,9 @@ public class LoginScreen extends OAuthScreen {
 
     private void updateLoginButton() {
         if (this.passwordWidget.getValue().isEmpty()) {
-            this.mojangLoginButton.setMessage(new StringTextComponent("Login Offline"));
+            this.mojangLoginButton.setMessage(new StringTextComponent("Add Offline Profile"));
         } else {
-            this.mojangLoginButton.setMessage(new StringTextComponent("Login"));
+            this.mojangLoginButton.setMessage(new StringTextComponent("Add Profile"));
         }
     }
 

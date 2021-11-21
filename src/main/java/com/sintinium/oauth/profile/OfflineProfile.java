@@ -3,16 +3,13 @@ package com.sintinium.oauth.profile;
 import com.mojang.authlib.UserType;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.sintinium.oauth.login.LoginUtil;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.MainMenuScreen;
-import net.minecraft.client.gui.screen.MultiplayerScreen;
 import org.json.JSONObject;
 
 import java.util.UUID;
 
 public class OfflineProfile implements IProfile {
 
-    private final String name;
+    private String name;
     private final UUID uuid;
 
     public OfflineProfile(String name, UUID uuid) {
@@ -23,6 +20,11 @@ public class OfflineProfile implements IProfile {
     @Override
     public String getName() {
         return this.name;
+    }
+
+    @Override
+    public void setName(String name) {
+        this.name = name;
     }
 
     @Override

@@ -2,11 +2,14 @@ package com.sintinium.oauth.gui.profile;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
+import com.sintinium.oauth.login.LoginUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.entity.player.PlayerModelPart;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Session;
+import org.lwjgl.system.CallbackI;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -41,6 +44,7 @@ public class FakePlayer extends ClientPlayerEntity {
             skinModel = "default";
             return;
         }
+
         if (cache.containsKey(profile.getId())) {
             PlayerData data = cache.get(profile.getId());
             this.skin = data.skin;

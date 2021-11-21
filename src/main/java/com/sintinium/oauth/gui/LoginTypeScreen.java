@@ -3,19 +3,13 @@ package com.sintinium.oauth.gui;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.sintinium.oauth.OAuth;
 import com.sintinium.oauth.gui.profile.ProfileSelectionScreen;
-import com.sintinium.oauth.login.LoginUtil;
-import com.sintinium.oauth.login.MicrosoftLogin;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.DialogTexts;
-import net.minecraft.client.gui.screen.MultiplayerScreen;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.util.text.ITextProperties;
 import net.minecraft.util.text.StringTextComponent;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.RunnableFuture;
 
 public class LoginTypeScreen extends OAuthScreen {
 
