@@ -1,5 +1,6 @@
 package com.sintinium.oauth;
 
+import net.minecraftforge.fml.loading.FMLPaths;
 import org.apache.commons.codec.binary.Base64;
 
 import javax.crypto.Cipher;
@@ -15,6 +16,8 @@ public class EncryptionUtil {
 
     private static Cipher cipher;
     private static SecureRandom random;
+
+    public static String key = FMLPaths.FMLCONFIG.get().toAbsolutePath().toString();
 
     static {
         try {

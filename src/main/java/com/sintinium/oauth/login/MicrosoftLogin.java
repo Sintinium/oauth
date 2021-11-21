@@ -3,7 +3,10 @@ package com.sintinium.oauth.login;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mojang.util.UUIDTypeAdapter;
+import com.sintinium.oauth.OAuth;
 import com.sintinium.oauth.gui.ErrorScreen;
+import com.sintinium.oauth.profile.MicrosoftProfile;
 import com.sun.net.httpserver.HttpServer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Util;
@@ -65,7 +68,26 @@ public class MicrosoftLogin {
         this.updateStatus = updateStatus;
     }
 
-    public MinecraftProfile login(Runnable callback) {
+    public MicrosoftProfile loginFromRefresh(String refreshToken) {
+        try {
+            MsToken token = callIfNotCancelled(this::refreshMsToken, refreshToken);
+            if (token == null) return null;
+
+            return loginWithToken(token);
+        } catch (Exception e) {
+            e.printStackTrace();
+            OAuth.getInstance().setScreen(new ErrorScreen(true, e.getMessage()));
+        } finally {
+            try {
+                client.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
+    public MicrosoftProfile login() {
         try {
             String authorizeCode = callIfNotCancelled(this::authorizeUser);
             if (authorizeCode != null) {
@@ -78,52 +100,12 @@ public class MicrosoftLogin {
             if (token != null) {
                 printDebug("Ms Token: " + token.accessToken);
             }
+            if (token == null) return null;
 
-            updateStatus.accept("Getting Xbox Live token");
-            XblToken xblToken = callIfNotCancelled(this::getXblToken, token.accessToken);
-            if (xblToken != null) {
-                printDebug("XBL Token: " + xblToken.token + " | " + xblToken.ush);
-            }
-
-            updateStatus.accept("Logging into Xbox Live");
-            XstsToken xstsToken = callIfNotCancelled(this::getXstsToken, xblToken);
-            if (xstsToken != null) {
-                printDebug("Xsts Token: " + xstsToken.token);
-            }
-
-            updateStatus.accept("Getting your Minecraft token");
-            MinecraftToken profile = callIfNotCancelled(() -> getMinecraftToken(xstsToken, xblToken));
-            if (profile != null) {
-                printDebug("Minecraft Profile Token: " + profile.accessToken);
-            }
-
-            updateStatus.accept("Loading your profile");
-            MinecraftProfile mcProfile = callIfNotCancelled(this::getMinecraftProflile, profile);
-            if (mcProfile != null) {
-                printDebug("Username: " + mcProfile.name);
-                printDebug("UUID: " + mcProfile.id);
-            }
-
-            updateStatus.accept("Logging you into Minecraft");
-            if (mcProfile != null) {
-                LoginUtil.loginMs(mcProfile);
-            }
-
-            if (errorMsg != null) {
-                Minecraft.getInstance().setScreen(new ErrorScreen(true, errorMsg));
-                return null;
-            }
-
-            if (mcProfile == null) {
-                Minecraft.getInstance().setScreen(new ErrorScreen(true, "Failed to create Minecraft Profile."));
-                return null;
-            }
-
-            callback.run();
-            return mcProfile;
+            return loginWithToken(token);
         } catch (Exception e) {
             e.printStackTrace();
-            Minecraft.getInstance().setScreen(new ErrorScreen(true, e));
+            OAuth.getInstance().setScreen(new ErrorScreen(true, e));
         } finally {
             try {
                 client.close();
@@ -132,6 +114,46 @@ public class MicrosoftLogin {
             }
         }
         return null;
+    }
+
+
+    private MicrosoftProfile loginWithToken(MsToken token) {
+        updateStatus.accept("Getting Xbox Live token");
+        XblToken xblToken = callIfNotCancelled(this::getXblToken, token.accessToken);
+        if (xblToken != null) {
+            printDebug("XBL Token: " + xblToken.token + " | " + xblToken.ush);
+        }
+
+        updateStatus.accept("Logging into Xbox Live");
+        XstsToken xstsToken = callIfNotCancelled(this::getXstsToken, xblToken);
+        if (xstsToken != null) {
+            printDebug("Xsts Token: " + xstsToken.token);
+        }
+
+        updateStatus.accept("Getting your Minecraft token");
+        MinecraftToken profile = callIfNotCancelled(() -> getMinecraftToken(xstsToken, xblToken));
+        if (profile != null) {
+            printDebug("Minecraft Profile Token: " + profile.accessToken);
+        }
+
+        updateStatus.accept("Loading your profile");
+        MinecraftProfile mcProfile = callIfNotCancelled(this::getMinecraftProflile, profile);
+        if (mcProfile != null) {
+            printDebug("Username: " + mcProfile.name);
+            printDebug("UUID: " + mcProfile.id);
+        }
+
+        if (errorMsg != null) {
+            OAuth.getInstance().setScreen(new ErrorScreen(true, errorMsg));
+            return null;
+        }
+
+        if (mcProfile == null) {
+            OAuth.getInstance().setScreen(new ErrorScreen(true, "Failed to create Minecraft Profile."));
+            return null;
+        }
+
+        return new MicrosoftProfile(mcProfile.name, UUIDTypeAdapter.fromString(mcProfile.id), mcProfile.token.accessToken, token.refreshToken);
     }
 
     private void printDebug(String text) {
@@ -195,6 +217,7 @@ public class MicrosoftLogin {
             return msCode.get();
         } catch (Exception e) {
             errorMsg = ExceptionUtils.getStackTrace(e);
+            e.printStackTrace();
         }
         return null;
     }
@@ -225,6 +248,36 @@ public class MicrosoftLogin {
             return new MsToken(obj.get("access_token").getAsString(), obj.get("refresh_token").getAsString());
         } catch (Exception e) {
             this.errorMsg = ExceptionUtils.getStackTrace(e);
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private MsToken refreshMsToken(String refreshToken) {
+        try {
+            HttpPost post = new HttpPost(msTokenUrl);
+
+            List<NameValuePair> params = new ArrayList<>();
+            params.add(new BasicNameValuePair("client_id", clientId));
+            params.add(new BasicNameValuePair("refresh_token", refreshToken));
+            params.add(new BasicNameValuePair("grant_type", "refresh_token"));
+            params.add(new BasicNameValuePair("redirect_uri", redirect));
+            post.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+
+            post.setHeader("Accept", "application/x-www-form-urlencoded");
+            post.setHeader("Content-type", "application/x-www-form-urlencoded");
+            HttpResponse response = client.execute(post);
+
+            if (response.getEntity() == null) {
+                // TODO: Throw readable exception!
+                throw new RuntimeException("No entity!");
+            }
+//        System.out.println(EntityUtils.toString(response.getEntity()));
+            JsonObject obj = parseObject(EntityUtils.toString(response.getEntity()));
+            return new MsToken(obj.get("access_token").getAsString(), obj.get("refresh_token").getAsString());
+        } catch (Exception e) {
+            this.errorMsg = ExceptionUtils.getStackTrace(e);
+            e.printStackTrace();
         }
         return null;
     }
@@ -256,6 +309,7 @@ public class MicrosoftLogin {
             return new XblToken(responseObj.get("Token").getAsString(), responseObj.get("DisplayClaims").getAsJsonObject().get("xui").getAsJsonArray().get(0).getAsJsonObject().get("uhs").getAsString());
         } catch (Exception e) {
             this.errorMsg = ExceptionUtils.getStackTrace(e);
+            e.printStackTrace();
         }
         return null;
     }
@@ -280,6 +334,7 @@ public class MicrosoftLogin {
             return new XstsToken(parseObject(response).get("Token").getAsString());
         } catch (Exception e) {
             this.errorMsg = ExceptionUtils.getStackTrace(e);
+            e.printStackTrace();
         }
         return null;
     }
@@ -296,6 +351,7 @@ public class MicrosoftLogin {
             return new MinecraftToken(responseObj.get("access_token").getAsString());
         } catch (Exception e) {
             this.errorMsg = ExceptionUtils.getStackTrace(e);
+            e.printStackTrace();
         }
         return null;
     }
@@ -309,6 +365,7 @@ public class MicrosoftLogin {
             return new MinecraftProfile(obj.get("name").getAsString(), obj.get("id").getAsString(), minecraftToken);
         } catch (Exception e) {
             this.errorMsg = ExceptionUtils.getStackTrace(e);
+            e.printStackTrace();
         }
         return null;
     }

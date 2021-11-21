@@ -1,6 +1,8 @@
 package com.sintinium.oauth.gui;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
+import com.sintinium.oauth.OAuth;
+import com.sintinium.oauth.gui.profile.ProfileSelectionScreen;
 import com.sintinium.oauth.login.LoginUtil;
 import com.sintinium.oauth.login.MicrosoftLogin;
 import net.minecraft.client.Minecraft;
@@ -13,37 +15,41 @@ import net.minecraft.util.text.StringTextComponent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.RunnableFuture;
 
-public class LoginTypeScreen extends Screen {
+public class LoginTypeScreen extends OAuthScreen {
 
-    private MultiplayerScreen lastScreen;
+    private Runnable onMojang;
+    private Runnable onMicrosoft;
 
-    public LoginTypeScreen(MultiplayerScreen last) {
+    public LoginTypeScreen(Runnable onMojang, Runnable onMicrosoft) {
         super(new StringTextComponent("Select Account Type"));
-        lastScreen = last;
+        this.onMojang = onMojang;
+        this.onMicrosoft = onMicrosoft;
     }
 
     @Override
     protected void init() {
         this.addButton(new Button(this.width / 2 - 100, this.height / 2 - 20 - 2, 200, 20, new StringTextComponent("Mojang Login"), p_onPress_1_ -> {
-            Minecraft.getInstance().setScreen(new LoginScreen(this, lastScreen));
+            this.onMojang.run();
         }));
         this.addButton(new Button(this.width / 2 - 100, this.height / 2 + 2, 200 /*- 52*/, 20, new StringTextComponent("Microsoft Login"), (p_213031_1_) -> {
-            final MicrosoftLogin login = new MicrosoftLogin();
-            LoginLoadingScreen loadingScreen = new LoginLoadingScreen(lastScreen, this, login::cancelLogin, true);
-            login.setUpdateStatusConsumer(loadingScreen::updateText);
-            Thread thread = new Thread(() -> {
-                login.login(() -> {
-                    LoginUtil.updateOnlineStatus();
-                    Minecraft.getInstance().setScreen(lastScreen);
-                });
-            }, "Oauth microsoft");
-            if (login.getErrorMsg() != null) {
-                System.err.println(login.getErrorMsg());
-            }
-            Minecraft.getInstance().setScreen(loadingScreen);
-            thread.setDaemon(true);
-            thread.start();
+//            final MicrosoftLogin login = new MicrosoftLogin();
+//            LoginLoadingScreen loadingScreen = new LoginLoadingScreen(new ProfileSelectionScreen(), this, login::cancelLogin, true);
+//            login.setUpdateStatusConsumer(loadingScreen::updateText);
+//            Thread thread = new Thread(() -> {
+//                login.login(() -> {
+//                    LoginUtil.updateOnlineStatus();
+//                    OAuth.getInstance().setScreen(new ProfileSelectionScreen());
+//                });
+//            }, "Oauth microsoft");
+//            if (login.getErrorMsg() != null) {
+//                System.err.println(login.getErrorMsg());
+//            }
+//            OAuth.getInstance().setScreen(loadingScreen);
+//            thread.setDaemon(true);
+//            thread.start();
+            this.onMicrosoft.run();
         }));
 
         final List<ITextProperties> logoutTooltip = new ArrayList<>();
@@ -58,8 +64,13 @@ public class LoginTypeScreen extends Screen {
 //        }));
 
         this.addButton(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, DialogTexts.GUI_CANCEL, (p_213029_1_) -> {
-            Minecraft.getInstance().setScreen(lastScreen);
+            OAuth.getInstance().setScreen(new ProfileSelectionScreen());
         }));
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
     }
 
     @Override

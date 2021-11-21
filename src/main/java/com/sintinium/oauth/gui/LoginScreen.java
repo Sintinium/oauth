@@ -1,25 +1,31 @@
 package com.sintinium.oauth.gui;
 
+import com.mojang.authlib.exceptions.AuthenticationException;
+import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
+import com.mojang.authlib.exceptions.InvalidCredentialsException;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.sintinium.oauth.OAuth;
 import com.sintinium.oauth.gui.components.OAuthCheckbox;
+import com.sintinium.oauth.gui.profile.ProfileSelectionScreen;
 import com.sintinium.oauth.login.LoginUtil;
+import com.sintinium.oauth.profile.MojangProfile;
+import com.sintinium.oauth.profile.OfflineProfile;
+import com.sintinium.oauth.profile.ProfileManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.DialogTexts;
-import net.minecraft.client.gui.screen.MultiplayerScreen;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.util.text.StringTextComponent;
 
+import java.net.UnknownHostException;
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class LoginScreen extends Screen {
-    private final Screen lastScreen;
-    private final MultiplayerScreen multiplayerScreen;
+public class LoginScreen extends OAuthScreen {
+
     private Button mojangLoginButton;
     private PasswordFieldWidget passwordWidget;
     private TextFieldWidget usernameWidget;
@@ -28,13 +34,12 @@ public class LoginScreen extends Screen {
 
     private List<Runnable> toRun = new CopyOnWriteArrayList<>();
 
-    public LoginScreen(Screen last, MultiplayerScreen multiplayerScreen) {
+    public LoginScreen() {
         super(new StringTextComponent("OAuth Login"));
-        this.lastScreen = last;
-        this.multiplayerScreen = multiplayerScreen;
     }
 
     public void tick() {
+        super.tick();
         this.usernameWidget.tick();
         this.passwordWidget.tick();
         if (!toRun.isEmpty()) {
@@ -70,24 +75,30 @@ public class LoginScreen extends Screen {
                 if (usernameWidget.getValue().isEmpty()) {
                     toRun.add(() -> this.status.set("Missing username!"));
                 } else {
-                    Optional<Boolean> didSuccessfullyLogIn = LoginUtil.loginMojangOrLegacy(usernameWidget.getValue(), passwordWidget.getValue());
-                    if (!didSuccessfullyLogIn.isPresent()) {
+                    if (passwordWidget.getValue().isEmpty()) {
+                        ProfileManager.getInstance().addProfile(new OfflineProfile(usernameWidget.getValue(), UUID.nameUUIDFromBytes(usernameWidget.getValue().getBytes())));
+                        toRun.add(() -> OAuth.getInstance().setScreen(new ProfileSelectionScreen()));
+                    }
+                    MojangProfile profile;
+                    try {
+                        profile = LoginUtil.tryGetMojangProfile(usernameWidget.getValue(), passwordWidget.getValue());
+                    } catch (InvalidCredentialsException e) {
+                        toRun.add(() -> this.status.set("Invalid username or password!"));
+                        return;
+                    } catch (AuthenticationUnavailableException e) {
                         toRun.add(() -> this.status.set("You seem to be offline. Check your connection!"));
-                    } else if (!didSuccessfullyLogIn.get()) {
-                        toRun.add(() -> this.status.set("Wrong password or username!"));
-                        if (this.savePasswordButton.selected()) {
-                            saveLoginInfo();
-                        } else {
-                            removeLoginInfo();
-                        }
+                        e.printStackTrace();
+                        return;
+                    } catch (AuthenticationException e) {
+                        toRun.add(() -> OAuth.getInstance().setScreen(new ErrorScreen(false, e)));
+                        return;
+                    }
+                    if (profile == null) {
+                        toRun.add(() -> this.status.set("Invalid username or password!"));
                     } else {
                         LoginUtil.updateOnlineStatus();
-                        toRun.add(() -> Minecraft.getInstance().setScreen(multiplayerScreen));
-                        if (this.savePasswordButton.selected()) {
-                            saveLoginInfo();
-                        } else {
-                            removeLoginInfo();
-                        }
+                        ProfileManager.getInstance().addProfile(profile);
+                        toRun.add(() -> OAuth.getInstance().setScreen(new ProfileSelectionScreen()));
                     }
                 }
             }, "Oauth mojang");
@@ -96,10 +107,7 @@ public class LoginScreen extends Screen {
         }, this::updateLoginButton, () -> this.mojangLoginButton.setMessage(new StringTextComponent("Login"))));
 
         this.addButton(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, DialogTexts.GUI_CANCEL, (p_213029_1_) -> {
-            Minecraft.getInstance().setScreen(lastScreen);
-            if (!this.savePasswordButton.selected()) {
-                removeLoginInfo();
-            }
+            OAuth.getInstance().setScreen(new ProfileSelectionScreen());
         }));
 
         this.cleanUp();
@@ -109,15 +117,6 @@ public class LoginScreen extends Screen {
             this.passwordWidget.setValue(OAuth.getInstance().config.getPassword());
             this.savePasswordButton.onPress();
         }
-    }
-
-    private void saveLoginInfo() {
-        OAuth.getInstance().config.setUsername(usernameWidget.getValue());
-        OAuth.getInstance().config.setPassword(passwordWidget.getValue());
-    }
-
-    private void removeLoginInfo() {
-        OAuth.getInstance().config.removeUsernamePassword();
     }
 
     public void resize(Minecraft p_231152_1_, int p_231152_2_, int p_231152_3_) {
@@ -146,7 +145,7 @@ public class LoginScreen extends Screen {
 
     public void onClose() {
         this.cleanUp();
-        this.minecraft.setScreen(this.lastScreen);
+        this.minecraft.setScreen(new ProfileSelectionScreen());
     }
 
     private void cleanUp() {

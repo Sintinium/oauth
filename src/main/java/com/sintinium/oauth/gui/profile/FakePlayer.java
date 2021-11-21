@@ -35,6 +35,12 @@ public class FakePlayer extends ClientPlayerEntity {
     }
 
     public void setSkin(GameProfile profile) {
+        if (profile == null) {
+            skin = DefaultPlayerSkin.getDefaultSkin();
+            cape = null;
+            skinModel = "default";
+            return;
+        }
         if (cache.containsKey(profile.getId())) {
             PlayerData data = cache.get(profile.getId());
             this.skin = data.skin;
