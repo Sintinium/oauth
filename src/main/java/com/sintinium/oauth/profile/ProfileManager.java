@@ -11,7 +11,7 @@ import java.util.*;
 public class ProfileManager {
 
     private static ProfileManager INSTANCE = null;
-    private Map<UUID, IProfile> profiles = new HashMap<>();
+    private List<IProfile> profiles = new ArrayList<>();
     private File saveFile;
 
     public static ProfileManager getInstance() {
@@ -61,13 +61,13 @@ public class ProfileManager {
                 e.printStackTrace();
                 continue;
             }
-            profiles.put(profile.getUUID(), profile);
+            profiles.add(profile);
         }
     }
 
     public void save() throws IOException {
         JSONArray array = new JSONArray();
-        for (IProfile profile : profiles.values()) {
+        for (IProfile profile : profiles) {
             array.put(profile.serialize());
         }
         OutputStream stream = new FileOutputStream(saveFile);
@@ -76,11 +76,11 @@ public class ProfileManager {
     }
 
     public List<IProfile> getProfiles() {
-        return new ArrayList<>(profiles.values());
+        return profiles;
     }
 
     public void addProfile(IProfile profile) {
-        profiles.put(profile.getUUID(), profile);
+        profiles.add(profile);
         try {
             save();
         } catch (IOException e) {
@@ -89,7 +89,7 @@ public class ProfileManager {
     }
 
     public void removeProfile(UUID uuid) {
-        profiles.remove(uuid);
+        profiles.removeIf(profile -> profile.getUUID().equals(uuid));
         try {
             save();
         } catch (IOException e) {
@@ -98,7 +98,12 @@ public class ProfileManager {
     }
 
     public IProfile getProfile(UUID uuid) {
-        return profiles.get(uuid);
+        for (IProfile profile : profiles) {
+            if (profile.getUUID().equals(uuid)) {
+                return profile;
+            }
+        }
+        return null;
     }
 
 }

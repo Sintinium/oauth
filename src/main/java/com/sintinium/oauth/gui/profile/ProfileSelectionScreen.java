@@ -40,16 +40,9 @@ public class ProfileSelectionScreen extends OAuthScreen {
 
     @Override
     protected void init() {
-        profileList = new ProfileList(this, Minecraft.getInstance(), this.width, this.height, 32, this.height - 60, 16);
+        profileList = new ProfileList(this, Minecraft.getInstance(), this.width, this.height, 32, this.height - 52, 16);
+        profileList.loadProfiles();
         // clear the cache everytime this screen loads so new skins can load
-
-        for (IProfile profile : ProfileManager.getInstance().getProfiles()) {
-            ProfileEntry entry = new ProfileEntry(profileList, profile);
-            profileList.children().add(entry);
-            if (profile.getUUID().equals(Minecraft.getInstance().getUser().getGameProfile().getId())) {
-                profileList.setSelected(entry);
-            }
-        }
 
         FakePlayer.getInstance().clearCache();
         if (!LoginUtil.isOnline()) {
@@ -222,7 +215,7 @@ public class ProfileSelectionScreen extends OAuthScreen {
             return true;
         }
 */
-        return this.profileList.mouseClicked(p_231044_1_, p_231044_3_, p_231044_5_) | super.mouseClicked(p_231044_1_, p_231044_3_, p_231044_5_);
+        return super.mouseClicked(p_231044_1_, p_231044_3_, p_231044_5_);
     }
 
     @Override
