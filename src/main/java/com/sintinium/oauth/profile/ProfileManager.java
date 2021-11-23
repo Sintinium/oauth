@@ -6,12 +6,14 @@ import org.json.JSONArray;
 
 import java.io.*;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 public class ProfileManager {
 
     private static ProfileManager INSTANCE = null;
-    private List<IProfile> profiles = new ArrayList<>();
+    private final List<IProfile> profiles = new ArrayList<>();
     private File saveFile;
 
     public static ProfileManager getInstance() {
@@ -80,6 +82,7 @@ public class ProfileManager {
     }
 
     public void addProfile(IProfile profile) {
+        profiles.removeIf(p -> p.getUUID().equals(profile.getUUID()));
         profiles.add(profile);
         try {
             save();

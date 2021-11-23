@@ -3,6 +3,7 @@ package com.sintinium.oauth.gui;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.sintinium.oauth.OAuth;
 import com.sintinium.oauth.gui.profile.ProfileSelectionScreen;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.DialogTexts;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.util.text.ITextProperties;
@@ -13,8 +14,8 @@ import java.util.List;
 
 public class LoginTypeScreen extends OAuthScreen {
 
-    private Runnable onMojang;
-    private Runnable onMicrosoft;
+    private final Runnable onMojang;
+    private final Runnable onMicrosoft;
 
     public LoginTypeScreen(Runnable onMojang, Runnable onMicrosoft) {
         super(new StringTextComponent("Select Account Type"));
@@ -27,6 +28,8 @@ public class LoginTypeScreen extends OAuthScreen {
         this.addButton(new Button(this.width / 2 - 100, this.height / 2 - 20 - 2, 200, 20, new StringTextComponent("Mojang Login"), p_onPress_1_ -> {
             this.onMojang.run();
         }));
+        final List<ITextProperties> msTooltip = new ArrayList<>();
+        msTooltip.add(new StringTextComponent("Will open your browser to login to Microsoft."));
         this.addButton(new Button(this.width / 2 - 100, this.height / 2 + 2, 200 /*- 52*/, 20, new StringTextComponent("Microsoft Login"), (p_213031_1_) -> {
 //            final MicrosoftLogin login = new MicrosoftLogin();
 //            LoginLoadingScreen loadingScreen = new LoginLoadingScreen(new ProfileSelectionScreen(), this, login::cancelLogin, true);
@@ -44,10 +47,11 @@ public class LoginTypeScreen extends OAuthScreen {
 //            thread.setDaemon(true);
 //            thread.start();
             this.onMicrosoft.run();
+        }, (button, matrix, x, y) -> {
+            renderWrappedToolTip(matrix, msTooltip, x, y, Minecraft.getInstance().font);
         }));
 
         final List<ITextProperties> logoutTooltip = new ArrayList<>();
-        logoutTooltip.add(new StringTextComponent("Logout of your Microsoft account to switch accounts."));
 //        this.addButton(new Button(this.width / 2 - 100 + 200 - 50, this.height / 2 + 2, 50, 20, new StringTextComponent("Logout"), p_onPress_1_ -> {
 //            MicrosoftLogin.logout();
 //        }, (button, matrix, x, y) -> {

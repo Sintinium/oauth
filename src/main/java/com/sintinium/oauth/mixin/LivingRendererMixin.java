@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(LivingRenderer.class)
 public abstract class LivingRendererMixin<T extends LivingEntity, M extends EntityModel<T>> implements IEntityRenderer<T, M> {
 
-    @Inject(method = "shouldShowName(Lnet/minecraft/entity/LivingEntity;)Z", at = @At("INVOKE"), remap = false, cancellable = true)
+    @Inject(method = "shouldShowName(Lnet/minecraft/entity/LivingEntity;)Z", at = @At("HEAD"), cancellable = true)
     public void shouldShowNameMixin(T livingEntity, CallbackInfoReturnable<Boolean> cir) {
         if (livingEntity instanceof FakePlayer || Minecraft.getInstance().screen instanceof ProfileSelectionScreen) cir.setReturnValue(false);
     }

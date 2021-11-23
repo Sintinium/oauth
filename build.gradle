@@ -14,8 +14,8 @@ buildscript {
 
 apply plugin: 'net.minecraftforge.gradle'
 // Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
-apply plugin: 'org.spongepowered.mixin'
 apply plugin: 'org.parchmentmc.librarian.forgegradle'
+apply plugin: 'org.spongepowered.mixin'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
@@ -48,9 +48,9 @@ minecraft {
     runs {
         client {
             workingDirectory project.file('run')
+            property 'mixin.env.refMapRemappingFile', "${buildDir}/createSrgToMcp/output.srg"
             property 'mixin.env.remapRefMap', 'true'
-            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
-            arg "-mixin.config=oauth.mixins.json"
+            arg "-mixin.config=oauth.mixins.json".toString()
 
             // Recommended logging data for a userdev environment
             // The markers can be changed as needed.
@@ -131,7 +131,7 @@ dependencies {
     implementation("org.json:json:20190722")
 
 //    compileOnly("org.spongepowered:mixin:0.8-SNAPSHOT")
-    annotationProcessor('org.spongepowered:mixin:0.8:processor')
+    annotationProcessor('org.spongepowered:mixin:0.8.4:processor')
 
     // You may put jars on which you depend on in ./libs or you may define them like so..
     // compile "some.group:artifact:version:classifier"
@@ -157,16 +157,16 @@ dependencies {
 jar {
     manifest {
         attributes([
-                "Specification-Title"     : "oauth",
-                "Specification-Vendor"    : "sintinium",
-                "Specification-Version"   : "1", // We are version 1 of ourselves
-                "Implementation-Title"    : project.name,
-                "Implementation-Version"  : "${version}",
-                "Implementation-Vendor"   : "sintinium",
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-                "MixinConfigs": "oauth.mixins.json",
-                "TweakClass": "org.spongepowered.asm.launch.MixinTweaker",
-                'FMLCorePluginContainsFMLMod': 'true'
+                "Specification-Title"   : "oauth",
+                "Specification-Vendor"  : "sintinium",
+                "Specification-Version" : "1", // We are version 1 of ourselves
+                "Implementation-Title"  : project.name,
+                "Implementation-Version": "${version}",
+                "Implementation-Vendor" : "sintinium",
+//                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                "MixinConfigs"          : "oauth.mixins.json",
+//                "TweakClass": "org.spongepowered.asm.launch.MixinTweaker",
+//                'FMLCorePluginContainsFMLMod': 'true'
         ])
     }
 
@@ -174,7 +174,7 @@ jar {
 }
 
 mixin {
-    add sourceSets.main, "oauth.refmap.json"
+    add(sourceSets.main, "oauth.refmap.json")
 }
 
 // Example configuration to allow publishing using the maven-publish task
