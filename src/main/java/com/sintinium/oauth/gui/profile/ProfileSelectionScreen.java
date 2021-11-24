@@ -7,7 +7,6 @@ import com.sintinium.oauth.OAuth;
 import com.sintinium.oauth.gui.*;
 import com.sintinium.oauth.login.LoginUtil;
 import com.sintinium.oauth.login.MicrosoftLogin;
-import com.sintinium.oauth.profile.IProfile;
 import com.sintinium.oauth.profile.MicrosoftProfile;
 import com.sintinium.oauth.profile.OfflineProfile;
 import com.sintinium.oauth.profile.ProfileManager;
@@ -99,17 +98,18 @@ public class ProfileSelectionScreen extends OAuthScreen {
         }
     }
 
-    private void onLoginButton() {
+    public void onLoginButton() {
         onLoginButton(profileList.getSelected());
     }
 
-    private void onLoginButton(ProfileEntry selected) {
+    public void onLoginButton(ProfileEntry selected) {
         if (selected == null) return;
 
         // Skip async if logging in offline.
         if (selected.getProfile() instanceof OfflineProfile) {
             try {
                 selected.getProfile().login();
+                Minecraft.getInstance().setScreen(new MultiplayerScreen(new MainMenuScreen()));
                 return;
             } catch (Exception e) {
                 OAuth.getInstance().setScreen(new ErrorScreen(profileList.getSelected().getProfile() instanceof MicrosoftProfile, e));

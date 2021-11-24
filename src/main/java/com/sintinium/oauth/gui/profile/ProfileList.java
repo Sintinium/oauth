@@ -3,16 +3,21 @@ package com.sintinium.oauth.gui.profile;
 import com.sintinium.oauth.profile.IProfile;
 import com.sintinium.oauth.profile.ProfileManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.list.ExtendedList;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
 
 public class ProfileList extends ExtendedList<ProfileEntry> {
-    private Screen screen;
-    public ProfileList(Screen screen, Minecraft minecraft, int width, int height, int topPadding, int bottomPadding, int lineHeight) {
+    private final ProfileSelectionScreen profileSelectionScreen;
+
+    public ProfileList(ProfileSelectionScreen screen, Minecraft minecraft, int width, int height, int topPadding, int bottomPadding, int lineHeight) {
         super(minecraft, width, height, topPadding, bottomPadding, lineHeight);
+        this.profileSelectionScreen = screen;
+    }
+
+    public ProfileSelectionScreen getProfileSelectionScreen() {
+        return profileSelectionScreen;
     }
 
     public void loadProfiles(UUID selected) {

@@ -8,11 +8,10 @@ import com.sintinium.oauth.profile.ProfileManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.widget.list.AbstractList;
-import net.minecraft.client.gui.widget.list.ResourcePackList;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Util;
 
 import java.io.IOException;
-import java.util.UUID;
 
 public class ProfileEntry extends AbstractList.AbstractListEntry<ProfileEntry> {
 
@@ -23,6 +22,7 @@ public class ProfileEntry extends AbstractList.AbstractListEntry<ProfileEntry> {
     private final boolean isOffline;
     private final ArrowButton upArrow;
     private final ArrowButton downArrow;
+    private long lastClickTime = 0L;
 
     public ProfileEntry(ProfileList profileList, IProfile profile) {
         this.profileList = profileList;
@@ -76,6 +76,13 @@ public class ProfileEntry extends AbstractList.AbstractListEntry<ProfileEntry> {
 
         profileList.setSelected(this);
         onSelected();
+
+        if (Util.getMillis() - this.lastClickTime < 250L) {
+            profileList.getProfileSelectionScreen().onLoginButton(this);
+            System.out.println("DOUBLE");
+        }
+
+        this.lastClickTime = Util.getMillis();
 
         return true;
     }

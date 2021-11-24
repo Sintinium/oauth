@@ -41,9 +41,14 @@ public class ProfileManager {
     }
 
     public void loadProfiles() throws IOException {
-        InputStream stream = new FileInputStream(saveFile);
-        JSONArray array = new JSONArray(IOUtils.toString(stream, Charset.defaultCharset()));
-        stream.close();
+        JSONArray array;
+        try (InputStream stream = new FileInputStream(saveFile)) {
+            array = new JSONArray(IOUtils.toString(stream, Charset.defaultCharset()));
+        } catch (Exception e) {
+            e.printStackTrace();
+            array = new JSONArray();
+        }
+
         for (int i = 0; i < array.length(); i++) {
             String type = array.getJSONObject(i).getString("type");
             IProfile profile = null;
