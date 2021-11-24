@@ -1,9 +1,9 @@
 package com.sintinium.oauth.profile;
 
+import com.google.gson.JsonObject;
 import com.mojang.authlib.UserType;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.sintinium.oauth.login.LoginUtil;
-import org.json.JSONObject;
 
 import java.util.UUID;
 
@@ -38,19 +38,19 @@ public class OfflineProfile implements IProfile {
         return true;
     }
 
-    @Override
-    public JSONObject serialize() {
-        JSONObject json = new JSONObject();
-        json.put("type", typeName());
-        json.put("name", this.name);
-        json.put("uuid", this.uuid.toString());
-        return json;
+    public static OfflineProfile deserialize(JsonObject json) {
+        String name = json.get("name").getAsString();
+        UUID uuid = UUID.fromString(json.get("uuid").getAsString());
+        return new OfflineProfile(name, uuid);
     }
 
-    public static OfflineProfile deserialize(JSONObject json) {
-        String name = json.getString("name");
-        UUID uuid = UUID.fromString(json.getString("uuid"));
-        return new OfflineProfile(name, uuid);
+    @Override
+    public JsonObject serialize() {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", typeName());
+        json.addProperty("name", this.name);
+        json.addProperty("uuid", this.uuid.toString());
+        return json;
     }
 
     public static String typeName() {

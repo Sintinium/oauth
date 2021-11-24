@@ -1,8 +1,9 @@
 package com.sintinium.oauth.profile;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonParser;
 import net.minecraftforge.fml.loading.FMLPaths;
 import org.apache.commons.io.IOUtils;
-import org.json.JSONArray;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -41,27 +42,27 @@ public class ProfileManager {
     }
 
     public void loadProfiles() throws IOException {
-        JSONArray array;
+        JsonArray array;
         try (InputStream stream = new FileInputStream(saveFile)) {
-            array = new JSONArray(IOUtils.toString(stream, Charset.defaultCharset()));
+            array = new JsonParser().parse(IOUtils.toString(stream, Charset.defaultCharset())).getAsJsonArray();
         } catch (Exception e) {
             e.printStackTrace();
-            array = new JSONArray();
+            array = new JsonArray();
         }
 
-        for (int i = 0; i < array.length(); i++) {
-            String type = array.getJSONObject(i).getString("type");
+        for (int i = 0; i < array.size(); i++) {
+            String type = array.get(i).getAsJsonObject().get("type").getAsString();
             IProfile profile = null;
             try {
                 switch (type) {
                     case "mojang":
-                        profile = MojangProfile.deserialize(array.getJSONObject(i));
+                        profile = MojangProfile.deserialize(array.get(i).getAsJsonObject());
                         break;
                     case "microsoft":
-                        profile = MicrosoftProfile.deserialize(array.getJSONObject(i));
+                        profile = MicrosoftProfile.deserialize(array.get(i).getAsJsonObject());
                         break;
                     case "offline":
-                        profile = OfflineProfile.deserialize(array.getJSONObject(i));
+                        profile = OfflineProfile.deserialize(array.get(i).getAsJsonObject());
                         break;
                 }
             } catch (Exception e) {
@@ -73,9 +74,9 @@ public class ProfileManager {
     }
 
     public void save() throws IOException {
-        JSONArray array = new JSONArray();
+        JsonArray array = new JsonArray();
         for (IProfile profile : profiles) {
-            array.put(profile.serialize());
+            array.add(profile.serialize());
         }
         OutputStream stream = new FileOutputStream(saveFile);
         IOUtils.write(array.toString(), stream, Charset.defaultCharset());

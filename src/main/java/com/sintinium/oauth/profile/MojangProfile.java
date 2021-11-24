@@ -1,10 +1,10 @@
 package com.sintinium.oauth.profile;
 
+import com.google.gson.JsonObject;
 import com.mojang.authlib.UserType;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.sintinium.oauth.EncryptionUtil;
 import com.sintinium.oauth.login.LoginUtil;
-import org.json.JSONObject;
 
 import java.util.UUID;
 
@@ -13,7 +13,7 @@ public class MojangProfile implements IProfile {
     private String name;
     private final String password;
     private final UUID uuid;
-    private UserType userType;
+    private final UserType userType;
 
     public MojangProfile(String name, String password, UUID uuid, UserType userType) {
         this.name = name;
@@ -46,24 +46,24 @@ public class MojangProfile implements IProfile {
         return LoginUtil.isOnline();
     }
 
-    @Override
-    public JSONObject serialize() {
-        JSONObject json = new JSONObject();
-        json.put("type", typeName());
-        json.put("name", this.name);
-        json.put("password", EncryptionUtil.encryptString(this.password, EncryptionUtil.key));
-        json.put("uuid", this.uuid.toString());
-        json.put("userType", this.userType.getName());
-        return json;
-    }
-
-    public static MojangProfile deserialize(JSONObject json) throws Exception {
-        String name = json.getString("name");
-        String password = EncryptionUtil.decryptString(json.getString("password"), EncryptionUtil.key);
-        UUID uuid = UUID.fromString(json.getString("uuid"));
-        UserType userType = UserType.byName(json.getString("userType"));
+    public static MojangProfile deserialize(JsonObject json) throws Exception {
+        String name = json.get("name").getAsString();
+        String password = EncryptionUtil.decryptString(json.get("password").getAsString(), EncryptionUtil.key);
+        UUID uuid = UUID.fromString(json.get("uuid").getAsString());
+        UserType userType = UserType.byName(json.get("userType").getAsString());
 
         return new MojangProfile(name, password, uuid, userType);
+    }
+
+    @Override
+    public JsonObject serialize() {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", typeName());
+        json.addProperty("name", this.name);
+        json.addProperty("password", EncryptionUtil.encryptString(this.password, EncryptionUtil.key));
+        json.addProperty("uuid", this.uuid.toString());
+        json.addProperty("userType", this.userType.getName());
+        return json;
     }
 
     public static String typeName() {

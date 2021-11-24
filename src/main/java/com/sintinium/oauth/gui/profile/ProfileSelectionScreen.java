@@ -44,15 +44,17 @@ public class ProfileSelectionScreen extends OAuthScreen {
         // clear the cache everytime this screen loads so new skins can load
 
         FakePlayer.getInstance().clearCache();
-        if (!LoginUtil.isOnline()) {
-            FakePlayer.getInstance().setSkin(null);
-        } else {
+        if (LoginUtil.isOnline()) {
+            // Duplicated because for some reason it only half loads the skin information. Running twice seems to fix it
+            FakePlayer.getInstance().setSkin(Minecraft.getInstance().getUser().getGameProfile());
+            FakePlayer.getInstance().setSkin(Minecraft.getInstance().getUser().getGameProfile());
+        } else if (profileList.getSelected() != null) {
             ProfileEntry entry = profileList.getSelected();
-            if (entry != null) {
-                FakePlayer.getInstance().setSkin(new GameProfile(entry.getProfile().getUUID(), entry.getProfile().getName()));
-            } else {
-                FakePlayer.getInstance().setSkin(null);
-            }
+            // Duplicated because for some reason it only half loads the skin information. Running twice seems to fix it
+            FakePlayer.getInstance().setSkin(new GameProfile(entry.getProfile().getUUID(), entry.getProfile().getName()));
+            FakePlayer.getInstance().setSkin(new GameProfile(entry.getProfile().getUUID(), entry.getProfile().getName()));
+        } else {
+            FakePlayer.getInstance().setSkin(null);
         }
 
         addButton(this.width / 2 - 45 - 90 - 2, this.height - 2 - 20, 90, "Add Account", p_onPress_1_ -> {

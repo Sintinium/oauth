@@ -1,7 +1,7 @@
 package com.sintinium.oauth.profile;
 
+import com.google.gson.JsonObject;
 import com.mojang.authlib.UserType;
-import org.json.JSONObject;
 
 import java.util.UUID;
 
@@ -17,7 +17,7 @@ public interface IProfile {
      */
     boolean login() throws Exception;
 
-    JSONObject serialize();
+    JsonObject serialize();
 
     UserType getUserType();
 }

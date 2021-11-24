@@ -1,9 +1,9 @@
 package com.sintinium.oauth.profile;
 
+import com.google.gson.JsonObject;
 import com.mojang.authlib.UserType;
 import com.sintinium.oauth.login.LoginUtil;
 import com.sintinium.oauth.login.MicrosoftLogin;
-import org.json.JSONObject;
 
 import java.util.UUID;
 
@@ -63,21 +63,21 @@ public class MicrosoftProfile implements IProfile {
         return LoginUtil.isOnline();
     }
 
-    @Override
-    public JSONObject serialize() {
-        JSONObject json = new JSONObject();
-        json.put("type", typeName());
-        json.put("name", name);
-        json.put("uuid", uuid.toString());
-        json.put("refreshToken", refreshToken);
-        return json;
+    public static MicrosoftProfile deserialize(JsonObject json) {
+        String name = json.get("name").getAsString();
+        UUID uuid = UUID.fromString(json.get("uuid").getAsString());
+        String refreshToken = json.get("refreshToken").getAsString();
+        return new MicrosoftProfile(name, uuid, null, refreshToken);
     }
 
-    public static MicrosoftProfile deserialize(JSONObject json) {
-        String name = json.getString("name");
-        UUID uuid = UUID.fromString(json.getString("uuid"));
-        String refreshToken = json.getString("refreshToken");
-        return new MicrosoftProfile(name, uuid, null, refreshToken);
+    @Override
+    public JsonObject serialize() {
+        JsonObject json = new JsonObject();
+        json.addProperty("type", typeName());
+        json.addProperty("name", name);
+        json.addProperty("uuid", uuid.toString());
+        json.addProperty("refreshToken", refreshToken);
+        return json;
     }
 
     public static String typeName() {
