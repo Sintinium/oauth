@@ -1,19 +1,34 @@
 package com.sintinium.oauth.gui;
 
-import com.sintinium.oauth.OAuth;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraftforge.fml.common.thread.SidedThreadGroups;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 public class OAuthScreen extends Screen {
+    private static final AtomicReference<Screen> screenToSet = new AtomicReference<>(null);
+
     protected OAuthScreen(ITextComponent pTitle) {
         super(pTitle);
+    }
+
+    /**
+     * Safely sets screen even if called in a different thread.
+     */
+    public static void setScreen(Screen screen) {
+        if (Thread.currentThread().getThreadGroup() == SidedThreadGroups.CLIENT) {
+            Minecraft.getInstance().setScreen(screen);
+            return;
+        }
+        screenToSet.set(screen);
     }
 
     @Override
     public void tick() {
         super.tick();
-        Screen screenToSet = OAuth.getInstance().screenToSet.getAndSet(null);
+        Screen screenToSet = OAuthScreen.screenToSet.getAndSet(null);
         if (screenToSet != null) {
             Minecraft.getInstance().setScreen(screenToSet);
         }

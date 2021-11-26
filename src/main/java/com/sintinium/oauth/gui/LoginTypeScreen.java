@@ -1,7 +1,6 @@
 package com.sintinium.oauth.gui;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.sintinium.oauth.OAuth;
 import com.sintinium.oauth.gui.profile.ProfileSelectionScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.DialogTexts;
@@ -62,7 +61,7 @@ public class LoginTypeScreen extends OAuthScreen {
 //        }));
 
         this.addButton(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, DialogTexts.GUI_CANCEL, (p_213029_1_) -> {
-            OAuth.getInstance().setScreen(new ProfileSelectionScreen());
+            setScreen(new ProfileSelectionScreen());
         }));
     }
 

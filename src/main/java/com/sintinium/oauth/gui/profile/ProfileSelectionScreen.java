@@ -3,7 +3,6 @@ package com.sintinium.oauth.gui.profile;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.exceptions.InvalidCredentialsException;
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.sintinium.oauth.OAuth;
 import com.sintinium.oauth.gui.*;
 import com.sintinium.oauth.login.LoginUtil;
 import com.sintinium.oauth.login.MicrosoftLogin;
@@ -37,6 +36,14 @@ public class ProfileSelectionScreen extends OAuthScreen {
         this.initialEntry = initialEntry;
     }
 
+    private static void onMojangType() {
+        setScreen(new LoginScreen());
+    }
+
+    public void onLoginButton() {
+        onLoginButton(profileList.getSelected());
+    }
+
     @Override
     protected void init() {
         profileList = new ProfileList(this, Minecraft.getInstance(), this.width, this.height, 32, this.height - 52, 16);
@@ -58,7 +65,7 @@ public class ProfileSelectionScreen extends OAuthScreen {
         }
 
         addButton(this.width / 2 - 45 - 90 - 2, this.height - 2 - 20, 90, "Add Account", p_onPress_1_ -> {
-            OAuth.getInstance().setScreen(new LoginTypeScreen(ProfileSelectionScreen::onMojangType, () -> this.onMicrosoftType(null)));
+            setScreen(new LoginTypeScreen(ProfileSelectionScreen::onMojangType, () -> this.onMicrosoftType(null)));
         });
         removeAccountButton = addButton(this.width / 2 - 45, this.height - 2 - 20, 90, "Remove Account", p_onPress_1_ -> {
             if (profileList.getSelected() != null) {
@@ -73,16 +80,16 @@ public class ProfileSelectionScreen extends OAuthScreen {
             }
         });
         removeAccountButton.active = false;
-        addButton(this.width / 2 + 45 + 2, this.height - 2 - 20, 90, "Back", p_onPress_1_ -> OAuth.getInstance().setScreen(new MainMenuScreen()));
+        addButton(this.width / 2 + 45 + 2, this.height - 2 - 20, 90, "Back", p_onPress_1_ -> setScreen(new MainMenuScreen()));
 
         loginButton = addButton(this.width / 2 - 137, this.height - 4 - 40, 137, "Login", p_onPress_1_ -> onLoginButton());
         loginOfflineButton = addButton(this.width / 2 + 1, this.height - 4 - 40, 137, "Login Offline", p_onPress_1_ -> {
             if (profileList.getSelected() != null) {
                 try {
                     LoginUtil.loginOffline(profileList.getSelected().getProfile().getName());
-                    OAuth.getInstance().setScreen(new MultiplayerScreen(new MainMenuScreen()));
+                    setScreen(new MultiplayerScreen(new MainMenuScreen()));
                 } catch (LoginUtil.WrongMinecraftVersionException e) {
-                    OAuth.getInstance().setScreen(new ErrorScreen(profileList.getSelected().getProfile() instanceof MicrosoftProfile, e));
+                    setScreen(new ErrorScreen(profileList.getSelected().getProfile() instanceof MicrosoftProfile, e));
                     e.printStackTrace();
                 }
             }
@@ -100,10 +107,6 @@ public class ProfileSelectionScreen extends OAuthScreen {
         }
     }
 
-    public void onLoginButton() {
-        onLoginButton(profileList.getSelected());
-    }
-
     public void onLoginButton(ProfileEntry selected) {
         if (selected == null) return;
 
@@ -114,7 +117,7 @@ public class ProfileSelectionScreen extends OAuthScreen {
                 Minecraft.getInstance().setScreen(new MultiplayerScreen(new MainMenuScreen()));
                 return;
             } catch (Exception e) {
-                OAuth.getInstance().setScreen(new ErrorScreen(profileList.getSelected().getProfile() instanceof MicrosoftProfile, e));
+                setScreen(new ErrorScreen(profileList.getSelected().getProfile() instanceof MicrosoftProfile, e));
                 e.printStackTrace();
                 return;
             }
@@ -126,7 +129,7 @@ public class ProfileSelectionScreen extends OAuthScreen {
                 final AtomicBoolean isCancelled = new AtomicBoolean();
 
                 LoginLoadingScreen loginLoadingScreen = new LoginLoadingScreen(() -> {
-                    OAuth.getInstance().setScreen(new ProfileSelectionScreen(selected));
+                    setScreen(new ProfileSelectionScreen(selected));
                     isCancelled.set(true);
                 }, selected.getProfile() instanceof MicrosoftProfile);
 
@@ -135,7 +138,7 @@ public class ProfileSelectionScreen extends OAuthScreen {
                 } else {
                     loginLoadingScreen.updateText("Logging into Minecraft.");
                 }
-                OAuth.getInstance().setScreen(loginLoadingScreen);
+                setScreen(loginLoadingScreen);
                 boolean isSuccessful = selected.getProfile().login();
 
                 if (isCancelled.get()) {
@@ -147,7 +150,7 @@ public class ProfileSelectionScreen extends OAuthScreen {
                     return;
                 }
                 if (!isSuccessful && Minecraft.getInstance().screen instanceof ProfileSelectionScreen) {
-                    OAuth.getInstance().setScreen(new ErrorScreen(selected.getProfile() instanceof MicrosoftProfile, "Login Failed"));
+                    setScreen(new ErrorScreen(selected.getProfile() instanceof MicrosoftProfile, "Login Failed"));
                     return;
                 }
 
@@ -160,22 +163,18 @@ public class ProfileSelectionScreen extends OAuthScreen {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                OAuth.getInstance().setScreen(new MultiplayerScreen(new MainMenuScreen()));
+                setScreen(new MultiplayerScreen(new MainMenuScreen()));
             } catch (InvalidCredentialsException e) {
                 ErrorScreen errorScreen = new ErrorScreen(profileList.getSelected().getProfile() instanceof MicrosoftProfile, "Wrong Password. Please delete the profile and create a new one.");
                 errorScreen.setInfo();
-                OAuth.getInstance().setScreen(errorScreen);
+                setScreen(errorScreen);
             } catch (Exception e) {
-                OAuth.getInstance().setScreen(new ErrorScreen(profileList.getSelected().getProfile() instanceof MicrosoftProfile, e));
+                setScreen(new ErrorScreen(profileList.getSelected().getProfile() instanceof MicrosoftProfile, e));
                 e.printStackTrace();
             }
         }, "LoginThread");
         thread.setDaemon(true);
         thread.start();
-    }
-
-    private static void onMojangType() {
-        OAuth.getInstance().setScreen(new LoginScreen());
     }
 
     private void onMicrosoftType(@Nullable ProfileEntry entry) {
@@ -187,7 +186,7 @@ public class ProfileSelectionScreen extends OAuthScreen {
             try {
                 profile = login.login();
             } catch (Exception e) {
-                OAuth.getInstance().setScreen(new ErrorScreen(true, e));
+                setScreen(new ErrorScreen(true, e));
                 e.printStackTrace();
                 return;
             }
@@ -199,7 +198,7 @@ public class ProfileSelectionScreen extends OAuthScreen {
             onLoginButton(newProfile);
         }, "Oauth microsoft");
 
-        OAuth.getInstance().setScreen(loadingScreen);
+        setScreen(loadingScreen);
         thread.setDaemon(true);
         thread.start();
     }

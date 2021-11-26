@@ -2,13 +2,11 @@ package com.sintinium.oauth.gui;
 
 import com.google.common.base.Splitter;
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.sintinium.oauth.OAuth;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.DialogTexts;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.screen.MainMenuScreen;
 import net.minecraft.client.gui.screen.MultiplayerScreen;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
@@ -40,7 +38,7 @@ public class ErrorScreen extends OAuthScreen {
     @Override
     protected void init() {
         this.addButton(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, DialogTexts.GUI_CANCEL, p_onPress_1_ -> {
-            OAuth.getInstance().setScreen(new MultiplayerScreen(new MainMenuScreen()));
+            setScreen(new MultiplayerScreen(new MainMenuScreen()));
         }));
     }
 

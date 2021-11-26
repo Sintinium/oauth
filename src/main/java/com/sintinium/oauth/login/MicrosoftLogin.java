@@ -4,8 +4,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.util.UUIDTypeAdapter;
-import com.sintinium.oauth.OAuth;
 import com.sintinium.oauth.gui.ErrorScreen;
+import com.sintinium.oauth.gui.OAuthScreen;
 import com.sintinium.oauth.profile.MicrosoftProfile;
 import com.sintinium.oauth.util.Lambdas;
 import com.sun.net.httpserver.HttpServer;
@@ -74,7 +74,7 @@ public class MicrosoftLogin {
             return loginWithToken(token);
         } catch (Exception e) {
             e.printStackTrace();
-            OAuth.getInstance().setScreen(new ErrorScreen(true, e.getMessage()));
+            OAuthScreen.setScreen(new ErrorScreen(true, e.getMessage()));
         } finally {
             try {
                 client.close();
@@ -138,7 +138,7 @@ public class MicrosoftLogin {
         }
 
         if (mcProfile == null) {
-            OAuth.getInstance().setScreen(new ErrorScreen(true, "Failed to create Minecraft Profile."));
+            OAuthScreen.setScreen(new ErrorScreen(true, "Failed to create Minecraft Profile."));
             return null;
         }
 

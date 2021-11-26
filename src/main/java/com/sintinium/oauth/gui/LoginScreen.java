@@ -4,8 +4,6 @@ import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
 import com.mojang.authlib.exceptions.InvalidCredentialsException;
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.sintinium.oauth.OAuth;
-import com.sintinium.oauth.gui.components.OAuthCheckbox;
 import com.sintinium.oauth.gui.profile.ProfileSelectionScreen;
 import com.sintinium.oauth.login.LoginUtil;
 import com.sintinium.oauth.profile.MojangProfile;
@@ -13,12 +11,10 @@ import com.sintinium.oauth.profile.OfflineProfile;
 import com.sintinium.oauth.profile.ProfileManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.DialogTexts;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.util.text.StringTextComponent;
 
-import java.net.UnknownHostException;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -29,9 +25,9 @@ public class LoginScreen extends OAuthScreen {
     private Button mojangLoginButton;
     private PasswordFieldWidget passwordWidget;
     private TextFieldWidget usernameWidget;
-    private AtomicReference<String> status = new AtomicReference<>();
+    private final AtomicReference<String> status = new AtomicReference<>();
 
-    private List<Runnable> toRun = new CopyOnWriteArrayList<>();
+    private final List<Runnable> toRun = new CopyOnWriteArrayList<>();
 
     public LoginScreen() {
         super(new StringTextComponent("OAuth Login"));
@@ -71,7 +67,7 @@ public class LoginScreen extends OAuthScreen {
                 } else {
                     if (passwordWidget.getValue().isEmpty()) {
                         ProfileManager.getInstance().addProfile(new OfflineProfile(usernameWidget.getValue(), UUID.nameUUIDFromBytes(usernameWidget.getValue().getBytes())));
-                        toRun.add(() -> OAuth.getInstance().setScreen(new ProfileSelectionScreen()));
+                        toRun.add(() -> setScreen(new ProfileSelectionScreen()));
                         return;
                     }
                     MojangProfile profile;
@@ -85,7 +81,7 @@ public class LoginScreen extends OAuthScreen {
                         e.printStackTrace();
                         return;
                     } catch (AuthenticationException e) {
-                        toRun.add(() -> OAuth.getInstance().setScreen(new ErrorScreen(false, e)));
+                        toRun.add(() -> setScreen(new ErrorScreen(false, e)));
                         e.printStackTrace();
                         return;
                     }
@@ -94,7 +90,7 @@ public class LoginScreen extends OAuthScreen {
                     } else {
                         LoginUtil.updateOnlineStatus();
                         ProfileManager.getInstance().addProfile(profile);
-                        toRun.add(() -> OAuth.getInstance().setScreen(new ProfileSelectionScreen()));
+                        toRun.add(() -> setScreen(new ProfileSelectionScreen()));
                     }
                 }
             }, "Oauth mojang");
@@ -103,7 +99,7 @@ public class LoginScreen extends OAuthScreen {
         }, this::updateLoginButton, () -> this.mojangLoginButton.setMessage(new StringTextComponent("Add Profile"))));
 
         this.addButton(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, DialogTexts.GUI_CANCEL, (p_213029_1_) -> {
-            OAuth.getInstance().setScreen(new ProfileSelectionScreen());
+            setScreen(new ProfileSelectionScreen());
         }));
 
         this.cleanUp();

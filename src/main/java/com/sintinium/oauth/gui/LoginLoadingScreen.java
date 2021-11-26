@@ -1,11 +1,9 @@
 package com.sintinium.oauth.gui;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.sintinium.oauth.OAuth;
 import com.sintinium.oauth.gui.profile.ProfileSelectionScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.DialogTexts;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.util.text.StringTextComponent;
 
@@ -13,14 +11,14 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class LoginLoadingScreen extends OAuthScreen {
 
-    private String loadingText = "Loading";
+    private final String loadingText = "Loading";
     private int dots = 0;
     private String renderText = loadingText;
 
     private int tick = 0;
-    private Runnable onCancel;
-    private boolean isMicrosoft;
-    private AtomicReference<String> updateText = new AtomicReference<>();
+    private final Runnable onCancel;
+    private final boolean isMicrosoft;
+    private final AtomicReference<String> updateText = new AtomicReference<>();
 
     public LoginLoadingScreen(Runnable onCancel, boolean isMicrosoft) {
         super(new StringTextComponent("Logging in"));
@@ -42,7 +40,7 @@ public class LoginLoadingScreen extends OAuthScreen {
     protected void init() {
         this.addButton(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, DialogTexts.GUI_CANCEL, (p_213029_1_) -> {
             onCancel.run();
-            OAuth.getInstance().setScreen(new ProfileSelectionScreen());
+            setScreen(new ProfileSelectionScreen());
         }));
     }
 
