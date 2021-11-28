@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiMultiplayer;
 import net.minecraft.client.gui.GuiScreen;
+import scala.collection.parallel.ParIterableLike;
 
 public class LoginTypeScreen extends GuiScreen {
 
@@ -28,14 +29,16 @@ public class LoginTypeScreen extends GuiScreen {
         this.addButton(new ActionButton(microsoftLoginId, this.width / 2 - 100, this.height / 2 + 2, 200, 20, "Microsoft Login", () -> {
             final MicrosoftLogin login = new MicrosoftLogin();
             Thread thread = new Thread(() -> {
-                login.login(() -> {
-                    LoginUtil.updateOnlineStatus();
-                    Minecraft.getMinecraft().displayGuiScreen(lastScreen);
-                });
+                try {
+                    login.login(() -> {
+                        LoginUtil.updateOnlineStatus();
+                        Minecraft.getMinecraft().displayGuiScreen(lastScreen);
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Minecraft.getMinecraft().displayGuiScreen(new ErrorScreen(true, e));
+                }
             });
-            if (login.getErrorMsg() != null) {
-                System.err.println(login.getErrorMsg());
-            }
             Minecraft.getMinecraft().displayGuiScreen(new LoginLoadingScreen(lastScreen, this, login::cancelLogin, true));
             thread.start();
         }));
