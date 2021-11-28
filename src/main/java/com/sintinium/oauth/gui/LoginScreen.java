@@ -1,7 +1,5 @@
 package com.sintinium.oauth.gui;
 
-import com.sintinium.oauth.EncryptionUtil;
-import com.sintinium.oauth.OAuth;
 import com.sintinium.oauth.OAuthConfig;
 import com.sintinium.oauth.login.LoginUtil;
 import net.minecraft.client.Minecraft;
@@ -21,7 +19,7 @@ public class LoginScreen extends GuiScreen {
     private final GuiMultiplayer multiplayerScreen;
     private ActionButton mojangLoginButton;
     private PasswordFieldWidget passwordWidget;
-    private ActionCheckbox savePasswordWidget;
+    private OAuthCheckbox savePasswordWidget;
     private GuiTextField usernameWidget;
     private AtomicReference<String> status = new AtomicReference<>();
     private String title = "OAuth Login";
@@ -88,19 +86,13 @@ public class LoginScreen extends GuiScreen {
         }
         this.usernameWidget.setGuiResponder(guiResponder);
 
-        savePasswordWidget = this.addButton(new ActionCheckbox(4, this.width / 2 - fontRenderer.getStringWidth("Save password") - 25, this.height / 2 + 1 + 2, "Save password", OAuth.savePassword, (actionCheckbox, isChecked) -> {
-            OAuth.savePassword = !OAuth.savePassword;
-        }));
+        savePasswordWidget = this.addButton(new OAuthCheckbox(4, this.width / 2 - fontRenderer.getStringWidth("Save password") - 25, this.height / 2 + 1 + 2, "Save password", false));
 
         Runnable savePw = () -> {
-            if (OAuth.savePassword) {
-                OAuthConfig.lastUsername = usernameWidget.getText();
-                OAuthConfig.lastPassword = EncryptionUtil.encryptString(passwordWidget.getText(), Minecraft.getMinecraft().mcDataDir.getAbsolutePath().replaceAll("\\\\", "/"));
-                ConfigManager.sync("oauth", Config.Type.INSTANCE);
+            if (savePasswordWidget.isChecked()) {
+                saveLoginInfo();
             } else {
-                OAuthConfig.lastUsername = "";
-                OAuthConfig.lastPassword = "";
-                ConfigManager.sync("oauth", Config.Type.INSTANCE);
+                removeLoginInfo();
             }
         };
 
@@ -127,19 +119,31 @@ public class LoginScreen extends GuiScreen {
         }, this::updateLoginButton, () -> this.mojangLoginButton.displayString = "Login"));
 
         this.addButton(new ActionButton(3, this.width / 2 - 100, this.height / 2 + 60, 200, 20, "Cancel", () -> {
-            savePw.run();
+            if (!this.savePasswordWidget.isChecked()) {
+                removeLoginInfo();
+            }
             Minecraft.getMinecraft().displayGuiScreen(lastScreen);
         }));
 
-        if (OAuthConfig.lastUsername.isEmpty() || OAuthConfig.lastPassword.isEmpty()) {
-            OAuth.savePassword = false;
-        } else {
-            OAuth.savePassword = true;
-            this.usernameWidget.setText(OAuthConfig.lastUsername);
-            this.passwordWidget.setText(EncryptionUtil.decryptString(OAuthConfig.lastPassword, Minecraft.getMinecraft().mcDataDir.getAbsolutePath().replaceAll("\\\\", "/")));
+        this.cleanUp();
+
+        if (OAuthConfig.isSavedPassword()) {
+            this.usernameWidget.setText(OAuthConfig.getUsername());
+            this.passwordWidget.setText(OAuthConfig.getPassword());
+            this.savePasswordWidget.setIsChecked(true);
         }
 
-        this.cleanUp();
+    }
+
+    private void saveLoginInfo() {
+        OAuthConfig.setUsername(usernameWidget.getText());
+        OAuthConfig.setPassword(passwordWidget.getText());
+        ConfigManager.sync("oauth", Config.Type.INSTANCE);
+    }
+
+    private void removeLoginInfo() {
+        OAuthConfig.removeUsernamePassword();
+        ConfigManager.sync("oauth", Config.Type.INSTANCE);
     }
 
     private void onEdited(int id, String value) {
@@ -167,8 +171,8 @@ public class LoginScreen extends GuiScreen {
     protected void actionPerformed(GuiButton button) {
         if (button instanceof ActionButton) {
             ((ActionButton) button).onClicked();
-        } else if (button instanceof ActionCheckbox) {
-            ((ActionCheckbox) button).onClicked();
+        } else if (button instanceof OAuthCheckbox) {
+            // Do nothing
         } else {
             throw new RuntimeException("Missing button action");
         }
@@ -202,16 +206,12 @@ public class LoginScreen extends GuiScreen {
         drawString(mc.fontRenderer, "Password", this.width / 2 - 100, this.height / 2 - 20 - 12, 10526880);
 
         if (status.get() != null) {
-            drawCenteredString(mc.fontRenderer, status.get(), width / 2, height / 2 + 10, 0xFF0000);
+            drawCenteredString(mc.fontRenderer, status.get(), width / 2, height / 2 + 20, 0xFF0000);
         }
         this.usernameWidget.drawTextBox();
         this.passwordWidget.drawTextBox();
 
         super.drawScreen(mouseX, mouseY, partialTicks);
-
-        if (mouseX >= savePasswordWidget.x && mouseX < savePasswordWidget.x + savePasswordWidget.width && mouseY >= savePasswordWidget.y && mouseY < savePasswordWidget.y + savePasswordWidget.height) {
-            drawHoveringText("This will save your password to a file in your configs. While it will be encrypted if you have a virus someone could extract your password.", mouseX, mouseY);
-        }
     }
 
 }

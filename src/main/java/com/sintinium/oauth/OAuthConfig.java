@@ -1,5 +1,6 @@
 package com.sintinium.oauth;
 
+import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.config.Config;
 
 @Config(modid = "oauth")
@@ -17,4 +18,29 @@ public class OAuthConfig {
     })
     @Config.Name("Last Password")
     public static String lastPassword = "";
+
+    public static String getUsername() {
+        return lastUsername;
+    }
+
+    public static void setUsername(String username) {
+        lastUsername = username;
+    }
+
+    public static String getPassword() {
+        return EncryptionUtil.decryptString(lastPassword, Minecraft.getMinecraft().mcDataDir.getAbsolutePath().replaceAll("\\\\", "/"));
+    }
+
+    public static void setPassword(String password) {
+        lastPassword = EncryptionUtil.encryptString(password, Minecraft.getMinecraft().mcDataDir.getAbsolutePath().replaceAll("\\\\", "/"));
+    }
+
+    public static void removeUsernamePassword() {
+        lastUsername = "";
+        lastPassword = "";
+    }
+
+    public static boolean isSavedPassword() {
+        return !lastUsername.isEmpty() && !lastPassword.isEmpty();
+    }
 }

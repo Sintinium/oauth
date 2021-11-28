@@ -14,7 +14,7 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
-version = '1.04'
+version = '1.06.1'
 group = 'com.sintinium.oauth' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'oauth'
 

@@ -6,7 +6,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiMultiplayer;
 import net.minecraft.client.gui.GuiScreen;
-import scala.collection.parallel.ParIterableLike;
 
 public class LoginTypeScreen extends GuiScreen {
 
