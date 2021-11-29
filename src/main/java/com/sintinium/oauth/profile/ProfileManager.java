@@ -3,7 +3,7 @@ package com.sintinium.oauth.profile;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
-import net.minecraft.util.Util;
+import net.minecraft.Util;
 import net.minecraftforge.fml.loading.FMLPaths;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
