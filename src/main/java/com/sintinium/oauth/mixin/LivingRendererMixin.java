@@ -19,5 +19,4 @@ public abstract class LivingRendererMixin<T extends LivingEntity, M extends Enti
     public void shouldShowNameMixin(T livingEntity, CallbackInfoReturnable<Boolean> cir) {
         if (livingEntity instanceof FakePlayer || Minecraft.getInstance().screen instanceof ProfileSelectionScreen) cir.setReturnValue(false);
     }
-
 }
