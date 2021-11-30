@@ -2,17 +2,16 @@ package com.sintinium.oauth.gui.profile;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
-import com.sintinium.oauth.login.LoginUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.resources.DefaultPlayerSkin;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerModelPart;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.Session;
-import org.lwjgl.system.CallbackI;
 
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class FakePlayer extends ClientPlayerEntity {
@@ -21,7 +20,7 @@ public class FakePlayer extends ClientPlayerEntity {
     private ResourceLocation skin;
     private ResourceLocation cape = null;
     private String skinModel = "default";
-    private Map<UUID, PlayerData> cache = new ConcurrentHashMap<>();
+    private final Map<UUID, PlayerData> cache = new ConcurrentHashMap<>();
 
     public FakePlayer() {
         super(Minecraft.getInstance(), FakeWorld.getInstance(), FakeClientPlayNetHandler.getInstance(), null, null, false, false);
@@ -120,4 +119,15 @@ public class FakePlayer extends ClientPlayerEntity {
         private ResourceLocation cape;
         private String skinModel;
     }
+
+    @Override
+    public float distanceTo(Entity pEntity) {
+        return Float.MAX_VALUE;
+    }
+
+    @Override
+    public double distanceToSqr(Entity pEntity) {
+        return Float.MAX_VALUE;
+    }
+
 }
