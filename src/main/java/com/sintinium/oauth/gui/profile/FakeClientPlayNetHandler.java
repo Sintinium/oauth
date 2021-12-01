@@ -1,17 +1,11 @@
 package com.sintinium.oauth.gui.profile;
 
-import com.mojang.authlib.GameProfile;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.network.play.ClientPlayNetHandler;
-import net.minecraft.client.network.play.NetworkPlayerInfo;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.network.PacketDirection;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.PacketFlow;
 
-import javax.annotation.Nullable;
-import java.util.UUID;
-
-public class FakeClientPlayNetHandler extends ClientPlayNetHandler {
+public class FakeClientPlayNetHandler extends ClientPacketListener {
 
     private static FakeClientPlayNetHandler instance;
 
@@ -23,7 +17,7 @@ public class FakeClientPlayNetHandler extends ClientPlayNetHandler {
     }
 
     public FakeClientPlayNetHandler() {
-        super(Minecraft.getInstance(), null, new NetworkManager(PacketDirection.CLIENTBOUND), Minecraft.getInstance().getUser().getGameProfile());
+        super(Minecraft.getInstance(), null, new Connection(PacketFlow.CLIENTBOUND), Minecraft.getInstance().getUser().getGameProfile(), null);
     }
 
 

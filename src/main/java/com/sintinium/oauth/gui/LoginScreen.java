@@ -3,17 +3,17 @@ package com.sintinium.oauth.gui;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
 import com.mojang.authlib.exceptions.InvalidCredentialsException;
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.sintinium.oauth.gui.profile.ProfileSelectionScreen;
 import com.sintinium.oauth.login.LoginUtil;
 import com.sintinium.oauth.profile.MojangProfile;
 import com.sintinium.oauth.profile.OfflineProfile;
 import com.sintinium.oauth.profile.ProfileManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.DialogTexts;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.TextComponent;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,14 +23,14 @@ import java.util.concurrent.atomic.AtomicReference;
 public class LoginScreen extends OAuthScreen {
 
     private Button mojangLoginButton;
-    private PasswordFieldWidget passwordWidget;
-    private TextFieldWidget usernameWidget;
+    private EditBox passwordWidget;
+    private EditBox usernameWidget;
     private final AtomicReference<String> status = new AtomicReference<>();
 
     private final List<Runnable> toRun = new CopyOnWriteArrayList<>();
 
     public LoginScreen() {
-        super(new StringTextComponent("OAuth Login"));
+        super(new TextComponent("OAuth Login"));
     }
 
     public void tick() {
@@ -49,18 +49,18 @@ public class LoginScreen extends OAuthScreen {
     protected void init() {
         this.minecraft.keyboardHandler.setSendRepeatsToGui(true);
 
-        this.passwordWidget = new PasswordFieldWidget(this.font, this.width / 2 - 100, this.height / 2 - 20, 200, 20, new StringTextComponent("Password"));
+        this.passwordWidget = new EditBox(this.font, this.width / 2 - 100, this.height / 2 - 20, 200, 20, new TextComponent("Password"));
         this.passwordWidget.setMaxLength(128);
         this.passwordWidget.setResponder(this::onEdited);
 
-        this.usernameWidget = new UsernameFieldWidget(this.font, this.width / 2 - 100, this.height / 2 - 60, 200, 20, new StringTextComponent("Username/Email"), passwordWidget);
+        this.usernameWidget = new EditBox(this.font, this.width / 2 - 100, this.height / 2 - 60, 200, 20, passwordWidget, new TextComponent("Username/Email"));
         this.usernameWidget.setFocus(true);
         this.usernameWidget.setResponder(this::onEdited);
 
-        this.children.add(this.usernameWidget);
-        this.children.add(this.passwordWidget);
+        this.addWidget(this.usernameWidget);
+        this.addWidget(this.passwordWidget);
 
-        this.mojangLoginButton = this.addButton(new ResponsiveButton(this.width / 2 - 100, this.height / 2 + 36, 200, 20, new StringTextComponent("Add Profile"), (p_213030_1_) -> {
+        this.mojangLoginButton = this.addRenderableWidget(new ResponsiveButton(this.width / 2 - 100, this.height / 2 + 36, 200, 20, new TextComponent("Add Profile"), (p_213030_1_) -> {
             Thread thread = new Thread(() -> {
                 if (usernameWidget.getValue().isEmpty()) {
                     toRun.add(() -> this.status.set("Missing username!"));
@@ -96,9 +96,9 @@ public class LoginScreen extends OAuthScreen {
             }, "Oauth mojang");
             thread.setDaemon(true);
             thread.start();
-        }, this::updateLoginButton, () -> this.mojangLoginButton.setMessage(new StringTextComponent("Add Profile"))));
+        }, this::updateLoginButton, () -> this.mojangLoginButton.setMessage(new TextComponent("Add Profile"))));
 
-        this.addButton(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, DialogTexts.GUI_CANCEL, (p_213029_1_) -> {
+        this.addRenderableWidget(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, CommonComponents.GUI_CANCEL, (p_213029_1_) -> {
             setScreen(new ProfileSelectionScreen());
         }));
 
@@ -119,9 +119,9 @@ public class LoginScreen extends OAuthScreen {
 
     private void updateLoginButton() {
         if (this.passwordWidget.getValue().isEmpty()) {
-            this.mojangLoginButton.setMessage(new StringTextComponent("Add Offline Profile"));
+            this.mojangLoginButton.setMessage(new TextComponent("Add Offline Profile"));
         } else {
-            this.mojangLoginButton.setMessage(new StringTextComponent("Add Profile"));
+            this.mojangLoginButton.setMessage(new TextComponent("Add Profile"));
         }
     }
 
@@ -138,7 +138,7 @@ public class LoginScreen extends OAuthScreen {
         this.mojangLoginButton.active = !this.usernameWidget.getValue().isEmpty();
     }
 
-    public void render(MatrixStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
+    public void render(PoseStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
         this.renderBackground(p_230430_1_);
         drawCenteredString(p_230430_1_, this.font, this.title, this.width / 2, 17, 16777215);
         drawString(p_230430_1_, this.font, "Username/Email", this.width / 2 - 100, this.height / 2 - 60 - 12, 10526880);

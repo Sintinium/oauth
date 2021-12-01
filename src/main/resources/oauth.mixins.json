@@ -8,6 +8,7 @@
   "minVersion": "0.8",
   "client": [
     "EntityRendererManagerMixin",
+    "EntityRendererMixin",
     "LivingRendererMixin",
     "PlayerRendererMixin"
   ]

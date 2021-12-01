@@ -4,22 +4,17 @@ import com.mojang.authlib.Agent;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.UserType;
 import com.mojang.authlib.exceptions.AuthenticationException;
-import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
-import com.mojang.authlib.exceptions.InvalidCredentialsException;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService;
 import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
 import com.mojang.util.UUIDTypeAdapter;
-import com.sintinium.oauth.gui.ErrorScreen;
 import com.sintinium.oauth.profile.MicrosoftProfile;
 import com.sintinium.oauth.profile.MojangProfile;
 import net.minecraft.client.Minecraft;
-import net.minecraft.util.Session;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
-import org.lwjgl.system.CallbackI;
+import net.minecraft.client.User;
+import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
 import java.lang.reflect.Field;
-import java.net.UnknownHostException;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -30,9 +25,9 @@ public class LoginUtil {
     public static boolean wasOnline = false;
     private static long lastCheck = -1L;
 
-    private static YggdrasilAuthenticationService authService = new YggdrasilAuthenticationService(Minecraft.getInstance().getProxy(), UUID.randomUUID().toString());
-    private static YggdrasilUserAuthentication userAuth = (YggdrasilUserAuthentication) authService.createUserAuthentication(Agent.MINECRAFT);
-    private static YggdrasilMinecraftSessionService minecraftSessionService = (YggdrasilMinecraftSessionService) authService.createMinecraftSessionService();
+    private static final YggdrasilAuthenticationService authService = new YggdrasilAuthenticationService(Minecraft.getInstance().getProxy(), UUID.randomUUID().toString());
+    private static final YggdrasilUserAuthentication userAuth = (YggdrasilUserAuthentication) authService.createUserAuthentication(Agent.MINECRAFT);
+    private static final YggdrasilMinecraftSessionService minecraftSessionService = (YggdrasilMinecraftSessionService) authService.createMinecraftSessionService();
 
     public static void updateOnlineStatus() {
         needsRefresh = true;
@@ -43,7 +38,7 @@ public class LoginUtil {
         if (!needsRefresh && System.currentTimeMillis() - lastCheck < 1000 * 10) {
             return wasOnline;
         }
-        Session session = Minecraft.getInstance().getUser();
+        User session = Minecraft.getInstance().getUser();
         String uuid = UUID.randomUUID().toString();
         needsRefresh = false;
         lastCheck = System.currentTimeMillis();
@@ -62,7 +57,7 @@ public class LoginUtil {
         }
     }
 
-    public static GameProfile getGameProfile(Session session) {
+    public static GameProfile getGameProfile(User session) {
         String serverId = UUID.randomUUID().toString();
         needsRefresh = false;
         lastCheck = System.currentTimeMillis();
@@ -79,7 +74,7 @@ public class LoginUtil {
     }
 
     public static void loginMs(MicrosoftProfile profile) throws WrongMinecraftVersionException {
-        Session session = new Session(profile.getName(), profile.getUUID().toString(), profile.getAccessToken(), Session.Type.MOJANG.name());
+        User session = new User(profile.getName(), profile.getUUID().toString(), profile.getAccessToken(), Optional.empty(), Optional.empty(), User.Type.MSA);
         setSession(session);
     }
 
@@ -107,7 +102,7 @@ public class LoginUtil {
     }
 
     public static void loginOffline(String username) throws WrongMinecraftVersionException {
-        Session session = new Session(username, UUID.nameUUIDFromBytes(username.getBytes()).toString(), null, UserType.LEGACY.getName());
+        User session = new User(username, UUID.nameUUIDFromBytes(username.getBytes()).toString(), "NotValid", Optional.empty(), Optional.empty(), User.Type.LEGACY);
         setSession(session);
     }
 
@@ -122,18 +117,19 @@ public class LoginUtil {
         String name = userAuth.getSelectedProfile().getName();
         String uuid = UUIDTypeAdapter.fromUUID(userAuth.getSelectedProfile().getId());
         String token = userAuth.getAuthenticatedToken();
-        String type = userAuth.getUserType().getName();
+        UserType type = userAuth.getUserType();
+
         boolean isOnline = userAuth.canPlayOnline();
         userAuth.logOut();
 
-        Session session = new Session(name, uuid, token, type);
+        User session = new User(name, uuid, token, Optional.empty(), Optional.empty(), User.Type.byName(type.getName()));
         setSession(session);
         lastMojangUsername = username;
         return isOnline;
     }
 
-    public static void setSession(Session session) throws WrongMinecraftVersionException {
-        Field field = ObfuscationReflectionHelper.findField(Minecraft.class, "field_71449_j");
+    public static void setSession(User session) throws WrongMinecraftVersionException {
+        Field field = ObfuscationReflectionHelper.findField(Minecraft.class, "f_90998_");
         field.setAccessible(true);
         try {
             field.set(Minecraft.getInstance(), session);

@@ -9,7 +9,7 @@ import com.sintinium.oauth.gui.OAuthScreen;
 import com.sintinium.oauth.profile.MicrosoftProfile;
 import com.sintinium.oauth.util.Lambdas;
 import com.sun.net.httpserver.HttpServer;
-import net.minecraft.util.Util;
+import net.minecraft.Util;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;

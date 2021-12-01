@@ -1,11 +1,11 @@
 package com.sintinium.oauth.gui;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.sintinium.oauth.gui.profile.ProfileSelectionScreen;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.DialogTexts;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.TextComponent;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -21,7 +21,7 @@ public class LoginLoadingScreen extends OAuthScreen {
     private final AtomicReference<String> updateText = new AtomicReference<>();
 
     public LoginLoadingScreen(Runnable onCancel, boolean isMicrosoft) {
-        super(new StringTextComponent("Logging in"));
+        super(new TextComponent("Logging in"));
         this.onCancel = onCancel;
         this.isMicrosoft = isMicrosoft;
 
@@ -38,7 +38,7 @@ public class LoginLoadingScreen extends OAuthScreen {
 
     @Override
     protected void init() {
-        this.addButton(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, DialogTexts.GUI_CANCEL, (p_213029_1_) -> {
+        this.addRenderableWidget(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, CommonComponents.GUI_CANCEL, (p_213029_1_) -> {
             onCancel.run();
             setScreen(new ProfileSelectionScreen());
         }));
@@ -62,7 +62,7 @@ public class LoginLoadingScreen extends OAuthScreen {
     }
 
     @Override
-    public void render(MatrixStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
+    public void render(PoseStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
         this.renderBackground(p_230430_1_);
         drawCenteredString(p_230430_1_, Minecraft.getInstance().font, renderText, this.width / 2, this.height / 2 - 40, 0xFFFFFF);
         if (this.isMicrosoft) {

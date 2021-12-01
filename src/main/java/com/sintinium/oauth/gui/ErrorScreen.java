@@ -1,16 +1,16 @@
 package com.sintinium.oauth.gui;
 
 import com.google.common.base.Splitter;
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.DialogTexts;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.screen.MainMenuScreen;
-import net.minecraft.client.gui.screen.MultiplayerScreen;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.Style;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextComponent;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 public class ErrorScreen extends OAuthScreen {
@@ -20,13 +20,13 @@ public class ErrorScreen extends OAuthScreen {
     private boolean isInfo = false;
 
     public ErrorScreen(boolean isMs, String message) {
-        super(new StringTextComponent("Error logging into " + (isMs ? "Microsoft." : "Mojang.")));
+        super(new TextComponent("Error logging into " + (isMs ? "Microsoft." : "Mojang.")));
         this.message = message;
         System.err.println(message);
     }
 
     public ErrorScreen(boolean isMs, Throwable e) {
-        super(new StringTextComponent("Error logging into " + (isMs ? "Microsoft." : "Mojang.")));
+        super(new TextComponent("Error logging into " + (isMs ? "Microsoft." : "Mojang.")));
         this.e = e;
         e.printStackTrace();
     }
@@ -37,8 +37,8 @@ public class ErrorScreen extends OAuthScreen {
 
     @Override
     protected void init() {
-        this.addButton(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, DialogTexts.GUI_CANCEL, p_onPress_1_ -> {
-            setScreen(new MultiplayerScreen(new MainMenuScreen()));
+        this.addRenderableWidget(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, CommonComponents.GUI_CANCEL, p_onPress_1_ -> {
+            setScreen(new JoinMultiplayerScreen(new TitleScreen()));
         }));
     }
 
@@ -48,8 +48,8 @@ public class ErrorScreen extends OAuthScreen {
     }
 
     @Override
-    public void render(MatrixStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
-        FontRenderer font = Minecraft.getInstance().font;
+    public void render(PoseStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
+        Font font = Minecraft.getInstance().font;
         this.renderBackground(p_230430_1_);
         if (isInfo) {
             drawCenteredString(p_230430_1_, Minecraft.getInstance().font, this.title, this.width / 2, this.height / 2 - 40, 0xFFFFFF);
@@ -60,7 +60,7 @@ public class ErrorScreen extends OAuthScreen {
             drawCenteredString(p_230430_1_, Minecraft.getInstance().font, "If you believe this is a bug please create an issue at", this.width / 2, this.height / 2 - 12, 0xFFFFFF);
             drawCenteredString(p_230430_1_, Minecraft.getInstance().font, "https://github.com/Sintinium/oauth with your latest log file.", this.width / 2, this.height / 2, 0xFFFFFF);
         } else {
-            ITextComponent github = new StringTextComponent("Please create an issue at https://github.com/Sintinium/oauth with your log file.")
+            Component github = new TextComponent("Please create an issue at https://github.com/Sintinium/oauth with your log file.")
                     .setStyle(Style.EMPTY.setUnderlined(true));
             drawCenteredString(p_230430_1_, Minecraft.getInstance().font, "An error occurred. This could be a bug.", this.width / 2, this.height / 2 - 40, 0xFFFFFF);
             drawCenteredString(p_230430_1_, Minecraft.getInstance().font, github, this.width / 2, this.height / 2 - 28, 0xFFFFFF);

@@ -1,19 +1,24 @@
 package com.sintinium.oauth.gui.profile;
 
 import com.mojang.authlib.GameProfile;
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.sintinium.oauth.profile.IProfile;
 import com.sintinium.oauth.profile.OfflineProfile;
 import com.sintinium.oauth.profile.ProfileManager;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.AbstractGui;
-import net.minecraft.client.gui.widget.list.AbstractList;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.Util;
+import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.components.ObjectSelectionList;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextComponent;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public class ProfileEntry extends AbstractList.AbstractListEntry<ProfileEntry> {
+public class ProfileEntry extends ObjectSelectionList.Entry<ProfileEntry> {
 
     private static final ResourceLocation ICON_OVERLAY_LOCATION = new ResourceLocation("textures/gui/resource_packs.png");
 
@@ -41,7 +46,7 @@ public class ProfileEntry extends AbstractList.AbstractListEntry<ProfileEntry> {
     }
 
     @Override
-    public void render(MatrixStack pMatrixStack, int pIndex, int pTop, int pLeft, int pWidth, int pHeight, int pMouseX, int pMouseY, boolean pIsMouseOver, float pPartialTicks) {
+    public void render(PoseStack pMatrixStack, int pIndex, int pTop, int pLeft, int pWidth, int pHeight, int pMouseX, int pMouseY, boolean pIsMouseOver, float pPartialTicks) {
         String name = profile.getName();
         if (isOffline) name += " (Offline)";
         Minecraft.getInstance().font.drawShadow(pMatrixStack, name, pLeft, pTop + 2, 0xFFFFFF);
@@ -109,6 +114,11 @@ public class ProfileEntry extends AbstractList.AbstractListEntry<ProfileEntry> {
         FakePlayer.getInstance().setSkin(new GameProfile(profile.getUUID(), profile.getName()));
     }
 
+    @Override
+    public @NotNull Component getNarration() {
+        return new TextComponent("");
+    }
+
     private static class ArrowButton {
         private final int xOffset;
         private final int yOffset;
@@ -140,14 +150,14 @@ public class ProfileEntry extends AbstractList.AbstractListEntry<ProfileEntry> {
             return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
         }
 
-        public void render(MatrixStack pMatrixStack, int pIndex, int pTop, int pLeft, int pWidth, int pHeight, int pMouseX, int pMouseY, boolean pIsMouseOver, float pPartialTicks) {
-            Minecraft.getInstance().getTextureManager().bind(ICON_OVERLAY_LOCATION);
-            if (true) {
-                if (isMouseOver(pMouseX, pMouseY)) {
-                    AbstractGui.blit(pMatrixStack, x, y, textureX, textureY + 32, width, height, 256, 256);
-                } else {
-                    AbstractGui.blit(pMatrixStack, x, y, textureX, textureY, width, height, 256, 256);
-                }
+        public void render(PoseStack pMatrixStack, int pIndex, int pTop, int pLeft, int pWidth, int pHeight, int pMouseX, int pMouseY, boolean pIsMouseOver, float pPartialTicks) {
+            RenderSystem.setShader(GameRenderer::getPositionTexShader);
+            RenderSystem.setShaderTexture(0, ICON_OVERLAY_LOCATION);
+            RenderSystem.setShaderColor(1f, 1f, 1, 1f);
+            if (isMouseOver(pMouseX, pMouseY)) {
+                GuiComponent.blit(pMatrixStack, x, y, textureX, textureY + 32, width, height, 256, 256);
+            } else {
+                GuiComponent.blit(pMatrixStack, x, y, textureX, textureY, width, height, 256, 256);
             }
         }
     }

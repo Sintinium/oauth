@@ -2,7 +2,7 @@ package com.sintinium.oauth.gui.profile;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.exceptions.InvalidCredentialsException;
-import com.mojang.blaze3d.matrix.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.sintinium.oauth.gui.*;
 import com.sintinium.oauth.login.LoginUtil;
 import com.sintinium.oauth.login.MicrosoftLogin;
@@ -10,11 +10,11 @@ import com.sintinium.oauth.profile.MicrosoftProfile;
 import com.sintinium.oauth.profile.OfflineProfile;
 import com.sintinium.oauth.profile.ProfileManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screen.MainMenuScreen;
-import net.minecraft.client.gui.screen.MultiplayerScreen;
-import net.minecraft.client.gui.screen.inventory.InventoryScreen;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
+import net.minecraft.network.chat.TextComponent;
 
 import javax.annotation.Nullable;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,7 +28,7 @@ public class ProfileSelectionScreen extends OAuthScreen {
     private ProfileEntry initialEntry;
 
     public ProfileSelectionScreen() {
-        super(new StringTextComponent("Profiles"));
+        super(new TextComponent("Profiles"));
     }
 
     public ProfileSelectionScreen(ProfileEntry initialEntry) {
@@ -80,14 +80,14 @@ public class ProfileSelectionScreen extends OAuthScreen {
             }
         });
         removeAccountButton.active = false;
-        addButton(this.width / 2 + 45 + 2, this.height - 2 - 20, 90, "Back", p_onPress_1_ -> setScreen(new MainMenuScreen()));
+        addButton(this.width / 2 + 45 + 2, this.height - 2 - 20, 90, "Back", p_onPress_1_ -> setScreen(new TitleScreen()));
 
         loginButton = addButton(this.width / 2 - 137, this.height - 4 - 40, 137, "Login", p_onPress_1_ -> onLoginButton());
         loginOfflineButton = addButton(this.width / 2 + 1, this.height - 4 - 40, 137, "Login Offline", p_onPress_1_ -> {
             if (profileList.getSelected() != null) {
                 try {
                     LoginUtil.loginOffline(profileList.getSelected().getProfile().getName());
-                    setScreen(new MultiplayerScreen(new MainMenuScreen()));
+                    setScreen(new JoinMultiplayerScreen(new TitleScreen()));
                 } catch (LoginUtil.WrongMinecraftVersionException e) {
                     setScreen(new ErrorScreen(profileList.getSelected().getProfile() instanceof MicrosoftProfile, e));
                     e.printStackTrace();
@@ -114,7 +114,7 @@ public class ProfileSelectionScreen extends OAuthScreen {
         if (selected.getProfile() instanceof OfflineProfile) {
             try {
                 selected.getProfile().login();
-                Minecraft.getInstance().setScreen(new MultiplayerScreen(new MainMenuScreen()));
+                Minecraft.getInstance().setScreen(new JoinMultiplayerScreen(new TitleScreen()));
                 return;
             } catch (Exception e) {
                 setScreen(new ErrorScreen(profileList.getSelected().getProfile() instanceof MicrosoftProfile, e));
@@ -163,7 +163,7 @@ public class ProfileSelectionScreen extends OAuthScreen {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                setScreen(new MultiplayerScreen(new MainMenuScreen()));
+                setScreen(new JoinMultiplayerScreen(new TitleScreen()));
             } catch (InvalidCredentialsException e) {
                 ErrorScreen errorScreen = new ErrorScreen(profileList.getSelected().getProfile() instanceof MicrosoftProfile, "Wrong Password. Please delete the profile and create a new one.");
                 errorScreen.setInfo();
@@ -203,8 +203,8 @@ public class ProfileSelectionScreen extends OAuthScreen {
         thread.start();
     }
 
-    private Button addButton(int x, int y, int width, String text, Button.IPressable onPress) {
-        return this.addButton(new Button(x, y, width, 20, new StringTextComponent(text), onPress));
+    private Button addButton(int x, int y, int width, String text, Button.OnPress onPress) {
+        return this.addRenderableWidget(new Button(x, y, width, 20, new TextComponent(text), onPress));
     }
 
     @Override
@@ -239,7 +239,7 @@ public class ProfileSelectionScreen extends OAuthScreen {
     }
 
     @Override
-    public void render(MatrixStack stack, int mouseX, int mouseY, float delta) {
+    public void render(PoseStack stack, int mouseX, int mouseY, float delta) {
         renderBackground(stack);
         int size = 60;
         int x = 40;

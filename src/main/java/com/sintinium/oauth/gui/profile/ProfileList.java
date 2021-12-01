@@ -3,12 +3,12 @@ package com.sintinium.oauth.gui.profile;
 import com.sintinium.oauth.profile.IProfile;
 import com.sintinium.oauth.profile.ProfileManager;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.widget.list.ExtendedList;
+import net.minecraft.client.gui.components.ObjectSelectionList;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
 
-public class ProfileList extends ExtendedList<ProfileEntry> {
+public class ProfileList extends ObjectSelectionList<ProfileEntry> {
     private final ProfileSelectionScreen profileSelectionScreen;
 
     public ProfileList(ProfileSelectionScreen screen, Minecraft minecraft, int width, int height, int topPadding, int bottomPadding, int lineHeight) {
