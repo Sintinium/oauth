@@ -147,7 +147,14 @@ public class LoginScreen extends OAuthScreen {
             drawCenteredString(p_230430_1_, Minecraft.getInstance().font, status.get(), this.width / 2, this.height / 2 + 20, 0xFF0000);
         }
         this.usernameWidget.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
+        String pw = this.passwordWidget.getValue();
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < pw.length(); i++) {
+            builder.append("*");
+        }
+        this.passwordWidget.setValue(builder.toString());
         this.passwordWidget.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
+        this.passwordWidget.setValue(pw);
 //        if (this.savePasswordButton.isHovered()) {
 //            List<ITextProperties> tooltips = new ArrayList<>();
 //            String tooltip = "This will save your password encrypted to your config file. While the password is encrypted if a hacker accesses your computer they could easily unencrypt it.";
