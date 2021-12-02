@@ -84,7 +84,6 @@ public class ProfileEntry extends ObjectSelectionList.Entry<ProfileEntry> {
 
         if (Util.getMillis() - this.lastClickTime < 250L) {
             profileList.getProfileSelectionScreen().onLoginButton(this);
-            System.out.println("DOUBLE");
         }
 
         this.lastClickTime = Util.getMillis();

@@ -1,4 +1,4 @@
-package com.sintinium.oauth.mixin.constants;
+package com.sintinium.oauth.util;
 
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;

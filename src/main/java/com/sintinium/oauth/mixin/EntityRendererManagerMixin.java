@@ -1,7 +1,7 @@
 package com.sintinium.oauth.mixin;
 
 import com.sintinium.oauth.gui.profile.FakePlayer;
-import com.sintinium.oauth.mixin.constants.PlayerRenderers;
+import com.sintinium.oauth.util.PlayerRenderers;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;

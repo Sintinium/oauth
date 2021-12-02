@@ -37,39 +37,43 @@ public class FakePlayer extends LocalPlayer {
     }
 
     public void setSkin(GameProfile profile) {
-        if (profile == null) {
-            skin = DefaultPlayerSkin.getDefaultSkin();
+        try {
+            if (profile == null) {
+                skin = DefaultPlayerSkin.getDefaultSkin();
+                cape = null;
+                skinModel = "default";
+                return;
+            }
+
+            if (cache.containsKey(profile.getId())) {
+                PlayerData data = cache.get(profile.getId());
+                this.skin = data.skin;
+                this.cape = data.cape;
+                this.skinModel = data.skinModel;
+                return;
+            }
+
+            PlayerData data = new PlayerData();
             cape = null;
-            skinModel = "default";
-            return;
-        }
-
-        if (cache.containsKey(profile.getId())) {
-            PlayerData data = cache.get(profile.getId());
-            this.skin = data.skin;
-            this.cape = data.cape;
-            this.skinModel = data.skinModel;
-            return;
-        }
-
-        PlayerData data = new PlayerData();
-        cape = null;
-        Minecraft.getInstance().getSkinManager().registerSkins(profile, (type, resourceLocation, minecraftProfileTexture) -> {
-            if (type == MinecraftProfileTexture.Type.SKIN) {
-                skin = resourceLocation;
-                this.skinModel = minecraftProfileTexture.getMetadata("model");
-                if (this.skinModel == null) {
-                    this.skinModel = "default";
+            Minecraft.getInstance().getSkinManager().registerSkins(profile, (type, resourceLocation, minecraftProfileTexture) -> {
+                if (type == MinecraftProfileTexture.Type.SKIN) {
+                    skin = resourceLocation;
+                    this.skinModel = minecraftProfileTexture.getMetadata("model");
+                    if (this.skinModel == null) {
+                        this.skinModel = "default";
+                    }
+                    data.skin = skin;
+                    data.skinModel = skinModel;
+                    cache.put(profile.getId(), data);
                 }
-                data.skin = skin;
-                data.skinModel = skinModel;
-                cache.put(profile.getId(), data);
-            }
-            if (type == MinecraftProfileTexture.Type.CAPE) {
-                cape = resourceLocation;
-                data.cape = cape;
-            }
-        }, true);
+                if (type == MinecraftProfileTexture.Type.CAPE) {
+                    cape = resourceLocation;
+                    data.cape = cape;
+                }
+            }, true);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
