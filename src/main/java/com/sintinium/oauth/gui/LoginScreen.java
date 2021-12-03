@@ -4,6 +4,7 @@ import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
 import com.mojang.authlib.exceptions.InvalidCredentialsException;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.sintinium.oauth.gui.components.PasswordBox;
 import com.sintinium.oauth.gui.profile.ProfileSelectionScreen;
 import com.sintinium.oauth.login.LoginUtil;
 import com.sintinium.oauth.profile.MojangProfile;
@@ -37,6 +38,8 @@ public class LoginScreen extends OAuthScreen {
         super.tick();
         this.usernameWidget.tick();
         this.passwordWidget.tick();
+        if (usernameWidget.isFocused()) passwordWidget.setFocus(false);
+        if (passwordWidget.isFocused()) usernameWidget.setFocus(false);
         if (!toRun.isEmpty()) {
             for (Runnable r : toRun) {
                 r.run();
@@ -49,13 +52,14 @@ public class LoginScreen extends OAuthScreen {
     protected void init() {
         this.minecraft.keyboardHandler.setSendRepeatsToGui(true);
 
-        this.passwordWidget = new EditBox(this.font, this.width / 2 - 100, this.height / 2 - 20, 200, 20, new TextComponent("Password"));
-        this.passwordWidget.setMaxLength(128);
-        this.passwordWidget.setResponder(this::onEdited);
 
-        this.usernameWidget = new EditBox(this.font, this.width / 2 - 100, this.height / 2 - 60, 200, 20, passwordWidget, new TextComponent("Username/Email"));
+        this.usernameWidget = new EditBox(this.font, this.width / 2 - 100, this.height / 2 - 60, 200, 20, new TextComponent("Username/Email"));
         this.usernameWidget.setFocus(true);
         this.usernameWidget.setResponder(this::onEdited);
+
+        this.passwordWidget = new PasswordBox(this.font, this.width / 2 - 100, this.height / 2 - 20, 200, 20, new TextComponent("Password"));
+        this.passwordWidget.setMaxLength(128);
+        this.passwordWidget.setResponder(this::onEdited);
 
         this.addWidget(this.usernameWidget);
         this.addWidget(this.passwordWidget);
@@ -147,14 +151,7 @@ public class LoginScreen extends OAuthScreen {
             drawCenteredString(p_230430_1_, Minecraft.getInstance().font, status.get(), this.width / 2, this.height / 2 + 20, 0xFF0000);
         }
         this.usernameWidget.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-        String pw = this.passwordWidget.getValue();
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < pw.length(); i++) {
-            builder.append("*");
-        }
-        this.passwordWidget.setValue(builder.toString());
         this.passwordWidget.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
-        this.passwordWidget.setValue(pw);
 //        if (this.savePasswordButton.isHovered()) {
 //            List<ITextProperties> tooltips = new ArrayList<>();
 //            String tooltip = "This will save your password encrypted to your config file. While the password is encrypted if a hacker accesses your computer they could easily unencrypt it.";
