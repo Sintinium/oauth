@@ -133,7 +133,7 @@ public class ProfileSelectionScreen extends OAuthScreen {
     }
 
     public void onLoginButton(ProfileEntry selected) {
-        if (selected == null) return;
+        if (selected == null || selected.getProfile() == null) return;
 
         // Skip async if logging in offline.
         if (selected.getProfile() instanceof OfflineProfile) {
@@ -142,7 +142,7 @@ public class ProfileSelectionScreen extends OAuthScreen {
                 Minecraft.getInstance().setScreen(new MultiplayerScreen(new MainMenuScreen()));
                 return;
             } catch (Exception e) {
-                setScreen(new ErrorScreen(profileList.getSelected().getProfile() instanceof MicrosoftProfile, e));
+                setScreen(new ErrorScreen(selected.getProfile() instanceof MicrosoftProfile, e));
                 e.printStackTrace();
                 return;
             }
@@ -217,10 +217,9 @@ public class ProfileSelectionScreen extends OAuthScreen {
             }
             if (profile != null) {
                 ProfileManager.getInstance().addProfile(profile);
+                ProfileEntry newProfile = new ProfileEntry(profileList, profile);
+                onLoginButton(newProfile);
             }
-
-            ProfileEntry newProfile = new ProfileEntry(profileList, profile);
-            onLoginButton(newProfile);
         }, "Oauth microsoft");
 
         setScreen(loadingScreen);
