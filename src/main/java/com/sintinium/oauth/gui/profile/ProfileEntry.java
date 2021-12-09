@@ -1,6 +1,5 @@
 package com.sintinium.oauth.gui.profile;
 
-import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.sintinium.oauth.profile.IProfile;
 import com.sintinium.oauth.profile.OfflineProfile;
@@ -75,7 +74,6 @@ public class ProfileEntry extends AbstractList.AbstractListEntry<ProfileEntry> {
         }
 
         profileList.setSelected(this);
-        onSelected();
 
         if (Util.getMillis() - this.lastClickTime < 250L) {
             profileList.getProfileSelectionScreen().onLoginButton(this);
@@ -106,7 +104,7 @@ public class ProfileEntry extends AbstractList.AbstractListEntry<ProfileEntry> {
             FakePlayer.getInstance().setSkin(null);
             return;
         }
-        FakePlayer.getInstance().setSkin(new GameProfile(profile.getUUID(), profile.getName()));
+        FakePlayer.getInstance().setSkin(profile.getGameProfile());
     }
 
     private static class ArrowButton {

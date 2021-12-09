@@ -44,14 +44,6 @@ public class FakePlayer extends ClientPlayerEntity {
             return;
         }
 
-        if (cache.containsKey(profile.getId())) {
-            PlayerData data = cache.get(profile.getId());
-            this.skin = data.skin;
-            this.cape = data.cape;
-            this.skinModel = data.skinModel;
-            return;
-        }
-
         PlayerData data = new PlayerData();
         cape = null;
         Minecraft.getInstance().getSkinManager().registerSkins(profile, (type, resourceLocation, minecraftProfileTexture) -> {
@@ -69,7 +61,7 @@ public class FakePlayer extends ClientPlayerEntity {
                 cape = resourceLocation;
                 data.cape = cape;
             }
-        }, true);
+        }, false);
     }
 
     @Override
