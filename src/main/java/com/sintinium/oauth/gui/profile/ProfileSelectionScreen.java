@@ -2,19 +2,31 @@ package com.sintinium.oauth.gui.profile;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.exceptions.InvalidCredentialsException;
+import com.mojang.blaze3d.platform.Lighting;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Quaternion;
+import com.mojang.math.Vector3f;
 import com.sintinium.oauth.gui.*;
 import com.sintinium.oauth.login.LoginUtil;
 import com.sintinium.oauth.login.MicrosoftLogin;
 import com.sintinium.oauth.profile.MicrosoftProfile;
 import com.sintinium.oauth.profile.OfflineProfile;
 import com.sintinium.oauth.profile.ProfileManager;
+import com.sintinium.oauth.util.PlayerRenderers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.TitleScreen;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
+import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.TextComponent;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.PlayerModelPart;
 
 import javax.annotation.Nullable;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -42,6 +54,18 @@ public class ProfileSelectionScreen extends OAuthScreen {
 
     public void onLoginButton() {
         onLoginButton(profileList.getSelected());
+    }
+
+    @Override
+    public void resize(Minecraft p_96575_, int p_96576_, int p_96577_) {
+        ProfileEntry selected = profileList.getSelected();
+        super.resize(p_96575_, p_96576_, p_96577_);
+        if (selected != null) {
+            this.profileList.children().stream()
+                    .filter(entry -> entry.getProfile().getUUID().equals(selected.getProfile().getUUID()))
+                    .findFirst()
+                    .ifPresent(profile -> this.profileList.setSelected(profile));
+        }
     }
 
     @Override
@@ -245,10 +269,93 @@ public class ProfileSelectionScreen extends OAuthScreen {
         int x = 40;
         int y = height / 2 + size;
         this.profileList.render(stack, mouseX, mouseY, delta);
-        InventoryScreen.renderEntityInInventory(x, y, size, -mouseX + x, -mouseY + y - size * 2 + size / 2f, FakePlayer.getInstance());
+//        InventoryScreen.renderEntityInInventory(x, y, size, -mouseX + x, -mouseY + y - size * 2 + size / 2f, FakePlayer.getInstance());
+        renderPlayer(RenderSystem.getModelViewStack(), mouseX, mouseY, delta);
         Minecraft.getInstance().font.drawShadow(stack, "Status: " + (LoginUtil.isOnline() ? "Online" : "Offline"), 12, 12, LoginUtil.isOnline() ? 0x55FF55 : 0xFF5555);
         drawCenteredString(stack, font, "Current Profile: " + Minecraft.getInstance().getUser().getName(), width / 2, 12, 0xFFFFFF);
 
         super.render(stack, mouseX, mouseY, delta);
+    }
+
+    private void renderPlayer(PoseStack stack, int mouseX, int mouseY, float delta) {
+        int size = 60;
+        int x = 40;
+        int y = height / 2 + size;
+        float rotX = -mouseX + x;
+        float rotY = -mouseY + y - size * 2 + size / 2f;
+        stack.pushPose();
+        stack.translate(x, y, 1050.0);
+        stack.scale(1.0F, 1.0F, -1.0F);
+        RenderSystem.applyModelViewMatrix();
+
+        FakePlayer fakePlayer = FakePlayer.getInstance();
+        float f = (float) Math.atan(rotX / 40.0F);
+        float f1 = (float) Math.atan(rotY / 40.0F);
+        fakePlayer.yBodyRot = 180.0F + f * 20.0F;
+        fakePlayer.setYRot(180.0F + f * 40.0F);
+        fakePlayer.setXRot(-f1 * 20.0F);
+        fakePlayer.yHeadRot = fakePlayer.getYRot();
+        fakePlayer.yHeadRotO = fakePlayer.getYRot();
+
+
+        PoseStack playerStack = new PoseStack();
+        playerStack.translate(0.0, 0.0, 1000.0);
+        playerStack.scale(size, size, size);
+        Quaternion quaternion = Vector3f.ZP.rotationDegrees(180.0F);
+        Quaternion quaternion1 = Vector3f.XP.rotationDegrees((float) Math.atan(rotX / 40F));
+        quaternion.mul(quaternion1);
+        playerStack.mulPose(quaternion);
+        playerStack.scale(0.9375F, 0.9375F, 0.9375F);
+
+        Lighting.setupForEntityInInventory();
+        MultiBufferSource.BufferSource multiBufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
+        RenderSystem.runAsFancy(() -> {
+            renderEntity(playerStack, multiBufferSource);
+        });
+        multiBufferSource.endBatch();
+
+        stack.popPose();
+        RenderSystem.applyModelViewMatrix();
+        Lighting.setupFor3DItems();
+    }
+
+    private void renderEntity(PoseStack stack, MultiBufferSource multiBufferSource) {
+        renderModel(stack, multiBufferSource);
+    }
+
+    private void renderModel(PoseStack stack, MultiBufferSource multiBufferSource) {
+        stack.pushPose();
+        stack.mulPose(Vector3f.YP.rotationDegrees(180 - Mth.lerp(1f, FakePlayer.getInstance().yBodyRotO, FakePlayer.getInstance().yBodyRot)));
+        stack.scale(-1f, -1f, 1f);
+        stack.translate(0.0, -1.501, 0.0);
+        boolean slim = false;
+        PlayerModel<AbstractClientPlayer> model;
+        if (FakePlayer.getInstance().getModelName().equals("slim")) model = PlayerRenderers.slimPlayerModel;
+        else model = PlayerRenderers.playerModel;
+        model.prepareMobModel(FakePlayer.getInstance(), 0f, 0f, 1f);
+        float rotation = Mth.rotLerp(1f, FakePlayer.getInstance().yHeadRotO, FakePlayer.getInstance().yHeadRot) - Mth.lerp(1f, FakePlayer.getInstance().yBodyRotO, FakePlayer.getInstance().yBodyRot);
+        model.setupAnim(FakePlayer.getInstance(), 0f, 0f, 0f, rotation, Mth.lerp(1f, FakePlayer.getInstance().xRotO, FakePlayer.getInstance().getXRot()));
+
+        RenderType renderType = model.renderType(FakePlayer.getInstance().getSkinTextureLocation());
+        VertexConsumer vertexConsumer = multiBufferSource.getBuffer(renderType);
+        int overlayCoords = OverlayTexture.pack(OverlayTexture.u(0), OverlayTexture.v(false));
+        model.setAllVisible(true);
+        model.young = false;
+
+        model.renderToBuffer(stack, vertexConsumer, 15728880, overlayCoords, 1.0f, 1.0f, 1.0f, 1.0f);
+
+        FakePlayer fakePlayer = FakePlayer.getInstance();
+        if (fakePlayer.isCapeLoaded() && fakePlayer.isModelPartShown(PlayerModelPart.CAPE) && fakePlayer.getCloakTextureLocation() != null) {
+            stack.pushPose();
+            stack.translate(0.0D, 0.0D, 0.225D);
+            stack.mulPose(Vector3f.ZN.rotationDegrees(5f));
+            stack.mulPose(Vector3f.XP.rotationDegrees(5f));
+            VertexConsumer vertexConsumer1 = multiBufferSource.getBuffer(RenderType.entitySolid(fakePlayer.getCloakTextureLocation()));
+            model.renderCloak(stack, vertexConsumer1, 15728880, OverlayTexture.NO_OVERLAY);
+            stack.popPose();
+        }
+
+        stack.popPose();
+        Minecraft.getInstance().renderBuffers().bufferSource().endBatch();
     }
 }

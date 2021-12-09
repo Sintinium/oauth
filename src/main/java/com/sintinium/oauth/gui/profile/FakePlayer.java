@@ -44,20 +44,20 @@ public class FakePlayer extends LocalPlayer {
                 skinModel = "default";
                 return;
             }
-
-            if (cache.containsKey(profile.getId())) {
-                PlayerData data = cache.get(profile.getId());
-                this.skin = data.skin;
-                this.cape = data.cape;
-                this.skinModel = data.skinModel;
-                return;
-            }
+//
+//            if (cache.containsKey(profile.getId())) {
+//                PlayerData data = cache.get(profile.getId());
+//                this.skin = data.skin;
+//                this.cape = data.cape;
+//                this.skinModel = data.skinModel;
+//                return;
+//            }
 
             PlayerData data = new PlayerData();
             cape = null;
             Minecraft.getInstance().getSkinManager().registerSkins(profile, (type, resourceLocation, minecraftProfileTexture) -> {
                 if (type == MinecraftProfileTexture.Type.SKIN) {
-                    skin = resourceLocation;
+                    this.skin = resourceLocation;
                     this.skinModel = minecraftProfileTexture.getMetadata("model");
                     if (this.skinModel == null) {
                         this.skinModel = "default";
@@ -70,7 +70,7 @@ public class FakePlayer extends LocalPlayer {
                     cape = resourceLocation;
                     data.cape = cape;
                 }
-            }, true);
+            }, false);
         } catch (Exception e) {
             e.printStackTrace();
         }

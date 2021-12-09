@@ -1,6 +1,5 @@
 package com.sintinium.oauth.gui.profile;
 
-import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.sintinium.oauth.profile.IProfile;
@@ -80,7 +79,6 @@ public class ProfileEntry extends ObjectSelectionList.Entry<ProfileEntry> {
         }
 
         profileList.setSelected(this);
-        onSelected();
 
         if (Util.getMillis() - this.lastClickTime < 250L) {
             profileList.getProfileSelectionScreen().onLoginButton(this);
@@ -110,7 +108,7 @@ public class ProfileEntry extends ObjectSelectionList.Entry<ProfileEntry> {
             FakePlayer.getInstance().setSkin(null);
             return;
         }
-        FakePlayer.getInstance().setSkin(new GameProfile(profile.getUUID(), profile.getName()));
+        FakePlayer.getInstance().setSkin(profile.getGameProfile());
     }
 
     @Override
