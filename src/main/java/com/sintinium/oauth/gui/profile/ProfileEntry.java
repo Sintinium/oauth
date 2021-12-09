@@ -77,7 +77,6 @@ public class ProfileEntry extends AbstractList.AbstractListEntry<ProfileEntry> {
 
         if (Util.getMillis() - this.lastClickTime < 250L) {
             profileList.getProfileSelectionScreen().onLoginButton(this);
-            System.out.println("DOUBLE");
         }
 
         this.lastClickTime = Util.getMillis();
