@@ -77,13 +77,15 @@ public class ProfileSelectionScreen extends OAuthScreen {
         FakePlayer.getInstance().clearCache();
         if (LoginUtil.isOnline()) {
             // Duplicated because for some reason it only half loads the skin information. Running twice seems to fix it
-            FakePlayer.getInstance().setSkin(Minecraft.getInstance().getUser().getGameProfile());
-            FakePlayer.getInstance().setSkin(Minecraft.getInstance().getUser().getGameProfile());
+            GameProfile profile = ProfileManager.getInstance().getGameProfileOrNull(Minecraft.getInstance().getUser().getGameProfile().getId());
+            if (profile == null) profile = Minecraft.getInstance().getUser().getGameProfile();
+            FakePlayer.getInstance().setSkin(profile);
+            FakePlayer.getInstance().setSkin(profile);
         } else if (profileList.getSelected() != null) {
             ProfileEntry entry = profileList.getSelected();
             // Duplicated because for some reason it only half loads the skin information. Running twice seems to fix it
-            FakePlayer.getInstance().setSkin(new GameProfile(entry.getProfile().getUUID(), entry.getProfile().getName()));
-            FakePlayer.getInstance().setSkin(new GameProfile(entry.getProfile().getUUID(), entry.getProfile().getName()));
+            FakePlayer.getInstance().setSkin(entry.getProfile().getGameProfile());
+            FakePlayer.getInstance().setSkin(entry.getProfile().getGameProfile());
         } else {
             FakePlayer.getInstance().setSkin(null);
         }
@@ -132,7 +134,7 @@ public class ProfileSelectionScreen extends OAuthScreen {
     }
 
     public void onLoginButton(ProfileEntry selected) {
-        if (selected == null) return;
+        if (selected == null || selected.getProfile() == null) return;
 
         // Skip async if logging in offline.
         if (selected.getProfile() instanceof OfflineProfile) {
@@ -141,7 +143,7 @@ public class ProfileSelectionScreen extends OAuthScreen {
                 Minecraft.getInstance().setScreen(new JoinMultiplayerScreen(new TitleScreen()));
                 return;
             } catch (Exception e) {
-                setScreen(new ErrorScreen(profileList.getSelected().getProfile() instanceof MicrosoftProfile, e));
+                setScreen(new ErrorScreen(selected.getProfile() instanceof MicrosoftProfile, e));
                 e.printStackTrace();
                 return;
             }
@@ -216,10 +218,10 @@ public class ProfileSelectionScreen extends OAuthScreen {
             }
             if (profile != null) {
                 ProfileManager.getInstance().addProfile(profile);
+                ProfileEntry newProfile = new ProfileEntry(profileList, profile);
+                onLoginButton(newProfile);
             }
 
-            ProfileEntry newProfile = new ProfileEntry(profileList, profile);
-            onLoginButton(newProfile);
         }, "Oauth microsoft");
 
         setScreen(loadingScreen);
