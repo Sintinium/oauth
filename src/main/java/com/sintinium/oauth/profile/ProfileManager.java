@@ -3,10 +3,12 @@ package com.sintinium.oauth.profile;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
+import com.sintinium.oauth.EncryptionUtil;
 import net.minecraft.util.Util;
 import net.minecraftforge.fml.loading.FMLPaths;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -18,6 +20,7 @@ public class ProfileManager {
     private final List<IProfile> profiles = new ArrayList<>();
     private final Map<UUID, GameProfile> gameProfiles = new HashMap<>();
     private File saveFile;
+    private boolean needsOldKey = false;
 
     public static ProfileManager getInstance() {
         if (INSTANCE == null) {
@@ -46,12 +49,14 @@ public class ProfileManager {
         // Deletes old oauth-client.toml if it still exists
         File clientFile = new File(FMLPaths.CONFIGDIR.get().toFile(), "oauth-client.toml");
         if (clientFile.exists()) {
+            LogManager.getLogger().info("Deleting old oauth-client.toml");
             clientFile.delete();
         }
 
         // Moves the old profile file to the new location
         File oldFile = new File(FMLPaths.CONFIGDIR.get().toFile(), "oauth/profiles.json");
         if (oldFile.exists()) {
+            LogManager.getLogger().info("Migrating profile file location");
             File newFile = getSaveFile();
             try {
                 FileUtils.copyFile(oldFile, newFile);
@@ -60,6 +65,7 @@ public class ProfileManager {
             }
             oldFile.delete();
             oldFile.getParentFile().delete();
+            needsOldKey = true;
         }
     }
 
@@ -89,6 +95,17 @@ public class ProfileManager {
             }
         }
         return file;
+    }
+
+    public String getEncryptionKey() {
+        return EncryptionUtil.key;
+    }
+
+    public String getDecryptionKey() {
+        if (needsOldKey) {
+            return EncryptionUtil.oldKey;
+        }
+        return EncryptionUtil.key;
     }
 
     public void loadProfiles() throws IOException {
@@ -134,6 +151,7 @@ public class ProfileManager {
         OutputStream stream = new FileOutputStream(saveFile);
         IOUtils.write(array.toString(), stream, Charset.defaultCharset());
         stream.close();
+        needsOldKey = false;
     }
 
     public List<IProfile> getProfiles() {

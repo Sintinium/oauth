@@ -49,7 +49,8 @@ public class LoginUtil {
         lastCheck = System.currentTimeMillis();
         try {
             minecraftSessionService.joinServer(session.getGameProfile(), session.getAccessToken(), uuid);
-            if (minecraftSessionService.hasJoinedServer(session.getGameProfile(), uuid, null).isComplete()) {
+            GameProfile mssProfile = minecraftSessionService.hasJoinedServer(session.getGameProfile(), uuid, null);
+            if (mssProfile != null && mssProfile.isComplete()) {
                 wasOnline = true;
                 return true;
             } else {
@@ -69,7 +70,7 @@ public class LoginUtil {
         try {
             minecraftSessionService.joinServer(session.getGameProfile(), session.getAccessToken(), serverId);
             GameProfile profile = minecraftSessionService.hasJoinedServer(session.getGameProfile(), serverId, null);
-            if (profile.isComplete()) {
+            if (profile != null && profile.isComplete()) {
                 return profile;
             }
         } catch (AuthenticationException e) {
