@@ -48,7 +48,7 @@ public class MojangProfile implements IProfile {
 
     public static MojangProfile deserialize(JsonObject json) throws Exception {
         String name = json.get("name").getAsString();
-        String password = EncryptionUtil.decryptString(json.get("password").getAsString(), EncryptionUtil.key);
+        String password = EncryptionUtil.decryptString(json.get("password").getAsString(), ProfileManager.getInstance().getDecryptionKey());
         UUID uuid = UUID.fromString(json.get("uuid").getAsString());
         UserType userType = UserType.byName(json.get("userType").getAsString());
 
@@ -60,7 +60,7 @@ public class MojangProfile implements IProfile {
         JsonObject json = new JsonObject();
         json.addProperty("type", typeName());
         json.addProperty("name", this.name);
-        json.addProperty("password", EncryptionUtil.encryptString(this.password, EncryptionUtil.key));
+        json.addProperty("password", EncryptionUtil.encryptString(this.password, ProfileManager.getInstance().getEncryptionKey()));
         json.addProperty("uuid", this.uuid.toString());
         json.addProperty("userType", this.userType.getName());
         return json;

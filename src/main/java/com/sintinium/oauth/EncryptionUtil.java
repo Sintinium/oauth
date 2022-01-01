@@ -17,7 +17,9 @@ public class EncryptionUtil {
     private static Cipher cipher;
     private static SecureRandom random;
 
-    public static String key = FMLPaths.FMLCONFIG.get().toAbsolutePath().toString();
+    public static String key = System.getProperty("user.home") + "oauth";
+    //    public static String key = FMLPaths.FMLCONFIG.get().toAbsolutePath().toString();
+    public static String oldKey = FMLPaths.FMLCONFIG.get().toAbsolutePath().toString();
 
     static {
         try {
