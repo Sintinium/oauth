@@ -3,7 +3,9 @@ package com.sintinium.oauth.profile;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
+import net.minecraft.util.Util;
 import net.minecraftforge.fml.loading.FMLPaths;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
 import java.io.*;
@@ -20,18 +22,9 @@ public class ProfileManager {
     public static ProfileManager getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new ProfileManager();
-            INSTANCE.saveFile = new File(FMLPaths.CONFIGDIR.get().toFile(), "oauth/profiles.json");
-            if (!INSTANCE.saveFile.exists()) {
-                try {
-                    INSTANCE.saveFile.getParentFile().mkdirs();
-                    INSTANCE.saveFile.createNewFile();
-                    OutputStream stream = new FileOutputStream(INSTANCE.saveFile);
-                    IOUtils.write("[]", stream, Charset.defaultCharset());
-                    stream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+            INSTANCE.migrateProfileFile();
+
+            INSTANCE.saveFile = INSTANCE.getSaveFile();
             try {
                 INSTANCE.loadProfiles();
             } catch (IOException e) {
@@ -39,6 +32,63 @@ public class ProfileManager {
             }
         }
         return INSTANCE;
+    }
+
+    /**
+     * Deletes any profile files inside /config and moves it to ./minecraft/oauthprofiles.json
+     */
+    private void migrateProfileFile() {
+        // File already migrated no need to do anything
+        if (new File(getSaveFilePath()).exists()) {
+            return;
+        }
+
+        // Deletes old oauth-client.toml if it still exists
+        File clientFile = new File(FMLPaths.CONFIGDIR.get().toFile(), "oauth-client.toml");
+        if (clientFile.exists()) {
+            clientFile.delete();
+        }
+
+        // Moves the old profile file to the new location
+        File oldFile = new File(FMLPaths.CONFIGDIR.get().toFile(), "oauth/profiles.json");
+        if (oldFile.exists()) {
+            File newFile = getSaveFile();
+            try {
+                FileUtils.copyFile(oldFile, newFile);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            oldFile.delete();
+            oldFile.getParentFile().delete();
+        }
+    }
+
+    private String getSaveFilePath() {
+        String filePath = System.getProperty("user.home");
+        if (Util.getPlatform() == Util.OS.WINDOWS) {
+            filePath += "\\AppData\\Roaming\\.minecraft\\oauthprofiles.json";
+        } else if (Util.getPlatform() == Util.OS.OSX) {
+            filePath += "/Library/Application Support/.minecraft/oauthprofiles.json";
+        } else {
+            filePath += "/.minecraft/oauthprofiles.json";
+        }
+        return filePath;
+    }
+
+    private File getSaveFile() {
+        File file = new File(getSaveFilePath());
+        if (!file.exists()) {
+            try {
+                file.getParentFile().mkdirs();
+                file.createNewFile();
+                OutputStream stream = new FileOutputStream(file);
+                IOUtils.write("[]", stream, Charset.defaultCharset());
+                stream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return file;
     }
 
     public void loadProfiles() throws IOException {
