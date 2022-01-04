@@ -189,7 +189,7 @@ jar {
         ])
     }
 
-    archiveFileName = "oauth-${version}-1.18.jar"
+    archiveFileName = "oauth-${version}-1.18.1.jar"
 }
 
 mixin {
