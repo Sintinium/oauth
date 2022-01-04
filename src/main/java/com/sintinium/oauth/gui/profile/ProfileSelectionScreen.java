@@ -2,6 +2,7 @@ package com.sintinium.oauth.gui.profile;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.exceptions.InvalidCredentialsException;
+import com.mojang.authlib.exceptions.UserMigratedException;
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -190,10 +191,21 @@ public class ProfileSelectionScreen extends OAuthScreen {
                     e.printStackTrace();
                 }
                 setScreen(new JoinMultiplayerScreen(new TitleScreen()));
-            } catch (InvalidCredentialsException e) {
-                ErrorScreen errorScreen = new ErrorScreen(profileList.getSelected().getProfile() instanceof MicrosoftProfile, "Wrong Password. Please delete the profile and create a new one.");
-                errorScreen.setInfo();
+            } catch (UserMigratedException e) {
+                ErrorScreen errorScreen = new ErrorScreen(selected.getProfile() instanceof MicrosoftProfile, "This account has migrated to Microsoft. Please create a new profile with your Microsoft account.");
                 setScreen(errorScreen);
+                e.printStackTrace();
+            } catch (InvalidCredentialsException e) {
+                // Exception was thrown and there's no message to display.
+                if (e.getMessage() == null || e.getMessage().equals(e.getCause().toString())) {
+                    ErrorScreen errorScreen = new ErrorScreen(selected.getProfile() instanceof MicrosoftProfile, e);
+                    setScreen(errorScreen);
+                } else {
+                    ErrorScreen errorScreen = new ErrorScreen(profileList.getSelected().getProfile() instanceof MicrosoftProfile, e.getMessage() + ". Please delete the profile and create a new one.");
+                    errorScreen.setInfo();
+                    setScreen(errorScreen);
+                }
+                e.printStackTrace();
             } catch (Exception e) {
                 setScreen(new ErrorScreen(profileList.getSelected().getProfile() instanceof MicrosoftProfile, e));
                 e.printStackTrace();
