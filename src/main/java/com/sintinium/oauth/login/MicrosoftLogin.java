@@ -3,15 +3,14 @@ package com.sintinium.oauth.login;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.mojang.util.UUIDTypeAdapter;
 import com.sintinium.oauth.gui.ErrorScreen;
 import com.sintinium.oauth.gui.OAuthScreen;
 import com.sintinium.oauth.profile.MicrosoftProfile;
+import com.sintinium.oauth.util.AgnosticUtils;
 import com.sintinium.oauth.util.Lambdas;
 import com.sintinium.oauth.util.NullUtils;
 import com.sun.net.httpserver.HttpServer;
-import net.minecraft.Util;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -171,7 +170,7 @@ public class MicrosoftLogin {
     }
 
     public static void logout() {
-        Util.getPlatform().openUri("https://www.microsoft.com/mscomhp/onerf/signout");
+        AgnosticUtils.openUri("https://www.microsoft.com/mscomhp/onerf/signout");
     }
 
     // 1st
@@ -195,7 +194,7 @@ public class MicrosoftLogin {
         server.setExecutor(null);
         server.start();
 
-        Util.getPlatform().openUri(msAuthUrl);
+        AgnosticUtils.openUri(msAuthUrl);
         serverLatch.await();
         server.stop(2);
         if (this.isCancelled) {
@@ -322,7 +321,7 @@ public class MicrosoftLogin {
         NullUtils.requireNotNull(xuiElement, "xuiElement");
         JsonArray xuiArray = xuiElement.getAsJsonArray();
         NullUtils.requireNotNull(xuiArray, "xuiArray");
-        if (xuiArray.isEmpty()) {
+        if (AgnosticUtils.isEmpty(xuiArray)) {
             throw new IllegalStateException("xuiArray is empty");
         }
         JsonElement xuiFirst = xuiArray.get(0);
@@ -432,7 +431,7 @@ public class MicrosoftLogin {
     }
 
     private JsonObject parseObject(String str) {
-        JsonElement json = JsonParser.parseString(str);
+        JsonElement json = AgnosticUtils.parseJson(str);
         NullUtils.requireNotNull(json, "json");
         JsonObject obj = json.getAsJsonObject();
         NullUtils.requireNotNull(obj, "obj");
