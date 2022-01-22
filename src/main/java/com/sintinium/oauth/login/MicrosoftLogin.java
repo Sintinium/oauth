@@ -1,6 +1,7 @@
 package com.sintinium.oauth.login;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.util.UUIDTypeAdapter;
@@ -8,8 +9,10 @@ import com.sintinium.oauth.gui.ErrorScreen;
 import com.sintinium.oauth.gui.OAuthScreen;
 import com.sintinium.oauth.profile.MicrosoftProfile;
 import com.sintinium.oauth.util.Lambdas;
+import com.sintinium.oauth.util.NullUtils;
 import com.sun.net.httpserver.HttpServer;
 import net.minecraft.util.Util;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
@@ -204,6 +207,8 @@ public class MicrosoftLogin {
 
     // 2nd
     private MsToken getMsToken(String authorizeCode) throws IOException {
+        NullUtils.requireNotNull(authorizeCode, "authorizeCode");
+
         HttpPost post = new HttpPost(msTokenUrl);
 
         List<NameValuePair> params = new ArrayList<>();
@@ -218,11 +223,29 @@ public class MicrosoftLogin {
         post.setHeader("Content-type", "application/x-www-form-urlencoded");
         HttpResponse response = client.execute(post);
 
-        JsonObject obj = parseObject(EntityUtils.toString(response.getEntity()));
-        return new MsToken(obj.get("access_token").getAsString(), obj.get("refresh_token").getAsString());
+        JsonObject obj = parseObject(response);
+        if (!obj.has("access_token")) {
+            throw new IllegalStateException("Missing access_token from obj.has(\"access_token\")");
+        }
+        JsonElement accessTokenElement = obj.get("access_token");
+        NullUtils.requireNotNull(accessTokenElement, "accessTokenElement");
+        String accessToken = accessTokenElement.getAsString();
+        NullUtils.requireNotNull(accessToken, "accessToken");
+
+        if (!obj.has("refresh_token")) {
+            throw new IllegalStateException("Missing refresh_token from obj.has(\"refresh_token\")");
+        }
+        JsonElement refreshTokenElement = obj.get("refresh_token");
+        NullUtils.requireNotNull(refreshTokenElement, "refreshTokenElement");
+        String refreshToken = refreshTokenElement.getAsString();
+        NullUtils.requireNotNull(refreshToken, "refreshToken");
+
+        return new MsToken(accessToken, refreshToken);
     }
 
     private MsToken refreshMsToken(String refreshToken) throws IOException {
+        NullUtils.requireNotNull(refreshToken, "refreshToken");
+
         HttpPost post = new HttpPost(msTokenUrl);
 
         List<NameValuePair> params = new ArrayList<>();
@@ -236,16 +259,28 @@ public class MicrosoftLogin {
         post.setHeader("Content-type", "application/x-www-form-urlencoded");
         HttpResponse response = client.execute(post);
 
-        JsonObject obj = parseObject(EntityUtils.toString(response.getEntity()));
+        JsonObject obj = parseObject(response);
 
         if (!obj.has("access_token")) return null;
         if (!obj.has("refresh_token")) return null;
 
-        return new MsToken(obj.get("access_token").getAsString(), obj.get("refresh_token").getAsString());
+        JsonElement accessTokenElement = obj.get("access_token");
+        NullUtils.requireNotNull(accessTokenElement, "accessTokenElement");
+        String accessToken = accessTokenElement.getAsString();
+        NullUtils.requireNotNull(accessToken, "accessToken");
+
+        JsonElement refreshTokenElement = obj.get("refresh_token");
+        NullUtils.requireNotNull(refreshTokenElement, "refreshTokenElement");
+        String newRefreshToken = refreshTokenElement.getAsString();
+        NullUtils.requireNotNull(newRefreshToken, "newRefreshToken");
+
+        return new MsToken(accessToken, newRefreshToken);
     }
 
     // 3
     private XblToken getXblToken(String accessToken) throws IOException {
+        NullUtils.requireNotNull(accessToken, "accessToken");
+
         HttpPost post = new HttpPost(authXbl);
 
         JsonObject obj = new JsonObject();
@@ -263,10 +298,53 @@ public class MicrosoftLogin {
         HttpResponse response = client.execute(post);
 
         JsonObject responseObj = parseObject(response);
-        return new XblToken(responseObj.get("Token").getAsString(), responseObj.get("DisplayClaims").getAsJsonObject().get("xui").getAsJsonArray().get(0).getAsJsonObject().get("uhs").getAsString());
+        if (!responseObj.has("Token")) {
+            throw new IllegalStateException("Missing token from responseObj.has(\"Token\")");
+        }
+        JsonElement tokenElement = responseObj.get("Token");
+        NullUtils.requireNotNull(tokenElement, "tokenElement");
+        String token = tokenElement.getAsString();
+        NullUtils.requireNotNull(token, "token");
+
+        if (!responseObj.has("DisplayClaims")) {
+            throw new IllegalStateException("Missing display claims from responseObj.has(\"DisplayClaims\")");
+        }
+        JsonElement displayClaimsElement = responseObj.get("DisplayClaims");
+        NullUtils.requireNotNull(displayClaimsElement, "displayClaimsElement");
+        JsonObject displayClaims = displayClaimsElement.getAsJsonObject();
+        NullUtils.requireNotNull(displayClaims, "displayClaims");
+
+        if (!displayClaims.has("xui")) {
+            throw new IllegalStateException("Missing xui from displayClaims.has(\"xui\")");
+        }
+
+        JsonElement xuiElement = displayClaims.get("xui");
+        NullUtils.requireNotNull(xuiElement, "xuiElement");
+        JsonArray xuiArray = xuiElement.getAsJsonArray();
+        NullUtils.requireNotNull(xuiArray, "xuiArray");
+        if (xuiArray.isEmpty()) {
+            throw new IllegalStateException("xuiArray is empty");
+        }
+        JsonElement xuiFirst = xuiArray.get(0);
+        NullUtils.requireNotNull(xuiFirst, "xuiFirst");
+        JsonObject xuiFirstObject = xuiFirst.getAsJsonObject();
+
+        if (!xuiFirstObject.has("uhs")) {
+            throw new IllegalStateException("Missing uhs from xuiFirstObject.has(\"uhs\")");
+        }
+
+        JsonElement uhsElement = xuiFirstObject.get("uhs");
+        NullUtils.requireNotNull(uhsElement, "uhsElement");
+        String uhs = uhsElement.getAsString();
+        NullUtils.requireNotNull(uhs, "uhs");
+
+        return new XblToken(token, uhs);
     }
 
     private XstsToken getXstsToken(XblToken xblToken) throws IOException {
+        NullUtils.requireNotNull(xblToken, "xblToken");
+        NullUtils.requireNotNull(xblToken.token, "xblToken.token");
+
         HttpPost post = new HttpPost(authXsts);
         JsonObject obj = new JsonObject();
         JsonObject props = new JsonObject();
@@ -282,10 +360,29 @@ public class MicrosoftLogin {
         post.setEntity(entity);
 
         HttpResponse response = client.execute(post);
-        return new XstsToken(parseObject(response).get("Token").getAsString());
+
+        JsonObject responseJson = parseObject(response);
+        NullUtils.requireNotNull(responseJson, "responseJson");
+
+        if (!responseJson.has("Token")) {
+            throw new IllegalStateException("Missing token from responseJson.has(\"Token\")");
+        }
+
+        JsonElement tokenElement = responseJson.get("Token");
+        NullUtils.requireNotNull(tokenElement, "tokenElement");
+
+        String tokenString = tokenElement.getAsString();
+        NullUtils.requireNotNull(tokenString, "tokenString");
+
+        return new XstsToken(tokenString);
     }
 
     private MinecraftToken getMinecraftToken(XstsToken xstsToken, XblToken xblToken) throws IOException {
+        NullUtils.requireNotNull(xstsToken, "xstsToken");
+        NullUtils.requireNotNull(xstsToken.token, "xstsToken.token");
+        NullUtils.requireNotNull(xblToken, "xblToken");
+        NullUtils.requireNotNull(xblToken.ush, "xblToken.ush");
+
         HttpPost post = new HttpPost(minecraftAuth);
         JsonObject obj = new JsonObject();
         obj.addProperty("identityToken", "XBL3.0 x=" + xblToken.ush + ";" + xstsToken.token);
@@ -293,7 +390,14 @@ public class MicrosoftLogin {
         post.setEntity(entity);
         HttpResponse response = client.execute(post);
         JsonObject responseObj = parseObject(response);
-        return new MinecraftToken(responseObj.get("access_token").getAsString());
+        NullUtils.requireNotNull(responseObj, "responseObj");
+        if (!responseObj.has("access_token")) {
+            throw new IllegalStateException("Missing access_token from responseObj.has(\"access_token\")");
+        }
+        JsonElement accessTokenElement = responseObj.get("access_token");
+        String accessToken = accessTokenElement.getAsString();
+        NullUtils.requireNotNull(accessToken, "accessToken");
+        return new MinecraftToken(accessToken);
     }
 
     private MinecraftProfile getMinecraftProflile(MinecraftToken minecraftToken) throws IOException {
@@ -301,15 +405,38 @@ public class MicrosoftLogin {
         get.setHeader("Authorization", "Bearer " + minecraftToken.accessToken);
         HttpResponse response = client.execute(get);
         JsonObject obj = parseObject(response);
-        return new MinecraftProfile(obj.get("name").getAsString(), obj.get("id").getAsString(), minecraftToken);
+        NullUtils.requireNotNull(obj, "obj");
+        if (!obj.has("name")) {
+            throw new IllegalStateException("Missing name from obj.has(\"name\")");
+        }
+        JsonElement nameElement = obj.get("name");
+        String name = nameElement.getAsString();
+        NullUtils.requireNotNull(name, "name");
+
+        if (!obj.has("id")) {
+            throw new IllegalStateException("Missing id from obj.has(\"id\")");
+        }
+        JsonElement idElement = obj.get("id");
+        String id = idElement.getAsString();
+        NullUtils.requireNotNull(id, "id");
+
+        return new MinecraftProfile(name, id, minecraftToken);
     }
 
     private JsonObject parseObject(HttpResponse entity) throws IOException {
-        return parseObject(EntityUtils.toString(entity.getEntity()));
+        HttpEntity responseEntity = entity.getEntity();
+        NullUtils.requireNotNull(responseEntity, "responseEntity");
+        String responseString = EntityUtils.toString(responseEntity);
+        NullUtils.requireNotNull(responseString, "responseString");
+        return parseObject(responseString);
     }
 
     private JsonObject parseObject(String str) {
-        return new JsonParser().parse(str).getAsJsonObject();
+        JsonElement json = JsonParser.parseString(str);
+        NullUtils.requireNotNull(json, "json");
+        JsonObject obj = json.getAsJsonObject();
+        NullUtils.requireNotNull(obj, "obj");
+        return obj;
     }
 
     private static class MsToken {
