@@ -68,15 +68,12 @@ public class MicrosoftLogin {
         this.updateStatus = updateStatus;
     }
 
-    public MicrosoftProfile loginFromRefresh(String refreshToken) {
+    public MicrosoftProfile loginFromRefresh(String refreshToken) throws Exception {
         try {
             MsToken token = callIfNotCancelled(this::refreshMsToken, refreshToken);
             if (token == null) return null;
 
             return loginWithToken(token);
-        } catch (Exception e) {
-            e.printStackTrace();
-            OAuthScreen.setScreen(new ErrorScreen(true, e.getMessage()));
         } finally {
             try {
                 client.close();
@@ -84,7 +81,6 @@ public class MicrosoftLogin {
                 e.printStackTrace();
             }
         }
-        return null;
     }
 
     public MicrosoftProfile login() throws Exception {
@@ -133,7 +129,7 @@ public class MicrosoftLogin {
         }
 
         updateStatus.accept("Loading your profile");
-        MinecraftProfile mcProfile = callIfNotCancelled(this::getMinecraftProflile, profile);
+        MinecraftProfile mcProfile = callIfNotCancelled(this::getMinecraftProfile, profile);
         if (mcProfile != null) {
             printDebug("Username: " + mcProfile.name);
             printDebug("UUID: " + mcProfile.id);
@@ -340,7 +336,7 @@ public class MicrosoftLogin {
         return new XblToken(token, uhs);
     }
 
-    private XstsToken getXstsToken(XblToken xblToken) throws IOException {
+    private XstsToken getXstsToken(XblToken xblToken) throws IOException, BaseMicrosoftLoginException {
         NullUtils.requireNotNull(xblToken, "xblToken");
         NullUtils.requireNotNull(xblToken.token, "xblToken.token");
 
@@ -362,6 +358,19 @@ public class MicrosoftLogin {
 
         JsonObject responseJson = parseObject(response);
         NullUtils.requireNotNull(responseJson, "responseJson");
+
+        if (responseJson.has("XErr")) {
+            long xErr = responseJson.get("XErr").getAsLong();
+            if (xErr == 2148916233L) {
+                throw new NoXboxAccountException();
+            } else if (xErr == 2148916235L) {
+                throw new BannedCountryException();
+            } else if (xErr == 2148916238L) {
+                throw new UnderageAccountException();
+            }
+            cancelLogin();
+            return null;
+        }
 
         if (!responseJson.has("Token")) {
             throw new IllegalStateException("Missing token from responseJson.has(\"Token\")");
@@ -399,12 +408,17 @@ public class MicrosoftLogin {
         return new MinecraftToken(accessToken);
     }
 
-    private MinecraftProfile getMinecraftProflile(MinecraftToken minecraftToken) throws IOException {
+    private MinecraftProfile getMinecraftProfile(MinecraftToken minecraftToken) throws Exception {
         HttpGet get = new HttpGet(minecraftProfile);
         get.setHeader("Authorization", "Bearer " + minecraftToken.accessToken);
         HttpResponse response = client.execute(get);
         JsonObject obj = parseObject(response);
         NullUtils.requireNotNull(obj, "obj");
+
+        if (obj.has("error")) {
+            throw new NoAccountFoundException();
+        }
+
         if (!obj.has("name")) {
             throw new IllegalStateException("Missing name from obj.has(\"name\")");
         }
@@ -516,5 +530,20 @@ public class MicrosoftLogin {
         public String str() {
             return "name=" + name + "&" + "id=" + id + "&" + "token=" + token.accessToken;
         }
+    }
+
+    public static class BaseMicrosoftLoginException extends Exception {
+    }
+
+    public static class NoXboxAccountException extends BaseMicrosoftLoginException {
+    }
+
+    public static class BannedCountryException extends BaseMicrosoftLoginException {
+    }
+
+    public static class UnderageAccountException extends BaseMicrosoftLoginException {
+    }
+
+    public static class NoAccountFoundException extends BaseMicrosoftLoginException {
     }
 }
