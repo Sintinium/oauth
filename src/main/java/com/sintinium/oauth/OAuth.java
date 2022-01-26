@@ -2,6 +2,8 @@ package com.sintinium.oauth;
 
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.ExtensionPoint;
+import net.minecraftforge.fml.ModContainer;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -17,11 +19,13 @@ public class OAuth {
     // Directly reference a log4j logger.
     private static OAuth INSTANCE;
     private static final Logger LOGGER = LogManager.getLogger();
+    public ModContainer modContainer;
 
     public OAuth() {
         INSTANCE = this;
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::doClientStuff);
         MinecraftForge.EVENT_BUS.register(this);
+        modContainer = ModList.get().getModContainerById("oauth").orElse(null);
     }
 
     public static OAuth getInstance() {

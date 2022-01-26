@@ -205,6 +205,10 @@ public class ProfileSelectionScreen extends OAuthScreen {
                     setScreen(errorScreen);
                 }
                 e.printStackTrace();
+            } catch (MicrosoftLogin.BaseMicrosoftLoginException e) {
+                setScreen(ErrorScreen.microsoftExceptionScreen(e));
+                e.printStackTrace();
+                return;
             } catch (Exception e) {
                 setScreen(new ErrorScreen(profileList.getSelected().getProfile() instanceof MicrosoftProfile, e));
                 e.printStackTrace();
@@ -222,6 +226,10 @@ public class ProfileSelectionScreen extends OAuthScreen {
             MicrosoftProfile profile;
             try {
                 profile = login.login();
+            } catch (MicrosoftLogin.BaseMicrosoftLoginException e) {
+                setScreen(ErrorScreen.microsoftExceptionScreen(e));
+                e.printStackTrace();
+                return;
             } catch (Exception e) {
                 setScreen(new ErrorScreen(true, e));
                 e.printStackTrace();
