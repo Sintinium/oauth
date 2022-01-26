@@ -38,7 +38,7 @@ minecraft {
     //
     // Use non-default mappings at your own risk. they may not always work.
     // Simply re-run your setup task after changing the mappings to update your workspace.
-    mappings channel: 'parchment', version: '2021.10.17-1.16.5'
+    mappings channel: 'official', version: '1.16.5'
     // makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
 
     // accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
@@ -141,10 +141,6 @@ dependencies {
 //    implementation("org.json:json:20190722")
     implementation("com.google.code.gson:gson:2.8.0")
 
-    // To test hats for compatibility issues
-    implementation fg.deobf("curse.maven:hats-229073:3539379")
-    implementation fg.deobf("curse.maven:ichunutil-229060:3539371")
-    implementation fg.deobf("curse.maven:tabula-229092:3539385")
 
 //    compileOnly("org.spongepowered:mixin:0.8-SNAPSHOT")
     annotationProcessor('org.spongepowered:mixin:0.8.4:processor')
