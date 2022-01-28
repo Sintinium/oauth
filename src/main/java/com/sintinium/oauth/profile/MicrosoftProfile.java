@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.mojang.authlib.UserType;
 import com.sintinium.oauth.login.LoginUtil;
 import com.sintinium.oauth.login.MicrosoftLogin;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.UUID;
 
@@ -46,21 +47,27 @@ public class MicrosoftProfile implements IProfile {
 
     @Override
     public boolean login() throws Exception {
-        if (accessToken == null && refreshToken != null) {
-            MicrosoftProfile profile = new MicrosoftLogin().loginFromRefresh(refreshToken);
-            if (profile == null) {
-                return false;
+        MicrosoftLogin login = new MicrosoftLogin();
+        try {
+            if (accessToken == null && refreshToken != null) {
+                MicrosoftProfile profile = login.loginFromRefresh(refreshToken);
+                if (profile == null) {
+                    return false;
+                }
+                accessToken = profile.accessToken;
+                refreshToken = profile.refreshToken;
+                if (accessToken == null) {
+                    return false;
+                }
+                ProfileManager.getInstance().save();
             }
-            accessToken = profile.accessToken;
-            refreshToken = profile.refreshToken;
-            if (accessToken == null) {
-                return false;
-            }
-            ProfileManager.getInstance().save();
+            LoginUtil.loginMs(this);
+            LoginUtil.needsRefresh = true;
+            return LoginUtil.isOnline();
+        } catch (Exception e) {
+            LogManager.getLogger().error(login.getErroredResponses());
+            throw e;
         }
-        LoginUtil.loginMs(this);
-        LoginUtil.needsRefresh = true;
-        return LoginUtil.isOnline();
     }
 
     public static MicrosoftProfile deserialize(JsonObject json) {

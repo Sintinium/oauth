@@ -19,6 +19,7 @@ public class OAuth {
     private static OAuth INSTANCE;
     private static final Logger LOGGER = LogManager.getLogger();
     public ModContainer modContainer;
+    public static boolean debugMode = false;
 
     public OAuth() {
         INSTANCE = this;

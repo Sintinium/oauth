@@ -28,6 +28,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.PlayerModelPart;
+import org.apache.logging.log4j.LogManager;
 
 import javax.annotation.Nullable;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -230,10 +231,12 @@ public class ProfileSelectionScreen extends OAuthScreen {
             } catch (MicrosoftLogin.BaseMicrosoftLoginException e) {
                 setScreen(ErrorScreen.microsoftExceptionScreen(e));
                 e.printStackTrace();
+                LogManager.getLogger().error(login.getErroredResponses());
                 return;
             } catch (Exception e) {
                 setScreen(new ErrorScreen(true, e));
                 e.printStackTrace();
+                LogManager.getLogger().error(login.getErroredResponses());
                 return;
             }
             if (profile != null) {
