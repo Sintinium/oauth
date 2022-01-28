@@ -1,8 +1,6 @@
 package com.sintinium.oauth.login;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 import com.mojang.util.UUIDTypeAdapter;
 import com.sintinium.oauth.gui.ErrorScreen;
 import com.sintinium.oauth.gui.OAuthScreen;
@@ -11,6 +9,7 @@ import com.sintinium.oauth.util.AgnosticUtils;
 import com.sintinium.oauth.util.Lambdas;
 import com.sintinium.oauth.util.NullUtils;
 import com.sun.net.httpserver.HttpServer;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -24,6 +23,8 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -39,6 +40,8 @@ import java.util.function.Consumer;
 //import org.json.*;
 
 public class MicrosoftLogin {
+
+    private final Logger LOGGER = LogManager.getLogger();
 
     private static final String msTokenUrl = "https://login.live.com/oauth20_token.srf";
     private static final String authXbl = "https://user.auth.xboxlive.com/user/authenticate";
@@ -59,10 +62,11 @@ public class MicrosoftLogin {
     private final RequestConfig config = RequestConfig.custom().setConnectTimeout(30 * 1000).setSocketTimeout(30 * 1000).setConnectionRequestTimeout(30 * 1000).build();
     private final CloseableHttpClient client = HttpClientBuilder.create().setDefaultRequestConfig(config).build();
     private boolean isCancelled = false;
-    private final boolean isDebug = false;
     private Consumer<String> updateStatus = s -> {
     };
     private CountDownLatch serverLatch = null;
+
+    private final List<JsonObject> erroredResponses = new ArrayList<>();
 
     public void setUpdateStatusConsumer(Consumer<String> updateStatus) {
         this.updateStatus = updateStatus;
@@ -86,16 +90,10 @@ public class MicrosoftLogin {
     public MicrosoftProfile login() throws Exception {
         try {
             String authorizeCode = callIfNotCancelled(this::authorizeUser);
-            if (authorizeCode != null) {
-                printDebug("MS Oauth: " + authorizeCode);
-            }
             if (authorizeCode == null) return null;
 
             updateStatus.accept("Getting token from Microsoft");
             MsToken token = callIfNotCancelled(this::getMsToken, authorizeCode);
-            if (token != null) {
-                printDebug("Ms Token: " + token.accessToken);
-            }
             if (token == null) return null;
 
             return loginWithToken(token);
@@ -112,28 +110,15 @@ public class MicrosoftLogin {
     private MicrosoftProfile loginWithToken(MsToken token) throws Exception {
         updateStatus.accept("Getting Xbox Live token");
         XblToken xblToken = callIfNotCancelled(this::getXblToken, token.accessToken);
-        if (xblToken != null) {
-            printDebug("XBL Token: " + xblToken.token + " | " + xblToken.ush);
-        }
 
         updateStatus.accept("Logging into Xbox Live");
         XstsToken xstsToken = callIfNotCancelled(this::getXstsToken, xblToken);
-        if (xstsToken != null) {
-            printDebug("Xsts Token: " + xstsToken.token);
-        }
 
         updateStatus.accept("Getting your Minecraft token");
         MinecraftToken profile = callIfNotCancelled(() -> getMinecraftToken(xstsToken, xblToken));
-        if (profile != null) {
-            printDebug("Minecraft Profile Token: " + profile.accessToken);
-        }
 
         updateStatus.accept("Loading your profile");
         MinecraftProfile mcProfile = callIfNotCancelled(this::getMinecraftProfile, profile);
-        if (mcProfile != null) {
-            printDebug("Username: " + mcProfile.name);
-            printDebug("UUID: " + mcProfile.id);
-        }
 
         if (mcProfile == null) {
             OAuthScreen.setScreen(new ErrorScreen(true, "Failed to create Minecraft Profile."));
@@ -143,9 +128,91 @@ public class MicrosoftLogin {
         return new MicrosoftProfile(mcProfile.name, UUIDTypeAdapter.fromString(mcProfile.id), mcProfile.token.accessToken, token.refreshToken);
     }
 
-    private void printDebug(String text) {
-        if (!isDebug) return;
-        System.out.println(text);
+    private void addResponseDebugInfo(JsonObject response) {
+        this.erroredResponses.add(response);
+    }
+
+    public String getErroredResponses() {
+        StringBuilder sb = new StringBuilder();
+        int index = 1;
+        for (JsonObject response : erroredResponses) {
+            sb.append(index).append(": ").append(hideElements(AgnosticUtils.deepCopy(response, JsonObject.class),
+                    "access_token",
+                    "refresh_token",
+                    "Token",
+                    "DisplayClaims",
+                    "xui",
+                    "uhs"
+            )).append(System.lineSeparator());
+            index++;
+        }
+        return sb.toString();
+    }
+
+    private JsonObject hideElements(JsonObject obj, final String... elements) {
+        for (String element : elements) {
+            for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+                // If nested loop over it first.
+                if (entry.getValue().isJsonObject()) {
+                    hideElements(entry.getValue().getAsJsonObject(), elements);
+                    continue;
+                }
+
+                // From here on we're only dealing with matched elements
+                if (!entry.getKey().equalsIgnoreCase(element)) continue;
+
+                if (entry.getValue().isJsonArray()) {
+                    // Recursive consumer. Don't judge me.
+                    Consumer<JsonArray> iterate = new Consumer<JsonArray>() {
+                        @Override
+                        public void accept(JsonArray jsonElements) {
+                            JsonArray array = new JsonArray();
+                            for (JsonElement jsonElement : entry.getValue().getAsJsonArray()) {
+                                if (jsonElement.isJsonPrimitive()) {
+                                    array.add(getHiddenString(jsonElement));
+                                } else if (jsonElement.isJsonArray()) {
+                                    accept(jsonElement.getAsJsonArray());
+                                } else if (jsonElement.isJsonObject()) {
+                                    array.add(hideElements(jsonElement.getAsJsonObject(), elements));
+                                } else {
+                                    array.add(jsonElement);
+                                }
+                            }
+                            entry.setValue(array);
+                        }
+                    };
+                    iterate.accept(entry.getValue().getAsJsonArray());
+                }
+
+                // Just hides the value.
+                if (entry.getValue().isJsonPrimitive()) {
+                    entry.setValue(new JsonPrimitive(getHiddenString(entry.getValue())));
+                }
+
+                if (entry.getValue().isJsonNull()) {
+                    entry.setValue(JsonNull.INSTANCE);
+                }
+            }
+        }
+
+        return obj;
+    }
+
+    private String getHiddenString(JsonElement element) {
+        String input = element.getAsString();
+        if (input == null) return "null";
+        if (StringUtils.isEmpty(input)) return "empty";
+
+        StringBuilder builder = new StringBuilder();
+        int count = 0;
+        for (char c : input.toCharArray()) {
+            if (count <= 10)
+                builder.append("?");
+            count++;
+        }
+        if (count > 10)
+            builder.append("...+").append(count - 10);
+        return builder.toString();
     }
 
     private <T, R> R callIfNotCancelled(Lambdas.FunctionWithException<T, R> function, T value) throws Exception {
@@ -441,6 +508,11 @@ public class MicrosoftLogin {
         NullUtils.requireNotNull(responseEntity, "responseEntity");
         String responseString = EntityUtils.toString(responseEntity);
         NullUtils.requireNotNull(responseString, "responseString");
+
+        if (entity.getStatusLine().getStatusCode() < 200 || entity.getStatusLine().getStatusCode() >= 300) {
+            LOGGER.error("Received error code: " + entity.getStatusLine().getStatusCode());
+            LOGGER.error("Response: " + responseString);
+        }
         return parseObject(responseString);
     }
 
@@ -449,6 +521,7 @@ public class MicrosoftLogin {
         NullUtils.requireNotNull(json, "json");
         JsonObject obj = json.getAsJsonObject();
         NullUtils.requireNotNull(obj, "obj");
+        addResponseDebugInfo(obj);
         return obj;
     }
 

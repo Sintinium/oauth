@@ -27,6 +27,7 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.vector.Quaternion;
 import net.minecraft.util.math.vector.Vector3f;
 import net.minecraft.util.text.StringTextComponent;
+import org.apache.logging.log4j.LogManager;
 
 import javax.annotation.Nullable;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -229,10 +230,12 @@ public class ProfileSelectionScreen extends OAuthScreen {
             } catch (MicrosoftLogin.BaseMicrosoftLoginException e) {
                 setScreen(ErrorScreen.microsoftExceptionScreen(e));
                 e.printStackTrace();
+                LogManager.getLogger().error(login.getErroredResponses());
                 return;
             } catch (Exception e) {
                 setScreen(new ErrorScreen(true, e));
                 e.printStackTrace();
+                LogManager.getLogger().error(login.getErroredResponses());
                 return;
             }
             if (profile != null) {
