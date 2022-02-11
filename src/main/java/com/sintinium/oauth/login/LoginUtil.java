@@ -4,23 +4,17 @@ import com.mojang.authlib.Agent;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.UserType;
 import com.mojang.authlib.exceptions.AuthenticationException;
-import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
-import com.mojang.authlib.exceptions.InvalidCredentialsException;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService;
 import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
 import com.mojang.util.UUIDTypeAdapter;
-import com.sintinium.oauth.gui.ErrorScreen;
 import com.sintinium.oauth.profile.MicrosoftProfile;
 import com.sintinium.oauth.profile.MojangProfile;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Session;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
-import org.lwjgl.system.CallbackI;
 
 import java.lang.reflect.Field;
-import java.net.UnknownHostException;
-import java.util.Optional;
 import java.util.UUID;
 
 public class LoginUtil {
@@ -104,7 +98,7 @@ public class LoginUtil {
             return null;
         }
 
-        return new MojangProfile(name, password, uuid, type);
+        return new MojangProfile(name, username, password, uuid, type);
     }
 
     public static void loginOffline(String username) throws WrongMinecraftVersionException {

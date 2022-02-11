@@ -54,7 +54,7 @@ public class LoginScreen extends OAuthScreen {
         this.passwordWidget.setResponder(this::onEdited);
 
         this.usernameWidget = new UsernameFieldWidget(this.font, this.width / 2 - 100, this.height / 2 - 60, 200, 20, new StringTextComponent("Username/Email"), passwordWidget);
-        this.usernameWidget.setFocus(true);
+        this.setInitialFocus(this.usernameWidget);
         this.usernameWidget.setResponder(this::onEdited);
 
         this.children.add(this.usernameWidget);
