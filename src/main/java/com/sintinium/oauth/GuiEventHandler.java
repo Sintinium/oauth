@@ -1,5 +1,6 @@
 package com.sintinium.oauth;
 
+import com.sintinium.oauth.gui.MultiplayerDisabledScreen;
 import com.sintinium.oauth.gui.TextWidget;
 import com.sintinium.oauth.gui.profile.ProfileSelectionScreen;
 import com.sintinium.oauth.login.LoginUtil;
@@ -14,9 +15,15 @@ import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = "oauth", value = Dist.CLIENT)
 public class GuiEventHandler {
+    public static boolean warned = false;
     @SubscribeEvent
     public static void multiplayerScreenOpen(ScreenEvent.InitScreenEvent.Post event) {
         if (!(event.getScreen() instanceof JoinMultiplayerScreen)) return;
+        if (LoginUtil.isMultiplayerDisabled() && !warned) {
+            Minecraft.getInstance().setScreen(new MultiplayerDisabledScreen());
+            warned = true;
+            return;
+        }
         JoinMultiplayerScreen multiplayerScreen = (JoinMultiplayerScreen) event.getScreen();
         try {
 //            Method addButtonMethod = ObfuscationReflectionHelper.findMethod(Screen.class, "addButton", Widget.class);

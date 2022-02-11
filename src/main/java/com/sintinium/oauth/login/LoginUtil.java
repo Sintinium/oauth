@@ -8,8 +8,10 @@ import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService;
 import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
 import com.mojang.util.UUIDTypeAdapter;
+import com.sintinium.oauth.GuiEventHandler;
 import com.sintinium.oauth.profile.MicrosoftProfile;
 import com.sintinium.oauth.profile.MojangProfile;
+import com.sintinium.oauth.util.MultiplayerAllowedUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.User;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
@@ -28,10 +30,15 @@ public class LoginUtil {
     private static final YggdrasilAuthenticationService authService = new YggdrasilAuthenticationService(Minecraft.getInstance().getProxy(), UUID.randomUUID().toString());
     private static final YggdrasilUserAuthentication userAuth = (YggdrasilUserAuthentication) authService.createUserAuthentication(Agent.MINECRAFT);
     private static final YggdrasilMinecraftSessionService minecraftSessionService = (YggdrasilMinecraftSessionService) authService.createMinecraftSessionService();
+    private static boolean isMultiplayerDisabled = false;
 
     public static void updateOnlineStatus() {
         needsRefresh = true;
         isOnline();
+    }
+
+    public static boolean isMultiplayerDisabled() {
+        return isMultiplayerDisabled;
     }
 
     public static boolean isOnline() {
@@ -42,6 +49,8 @@ public class LoginUtil {
         String uuid = UUID.randomUUID().toString();
         needsRefresh = false;
         lastCheck = System.currentTimeMillis();
+        GuiEventHandler.warned = false;
+        isMultiplayerDisabled = MultiplayerAllowedUtil.isMultiplayerDisabled(session.getAccessToken());
         try {
             minecraftSessionService.joinServer(session.getGameProfile(), session.getAccessToken(), uuid);
             GameProfile mssProfile = minecraftSessionService.hasJoinedServer(session.getGameProfile(), uuid, null);

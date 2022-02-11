@@ -176,6 +176,10 @@ public class ProfileSelectionScreen extends OAuthScreen {
                 }
 
                 if (!isSuccessful && selected.getProfile() instanceof MicrosoftProfile) {
+                    if (LoginUtil.isMultiplayerDisabled()) {
+                        setScreen(new MultiplayerDisabledScreen());
+                        return;
+                    }
                     onMicrosoftType(selected);
                     return;
                 }
