@@ -100,7 +100,9 @@ public class ProfileSelectionScreen extends OAuthScreen {
                 ProfileManager.getInstance().removeProfile(profileList.getSelected().getProfile().getUUID());
                 int index = profileList.children().indexOf(profileList.getSelected());
                 profileList.children().remove(profileList.getSelected());
-                if (index < profileList.children().size()) {
+                if (profileList.children().isEmpty()) {
+                    profileList.setSelected(null);
+                } else if (index < profileList.children().size()) {
                     profileList.setSelected(profileList.children().get(index));
                 } else if (index - 1 < profileList.children().size() && index - 1 >= 0) {
                     profileList.setSelected(profileList.children().get(index - 1));
