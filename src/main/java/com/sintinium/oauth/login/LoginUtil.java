@@ -99,7 +99,7 @@ public class LoginUtil {
             return null;
         }
 
-        return new MojangProfile(name, password, uuid, type);
+        return new MojangProfile(name, username, password, uuid, type);
     }
 
     public static void loginOffline(String username) throws WrongMinecraftVersionException {
