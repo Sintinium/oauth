@@ -11,6 +11,7 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -18,11 +19,16 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 import java.awt.*;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -51,10 +57,33 @@ public class MicrosoftLogin {
             .addParameter("prompt", "select_account")
             .build();
     private RequestConfig config = RequestConfig.custom().setConnectTimeout(30 * 1000).setSocketTimeout(30 * 1000).setConnectionRequestTimeout(30 * 1000).build();
-    private CloseableHttpClient client = HttpClientBuilder.create().setDefaultRequestConfig(config).build();
+    private CloseableHttpClient client;
     private boolean isCancelled = false;
     private boolean isDebug = false;
     private CountDownLatch serverLatch = null;
+
+    public MicrosoftLogin() {
+        SSLContext sslContext = null;
+        try {
+            KeyStore keyStore = KeyStore.getInstance("JKS");
+            try (InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream("cacerts")) {
+                keyStore.load(stream, "changeit".toCharArray());
+            }
+
+            sslContext = SSLContext.getInstance("TLS");
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            keyManagerFactory.init(keyStore, "changeit".toCharArray());
+            trustManagerFactory.init(keyStore);
+            sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+        client = HttpClientBuilder.create().setSSLSocketFactory(new SSLConnectionSocketFactory(sslContext)).setDefaultRequestConfig(config).build();
+
+    }
 
     public MinecraftProfile login(Runnable callback) throws Exception {
         try {
