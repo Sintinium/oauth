@@ -93,7 +93,7 @@ public class ProfileSelectionScreen extends OAuthScreen {
         }
 
         addButton(this.width / 2 - 45 - 90 - 2, this.height - 2 - 20, 90, "Add Account", p_onPress_1_ -> {
-            setScreen(new LoginTypeScreen(ProfileSelectionScreen::onMojangType, () -> this.onMicrosoftType(null)));
+            this.onMicrosoftType(null);
         });
         removeAccountButton = addButton(this.width / 2 - 45, this.height - 2 - 20, 90, "Remove Account", p_onPress_1_ -> {
             if (profileList.getSelected() != null) {
