@@ -49,7 +49,7 @@ public class ErrorScreen extends GuiScreen {
 
     @Override
     public void drawScreen(int p_230430_2_, int p_230430_3_, float p_230430_4_) {
-        FontRenderer font = Minecraft.getMinecraft().fontRenderer;
+        FontRenderer font = Minecraft.getMinecraft().fontRendererObj;
         this.drawDefaultBackground();
         if (isInfo) {
             drawCenteredString(font, this.title, this.width / 2, this.height / 2 - 40, 0xFFFFFF);

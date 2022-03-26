@@ -1,6 +1,7 @@
 package com.sintinium.oauth.login;
 
 import com.mojang.authlib.Agent;
+import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.UserType;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
@@ -10,7 +11,7 @@ import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
 import com.mojang.util.UUIDTypeAdapter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Session;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+import net.minecraftforge.fml.relauncher.ReflectionHelper;
 
 import java.lang.reflect.Field;
 import java.util.Optional;
@@ -42,7 +43,8 @@ public class LoginUtil {
         lastCheck = System.currentTimeMillis();
         try {
             minecraftSessionService.joinServer(session.getProfile(), session.getToken(), uuid);
-            if (minecraftSessionService.hasJoinedServer(session.getProfile(), uuid, null).isComplete()) {
+            GameProfile mssProfile = minecraftSessionService.hasJoinedServer(session.getProfile(), uuid);
+            if (mssProfile != null && mssProfile.isComplete()) {
                 wasOnline = true;
                 return true;
             } else {
@@ -91,7 +93,7 @@ public class LoginUtil {
     private static void setSession(Session session) {
         needsRefresh = true;
         updateOnlineStatus();
-        Field field = ObfuscationReflectionHelper.findField(Minecraft.class, "field_71449_j");
+        Field field = ReflectionHelper.findField(Minecraft.class, "field_71449_j", "session");
         field.setAccessible(true);
         try {
             field.set(Minecraft.getMinecraft(), session);

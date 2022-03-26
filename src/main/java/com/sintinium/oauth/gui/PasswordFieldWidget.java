@@ -8,9 +8,9 @@ import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiPageButtonList;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ChatAllowedCharacters;
 import net.minecraft.util.math.MathHelper;
@@ -437,7 +437,7 @@ public class PasswordFieldWidget extends Gui {
         }
 
         Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder bufferbuilder = tessellator.getBuffer();
+        VertexBuffer bufferbuilder = tessellator.getBuffer();
         GlStateManager.color(0.0F, 0.0F, 255.0F, 255.0F);
         GlStateManager.disableTexture2D();
         GlStateManager.enableColorLogic();
@@ -501,10 +501,6 @@ public class PasswordFieldWidget extends Gui {
         }
 
         this.isFocused = isFocusedIn;
-
-        if (Minecraft.getMinecraft().currentScreen != null) {
-            Minecraft.getMinecraft().currentScreen.setFocused(isFocusedIn);
-        }
     }
 
     public void setEnabled(boolean enabled) {

@@ -25,7 +25,12 @@ public class LoginLoadingScreen extends GuiScreen {
         this.lastScreen = callingScreen;
         this.onCancel = onCancel;
         this.isMicrosoft = isMicrosoft;
-        updateText.set("Check your browser");
+
+        if (this.isMicrosoft) {
+            updateText.set("Check your browser");
+        } else {
+            updateText.set("Authorizing you with Mojang");
+        }
     }
 
     public void updateText(String text) {
@@ -68,9 +73,9 @@ public class LoginLoadingScreen extends GuiScreen {
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         this.drawBackground(0);
-        drawCenteredString(Minecraft.getMinecraft().fontRenderer, renderText, this.width / 2, this.height / 2 - 40, 0xFFFFFF);
+        drawCenteredString(Minecraft.getMinecraft().fontRendererObj, renderText, this.width / 2, this.height / 2 - 40, 0xFFFFFF);
         if (this.isMicrosoft) {
-            drawCenteredString(Minecraft.getMinecraft().fontRenderer, updateText.get(), this.width / 2, this.height / 2 - 28, 0xFFFFFF);
+            drawCenteredString(Minecraft.getMinecraft().fontRendererObj, updateText.get(), this.width / 2, this.height / 2 - 28, 0xFFFFFF);
         }
         super.drawScreen(mouseX, mouseY, partialTicks);
     }

@@ -4,7 +4,7 @@
     "name": "OAuth",
     "description": "Adds the ability to relogin without closing your game. It includes legacy username logins, mojang logins, and microsoft account logins.",
     "version": "${version}",
-    "mcversion": "1.12.2",
+    "mcversion": "${mcversion}",
     "url": "sintinium.com",
     "updateUrl": "",
     "authorList": [

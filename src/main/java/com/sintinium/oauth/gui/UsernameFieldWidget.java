@@ -14,11 +14,10 @@ public class UsernameFieldWidget extends GuiTextField {
 
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) {
-        boolean result = super.mouseClicked(mouseX, mouseY, mouseButton);
+    public void mouseClicked(int mouseX, int mouseY, int mouseButton) {
+        super.mouseClicked(mouseX, mouseY, mouseButton);
         if (this.isFocused()) {
             passwordFieldWidget.setFocused(false);
         }
-        return result;
     }
 }

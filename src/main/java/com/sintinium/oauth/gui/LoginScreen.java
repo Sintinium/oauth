@@ -75,18 +75,18 @@ public class LoginScreen extends GuiScreen {
         Keyboard.enableRepeatEvents(true);
         buttonList.clear();
 
-        this.passwordWidget = new PasswordFieldWidget(0, this.mc.fontRenderer, this.width / 2 - 100, this.height / 2 - 20, 200, 20);
+        this.passwordWidget = new PasswordFieldWidget(0, this.mc.fontRendererObj, this.width / 2 - 100, this.height / 2 - 20, 200, 20);
         this.passwordWidget.setMaxStringLength(128);
         this.passwordWidget.setGuiResponder(guiResponder);
 
-        this.usernameWidget = new UsernameFieldWidget(1, this.mc.fontRenderer, this.width / 2 - 100, this.height / 2 - 60, 200, 20, passwordWidget);
+        this.usernameWidget = new UsernameFieldWidget(1, this.mc.fontRendererObj, this.width / 2 - 100, this.height / 2 - 60, 200, 20, passwordWidget);
         this.usernameWidget.setFocused(true);
         if (LoginUtil.lastMojangUsername != null) {
             this.usernameWidget.setText(LoginUtil.lastMojangUsername);
         }
         this.usernameWidget.setGuiResponder(guiResponder);
 
-        savePasswordWidget = this.addButton(new OAuthCheckbox(4, this.width / 2 - fontRenderer.getStringWidth("Save password") - 25, this.height / 2 + 1 + 2, "Save password", false));
+        savePasswordWidget = this.addButton(new OAuthCheckbox(4, this.width / 2 - this.mc.fontRendererObj.getStringWidth("Save password") - 25, this.height / 2 + 1 + 2, "Save password", false));
 
         Runnable savePw = () -> {
             if (savePasswordWidget.isChecked()) {
@@ -115,6 +115,7 @@ public class LoginScreen extends GuiScreen {
                     }
                 }
             });
+            thread.setDaemon(true);
             thread.start();
         }, this::updateLoginButton, () -> this.mojangLoginButton.displayString = "Login"));
 
@@ -125,25 +126,22 @@ public class LoginScreen extends GuiScreen {
             Minecraft.getMinecraft().displayGuiScreen(lastScreen);
         }));
 
-        this.cleanUp();
-
         if (OAuthConfig.isSavedPassword()) {
             this.usernameWidget.setText(OAuthConfig.getUsername());
             this.passwordWidget.setText(OAuthConfig.getPassword());
             this.savePasswordWidget.setIsChecked(true);
         }
 
+        this.cleanUp();
     }
 
     private void saveLoginInfo() {
         OAuthConfig.setUsername(usernameWidget.getText());
         OAuthConfig.setPassword(passwordWidget.getText());
-        ConfigManager.sync("oauth", Config.Type.INSTANCE);
     }
 
     private void removeLoginInfo() {
         OAuthConfig.removeUsernamePassword();
-        ConfigManager.sync("oauth", Config.Type.INSTANCE);
     }
 
     private void onEdited(int id, String value) {
@@ -201,12 +199,12 @@ public class LoginScreen extends GuiScreen {
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         this.drawBackground(0);
-        drawCenteredString(mc.fontRenderer, title, width / 2, 17, 16777215);
-        drawString(mc.fontRenderer, "Username/Email", this.width / 2 - 100, this.height / 2 - 60 - 12, 10526880);
-        drawString(mc.fontRenderer, "Password", this.width / 2 - 100, this.height / 2 - 20 - 12, 10526880);
+        drawCenteredString(mc.fontRendererObj, title, width / 2, 17, 16777215);
+        drawString(mc.fontRendererObj, "Username/Email", this.width / 2 - 100, this.height / 2 - 60 - 12, 10526880);
+        drawString(mc.fontRendererObj, "Password", this.width / 2 - 100, this.height / 2 - 20 - 12, 10526880);
 
         if (status.get() != null) {
-            drawCenteredString(mc.fontRenderer, status.get(), width / 2, height / 2 + 20, 0xFF0000);
+            drawCenteredString(mc.fontRendererObj, status.get(), width / 2, height / 2 + 20, 0xFF0000);
         }
         this.usernameWidget.drawTextBox();
         this.passwordWidget.drawTextBox();

@@ -1,46 +1,46 @@
 package com.sintinium.oauth;
 
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.common.config.Config;
+import net.minecraftforge.common.config.Configuration;
+import net.minecraftforge.common.config.Property;
 
-@Config(modid = "oauth")
 public class OAuthConfig {
-    @Config.Comment({
-            "THIS SHOULDN'T BE EDITED BY HAND!",
-            "Last username used to login to Mojang if saved."
-    })
-    @Config.Name("Last Username")
-    public static String lastUsername = "";
+    private static Configuration cfg;
+    private static Property lastUsername;
+    private static Property lastPassword;
 
-    @Config.Comment({
-            "THIS SHOULDN'T BE EDITED BY HAND!",
-            "Last password used to login to Mojang if saved. (Encrypted)"
-    })
-    @Config.Name("Last Password")
-    public static String lastPassword = "";
+    public static void load(Configuration cfg) {
+        OAuthConfig.cfg = cfg;
+        OAuthConfig.lastUsername = cfg.get("oauth", "Last Username", "", "THIS SHOULDN'T BE EDITED BY HAND!\nLast username used to login to Mojang if saved.");
+        OAuthConfig.lastPassword = cfg.get("oauth", "Last Password", "", "THIS SHOULDN'T BE EDITED BY HAND!\nLast password used to login to Mojang if saved. (Encrypted)");
+        cfg.save();
+    }
 
     public static String getUsername() {
-        return lastUsername;
+        return lastUsername.getString();
     }
 
     public static void setUsername(String username) {
-        lastUsername = username;
+        lastUsername.set(username);
+        cfg.save();
     }
 
     public static String getPassword() {
-        return EncryptionUtil.decryptString(lastPassword, Minecraft.getMinecraft().mcDataDir.getAbsolutePath().replaceAll("\\\\", "/"));
+        return EncryptionUtil.decryptString(lastPassword.getString(), Minecraft.getMinecraft().mcDataDir.getAbsolutePath().replaceAll("\\\\", "/"));
     }
 
     public static void setPassword(String password) {
-        lastPassword = EncryptionUtil.encryptString(password, Minecraft.getMinecraft().mcDataDir.getAbsolutePath().replaceAll("\\\\", "/"));
+        lastPassword.set(EncryptionUtil.encryptString(password, Minecraft.getMinecraft().mcDataDir.getAbsolutePath().replaceAll("\\\\", "/")));
+        cfg.save();
     }
 
     public static void removeUsernamePassword() {
-        lastUsername = "";
-        lastPassword = "";
+        lastUsername.set("");
+        lastPassword.set("");
+        cfg.save();
     }
 
     public static boolean isSavedPassword() {
-        return !lastUsername.isEmpty() && !lastPassword.isEmpty();
+        return !lastUsername.getString().isEmpty() && !lastPassword.getString().isEmpty();
     }
 }

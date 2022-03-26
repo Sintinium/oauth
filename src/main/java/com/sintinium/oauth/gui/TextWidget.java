@@ -23,6 +23,6 @@ public class TextWidget {
     }
 
     public void draw(GuiScreen screen) {
-        screen.drawString(screen.mc.fontRenderer, text, x, y, color);
+        screen.drawString(screen.mc.fontRendererObj, text, x, y, color);
     }
 }
