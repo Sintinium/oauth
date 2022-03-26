@@ -16,7 +16,7 @@ import java.util.List;
 
 @Mod.EventBusSubscriber(modid = "oauth", value = Side.CLIENT)
 public class GuiEventHandler {
-    private static TextWidget statusText = new TextWidget(10 + 66 + 3, 12, "Status: offline");
+    private static TextWidget statusText = new TextWidget(10 + 66 + 3, 12, "Status: loading");
 
     @SubscribeEvent
     public static void multiplayerScreenOpen(GuiScreenEvent.InitGuiEvent.Post event) {
