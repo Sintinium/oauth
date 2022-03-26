@@ -115,6 +115,7 @@ public class LoginScreen extends GuiScreen {
                     }
                 }
             });
+            thread.setDaemon(true);
             thread.start();
         }, this::updateLoginButton, () -> this.mojangLoginButton.displayString = "Login"));
 

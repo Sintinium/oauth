@@ -39,6 +39,7 @@ public class GuiEventHandler {
                     statusText.setColor(0xFF5555);
                 }
             });
+            thread.setDaemon(true);
             thread.start();
 
             event.getButtonList().addAll(buttonList);

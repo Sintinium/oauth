@@ -41,6 +41,7 @@ public class LoginTypeScreen extends GuiScreen {
                 }
             });
             Minecraft.getMinecraft().displayGuiScreen(loadingScreen);
+            thread.setDaemon(true);
             thread.start();
         }));
 
