@@ -25,7 +25,12 @@ public class LoginLoadingScreen extends GuiScreen {
         this.lastScreen = callingScreen;
         this.onCancel = onCancel;
         this.isMicrosoft = isMicrosoft;
-        updateText.set("Check your browser");
+
+        if (this.isMicrosoft) {
+            updateText.set("Check your browser");
+        } else {
+            updateText.set("Authorizing you with Mojang");
+        }
     }
 
     public void updateText(String text) {
