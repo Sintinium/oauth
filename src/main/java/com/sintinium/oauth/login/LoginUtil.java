@@ -1,6 +1,7 @@
 package com.sintinium.oauth.login;
 
 import com.mojang.authlib.Agent;
+import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.UserType;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
@@ -42,7 +43,9 @@ public class LoginUtil {
         lastCheck = System.currentTimeMillis();
         try {
             minecraftSessionService.joinServer(session.getProfile(), session.getToken(), uuid);
-            if (minecraftSessionService.hasJoinedServer(session.getProfile(), uuid, null).isComplete()) {
+            GameProfile mssProfile = minecraftSessionService.hasJoinedServer(session.getProfile(),
+                uuid, null);
+            if (mssProfile != null && mssProfile.isComplete()) {
                 wasOnline = true;
                 return true;
             } else {

@@ -115,6 +115,7 @@ public class LoginScreen extends GuiScreen {
                     }
                 }
             });
+            thread.setDaemon(true);
             thread.start();
         }, this::updateLoginButton, () -> this.mojangLoginButton.displayString = "Login"));
 
@@ -125,14 +126,13 @@ public class LoginScreen extends GuiScreen {
             Minecraft.getMinecraft().displayGuiScreen(lastScreen);
         }));
 
-        this.cleanUp();
-
         if (OAuthConfig.isSavedPassword()) {
             this.usernameWidget.setText(OAuthConfig.getUsername());
             this.passwordWidget.setText(OAuthConfig.getPassword());
             this.savePasswordWidget.setIsChecked(true);
         }
 
+        this.cleanUp();
     }
 
     private void saveLoginInfo() {

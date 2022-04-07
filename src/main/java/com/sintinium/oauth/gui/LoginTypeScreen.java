@@ -27,6 +27,8 @@ public class LoginTypeScreen extends GuiScreen {
         }));
         this.addButton(new ActionButton(microsoftLoginId, this.width / 2 - 100, this.height / 2 + 2, 200, 20, "Microsoft Login", () -> {
             final MicrosoftLogin login = new MicrosoftLogin();
+            LoginLoadingScreen loadingScreen = new LoginLoadingScreen(lastScreen, this, login::cancelLogin, true);
+            login.setUpdateStatusConsumer(loadingScreen::updateText);
             Thread thread = new Thread(() -> {
                 try {
                     login.login(() -> {
@@ -38,7 +40,8 @@ public class LoginTypeScreen extends GuiScreen {
                     Minecraft.getMinecraft().displayGuiScreen(new ErrorScreen(true, e));
                 }
             });
-            Minecraft.getMinecraft().displayGuiScreen(new LoginLoadingScreen(lastScreen, this, login::cancelLogin, true));
+            Minecraft.getMinecraft().displayGuiScreen(loadingScreen);
+            thread.setDaemon(true);
             thread.start();
         }));
 

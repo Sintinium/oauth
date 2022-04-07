@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 //import org.json.*;
 
@@ -60,6 +61,8 @@ public class MicrosoftLogin {
     private CloseableHttpClient client;
     private boolean isCancelled = false;
     private boolean isDebug = false;
+    private Consumer<String> updateStatus = s -> {
+    };
     private CountDownLatch serverLatch = null;
 
     public MicrosoftLogin() {
@@ -85,6 +88,10 @@ public class MicrosoftLogin {
 
     }
 
+    public void setUpdateStatusConsumer(Consumer<String> updateStatus) {
+        this.updateStatus = updateStatus;
+    }
+
     public MinecraftProfile login(Runnable callback) throws Exception {
         try {
             String authorizeCode = callIfNotCancelled(this::authorizeUser);
@@ -93,26 +100,31 @@ public class MicrosoftLogin {
             }
             if (authorizeCode == null) return null;
 
+            updateStatus.accept("Getting token from Microsoft");
             MsToken token = callIfNotCancelled(this::getMsToken, authorizeCode);
             if (token != null) {
                 printDebug("Ms Token: " + token.accessToken);
             }
 
+            updateStatus.accept("Getting Xbox Live token");
             XblToken xblToken = callIfNotCancelled(this::getXblToken, token.accessToken);
             if (xblToken != null) {
                 printDebug("XBL Token: " + xblToken.token + " | " + xblToken.ush);
             }
 
+            updateStatus.accept("Logging into Xbox Live");
             XstsToken xstsToken = callIfNotCancelled(this::getXstsToken, xblToken);
             if (xstsToken != null) {
                 printDebug("Xsts Token: " + xstsToken.token);
             }
 
+            updateStatus.accept("Getting your Minecraft token");
             MinecraftToken profile = callIfNotCancelled(() -> getMinecraftToken(xstsToken, xblToken));
             if (profile != null) {
                 printDebug("Minecraft Profile Token: " + profile.accessToken);
             }
 
+            updateStatus.accept("Loading your profile");
             MinecraftProfile mcProfile = callIfNotCancelled(this::getMinecraftProflile, profile);
             if (mcProfile != null) {
                 printDebug("Username: " + mcProfile.name);
