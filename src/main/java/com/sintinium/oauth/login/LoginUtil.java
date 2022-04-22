@@ -1,6 +1,7 @@
 package com.sintinium.oauth.login;
 
 import com.mojang.authlib.Agent;
+import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.UserType;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
@@ -8,16 +9,17 @@ import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService;
 import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
 import com.mojang.util.UUIDTypeAdapter;
+import com.sintinium.oauth.profile.MicrosoftProfile;
+import com.sintinium.oauth.profile.MojangProfile;
+
 import cpw.mods.fml.relauncher.ReflectionHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Session;
 
 import java.lang.reflect.Field;
-import java.util.Optional;
 import java.util.UUID;
 
 public class LoginUtil {
-
     public static String lastMojangUsername = null;
     public static boolean needsRefresh = true;
     public static boolean wasOnline = false;
@@ -55,49 +57,106 @@ public class LoginUtil {
         }
     }
 
-    public static void loginMs(MicrosoftLogin.MinecraftProfile profile) {
-        Session session = new Session(profile.name, profile.id, profile.token.accessToken, Session.Type.MOJANG.name());
+    public static GameProfile getGameProfile(Session session) {
+        String serverId = UUID.randomUUID().toString();
+        needsRefresh = false;
+        lastCheck = System.currentTimeMillis();
+        try {
+            minecraftSessionService.joinServer(session.func_148256_e(), session.getToken(), serverId);
+            GameProfile profile = minecraftSessionService.hasJoinedServer(session.func_148256_e(), serverId);
+            if (profile != null && profile.isComplete()) {
+                return profile;
+            }
+        } catch (AuthenticationException e) {
+            return null;
+        }
+        return null;
+    }
+    
+    public static void loginMs(MicrosoftProfile profile) throws WrongMinecraftVersionException {
+        Session session = new Session(profile.getName(), profile.getUUID().toString(), profile.getAccessToken(), Session.Type.MOJANG.name());
         setSession(session);
     }
 
-    public static Optional<Boolean> loginMojangOrLegacy(String username, String password) {
-        try {
-            if (password.isEmpty()) {
-                Session session = new Session(username, UUID.nameUUIDFromBytes(username.getBytes()).toString(), null, UserType.LEGACY.getName());
-                setSession(session);
-                return Optional.of(true);
-            }
-            userAuth.setUsername(username);
-            userAuth.setPassword(password);
-            userAuth.logIn();
-
-            String name = userAuth.getSelectedProfile().getName();
-            String uuid = UUIDTypeAdapter.fromUUID(userAuth.getSelectedProfile().getId());
-            String token = userAuth.getAuthenticatedToken();
-            String type = userAuth.getUserType().getName();
-            userAuth.logOut();
-
-            Session session = new Session(name, uuid, token, type);
-            setSession(session);
-            lastMojangUsername = username;
-            return Optional.of(true);
-        } catch (AuthenticationUnavailableException e) {
-            return Optional.empty();
-        } catch (AuthenticationException e) {
-            return Optional.of(false);
+    public static MojangProfile tryGetMojangProfile(String username, String password) throws AuthenticationException {
+        if (password.isEmpty()) {
+            return null;
         }
+        userAuth.setUsername(username);
+        userAuth.setPassword(password);
+        userAuth.logIn();
+
+        String name = userAuth.getSelectedProfile().getName();
+        UUID uuid = userAuth.getSelectedProfile().getId();
+        UserType type = userAuth.getUserType();
+        boolean isOnline = userAuth.canPlayOnline();
+
+        userAuth.logOut();
+
+        if (!isOnline) {
+            return null;
+        }
+
+        return new MojangProfile(name, username, password, uuid, type);
     }
 
-    private static void setSession(Session session) {
-        needsRefresh = true;
-        updateOnlineStatus();
+    public static void loginOffline(String username) throws WrongMinecraftVersionException {
+    	Session session = new Session(username, UUID.nameUUIDFromBytes(username.getBytes()).toString(), "NotValid", Session.Type.LEGACY.name());
+        setSession(session);
+    }
+
+    public static boolean loginMojangOrLegacy(String username, String password) throws AuthenticationException, AuthenticationUnavailableException, WrongMinecraftVersionException {
+        if (password.isEmpty())
+            return false;
+        userAuth.setUsername(username);
+        userAuth.setPassword(password);
+        userAuth.logIn();
+
+        String name = userAuth.getSelectedProfile().getName();
+        String uuid = UUIDTypeAdapter.fromUUID(userAuth.getSelectedProfile().getId());
+        String token = userAuth.getAuthenticatedToken();
+        String type = userAuth.getUserType().getName();
+
+        boolean isOnline = userAuth.canPlayOnline();
+        userAuth.logOut();
+
+        Session session = new Session(name, uuid, token, type);
+        setSession(session);
+        lastMojangUsername = username;
+        return isOnline;
+    }
+
+    private static void setSession(Session session) throws WrongMinecraftVersionException {
         Field field = ReflectionHelper.findField(Minecraft.class, "field_71449_j", "session");
         field.setAccessible(true);
         try {
             field.set(Minecraft.getMinecraft(), session);
         } catch (IllegalAccessException e) {
-            e.printStackTrace();
+            throw new WrongMinecraftVersionException("Missing session field. Are you using SRG mappings?");
         }
+        needsRefresh = true;
+        updateOnlineStatus();
     }
 
+    @SuppressWarnings("serial")
+	public static class WrongMinecraftVersionException extends Exception {
+        public WrongMinecraftVersionException() {
+        }
+
+        public WrongMinecraftVersionException(String message) {
+            super(message);
+        }
+
+        public WrongMinecraftVersionException(String message, Throwable cause) {
+            super(message, cause);
+        }
+
+        public WrongMinecraftVersionException(Throwable cause) {
+            super(cause);
+        }
+
+        public WrongMinecraftVersionException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+            super(message, cause, enableSuppression, writableStackTrace);
+        }
+    }
 }

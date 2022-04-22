@@ -8,18 +8,19 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 
 public class EncryptionUtil {
 
     private static Cipher cipher;
-    private static SecureRandom random;
+    //private static SecureRandom random;
+
+    public static String key = System.getProperty("user.home") + "oauth";
 
     static {
         try {
             cipher = Cipher.getInstance("AES/CTR/NoPadding");
-            random = SecureRandom.getInstance("SHA1PRNG");
+            //random = SecureRandom.getInstance("SHA1PRNG");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -51,13 +52,5 @@ public class EncryptionUtil {
 
     private static byte[] hashPassword(String pass) throws NoSuchAlgorithmException, InvalidKeySpecException {
         return SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(new PBEKeySpec(pass.toCharArray(), "oauth".getBytes(), 65536, 256)).getEncoded();
-    }
-
-    public static void main(String[] args) {
-        String in = "hello1234!@*(()*M,•";
-        String pass = "C:\\Users\\sinti\\Documents\\Projects\\Forge\\ReLogin\\run\\.";
-        String encrypt = encryptString(in, pass);
-        System.out.println(encrypt);
-        System.out.println(decryptString(encrypt, pass));
     }
 }

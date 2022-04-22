@@ -1,34 +1,36 @@
 package com.sintinium.oauth.gui;
 
-import com.sintinium.oauth.OAuthConfig;
-import com.sintinium.oauth.login.LoginUtil;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiMultiplayer;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.GuiTextField;
-import org.lwjgl.input.Keyboard;
-
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.lwjgl.input.Keyboard;
+
+import com.mojang.authlib.exceptions.AuthenticationException;
+import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
+import com.mojang.authlib.exceptions.InvalidCredentialsException;
+import com.sintinium.oauth.login.LoginUtil;
+import com.sintinium.oauth.profile.MojangProfile;
+import com.sintinium.oauth.profile.OfflineProfile;
+import com.sintinium.oauth.profile.ProfileManager;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.GuiTextField;
+
 public class LoginScreen extends GuiScreenCustom {
     private final GuiScreen lastScreen;
-    private final GuiMultiplayer multiplayerScreen;
     private ActionButton mojangLoginButton;
     private PasswordFieldWidget passwordWidget;
-    private OAuthCheckbox savePasswordWidget;
     private GuiTextField usernameWidget;
     private AtomicReference<String> status = new AtomicReference<>();
-    private String title = "OAuth Login";
+    private static final String title = "OAuth Login";
 
     private List<Runnable> toRun = new CopyOnWriteArrayList<>();
 
-    public LoginScreen(GuiScreen last, GuiMultiplayer multiplayerScreen) {
+    public LoginScreen(GuiScreen last) {
         this.lastScreen = last;
-        this.multiplayerScreen = multiplayerScreen;
     }
 
     @Override
@@ -49,8 +51,11 @@ public class LoginScreen extends GuiScreenCustom {
 
     @Override
     public void updateScreen() {
+    	super.updateScreen();
         this.usernameWidget.updateCursorCounter();
         this.passwordWidget.updateCursorCounter();
+        if (usernameWidget.isFocused()) passwordWidget.setFocused(false);
+        if (passwordWidget.isFocused()) usernameWidget.setFocused(false);
         if (!toRun.isEmpty()) {
             for (Runnable r : toRun) {
                 r.run();
@@ -63,81 +68,61 @@ public class LoginScreen extends GuiScreenCustom {
     public void initGui() {
         Keyboard.enableRepeatEvents(true);
         buttonList.clear();
-
+        
         this.passwordWidget = new PasswordFieldWidget(this.fontRendererObj, this.width / 2 - 100, this.height / 2 - 20, 200, 20);
         this.passwordWidget.setMaxStringLength(128);
 
         this.usernameWidget = new UsernameFieldWidget(this.fontRendererObj, this.width / 2 - 100, this.height / 2 - 60, 200, 20, passwordWidget);
         this.usernameWidget.setFocused(true);
-        if (LoginUtil.lastMojangUsername != null) {
-            this.usernameWidget.setText(LoginUtil.lastMojangUsername);
-        }
 
-        this.savePasswordWidget = this.addButton(new OAuthCheckbox(4, this.width / 2 - this.fontRendererObj.getStringWidth("Save password") - 25, this.height / 2 + 1 + 2, "Save password", false));
-
-        Runnable savePw = () -> {
-            if (savePasswordWidget.isChecked()) {
-                saveLoginInfo();
-            } else {
-                removeLoginInfo();
-            }
-        };
-
-        this.mojangLoginButton = this.addButton(new ResponsiveButton(2, this.width / 2 - 100, this.height / 2 + 36, 200, 20, "Login", () -> {
+        this.mojangLoginButton = this.addButton(new ResponsiveButton(2, this.width / 2 - 100, this.height / 2 + 36, 200, 20, "Add Profile", () -> {
             Thread thread = new Thread(() -> {
                 if (usernameWidget.getText().isEmpty()) {
                     toRun.add(() -> this.status.set("Missing username!"));
                 } else {
-                    Optional<Boolean> didSuccessfullyLogIn = LoginUtil.loginMojangOrLegacy(usernameWidget.getText(), passwordWidget.getText());
-                    savePw.run();
-                    if (!didSuccessfullyLogIn.isPresent()) {
+                    if (passwordWidget.getText().isEmpty()) {
+                        ProfileManager.getInstance().addProfile(new OfflineProfile(usernameWidget.getText(), UUID.nameUUIDFromBytes(usernameWidget.getText().getBytes())));
+                        toRun.add(() -> setScreen(lastScreen));
+                        return;
+                    }
+                    MojangProfile profile;
+                    try {
+                        profile = LoginUtil.tryGetMojangProfile(usernameWidget.getText(), passwordWidget.getText());
+                    } catch (InvalidCredentialsException e) {
+                        toRun.add(() -> this.status.set("Invalid username or password!"));
+                        return;
+                    } catch (AuthenticationUnavailableException e) {
                         toRun.add(() -> this.status.set("You seem to be offline. Check your connection!"));
-                    } else if (!didSuccessfullyLogIn.get()) {
-                        toRun.add(() -> this.status.set("Wrong password or username!"));
+                        e.printStackTrace();
+                        return;
+                    } catch (AuthenticationException e) {
+                        toRun.add(() -> setScreen(new ErrorScreen(lastScreen, false, e)));
+                        e.printStackTrace();
+                        return;
+                    }
+                    if (profile == null) {
+                        toRun.add(() -> this.status.set("Invalid username or password!"));
                     } else {
                         LoginUtil.updateOnlineStatus();
-                        toRun.add(() -> Minecraft.getMinecraft().displayGuiScreen(multiplayerScreen));
+                        ProfileManager.getInstance().addProfile(profile);
+                        toRun.add(() -> setScreen(lastScreen));
                     }
                 }
-            });
+            }, "Oauth mojang");
+            thread.setDaemon(true);
             thread.start();
-        }, this::updateLoginButton, () -> this.mojangLoginButton.displayString = "Login"));
+        }, this::updateLoginButton, () -> this.mojangLoginButton.displayString = "Add Profile"));
+        
+        this.addButton(new ActionButton(3, this.width / 2 - 100, this.height / 2 + 60, 200, 20, "Cancel", () -> setScreen(lastScreen)));
 
-        this.addButton(new ActionButton(3, this.width / 2 - 100, this.height / 2 + 60, 200, 20, "Cancel", () -> {
-            if (!this.savePasswordWidget.isChecked()) {
-                removeLoginInfo();
-            }
-            Minecraft.getMinecraft().displayGuiScreen(lastScreen);
-        }));
-
-        this.cleanUp();
-
-        if (OAuthConfig.isSavedPassword()) {
-            this.usernameWidget.setText(OAuthConfig.getUsername());
-            this.passwordWidget.setText(OAuthConfig.getPassword());
-            this.savePasswordWidget.setIsChecked(true);
-        }
-
-    }
-
-    private void saveLoginInfo() {
-        OAuthConfig.setUsername(usernameWidget.getText());
-        OAuthConfig.setPassword(passwordWidget.getText());
-    }
-
-    private void removeLoginInfo() {
-        OAuthConfig.removeUsernamePassword();
-    }
-
-    private void onEdited(int id, String value) {
         this.cleanUp();
     }
 
     private void updateLoginButton() {
         if (this.passwordWidget.getText().isEmpty()) {
-            this.mojangLoginButton.displayString = "Login Offline";
+            this.mojangLoginButton.displayString = "Add Offline Profile";
         } else {
-            this.mojangLoginButton.displayString = "Login";
+            this.mojangLoginButton.displayString = "Add Profile";
         }
     }
 
@@ -148,17 +133,6 @@ public class LoginScreen extends GuiScreenCustom {
 
     private void cleanUp() {
         this.mojangLoginButton.enabled = !this.usernameWidget.getText().isEmpty();
-    }
-
-    @Override
-    protected void actionPerformed(GuiButton button) {
-        if (button instanceof ActionButton) {
-            ((ActionButton) button).onClicked();
-        } else if (button instanceof OAuthCheckbox) {
-            // Do nothing
-        } else {
-            throw new RuntimeException("Missing button action");
-        }
     }
 
     @Override
@@ -197,5 +171,4 @@ public class LoginScreen extends GuiScreenCustom {
 
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
-
 }

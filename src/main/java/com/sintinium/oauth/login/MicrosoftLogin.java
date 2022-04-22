@@ -1,29 +1,12 @@
 package com.sintinium.oauth.login;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonPrimitive;
-import com.sun.net.httpserver.HttpServer;
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
-
-import java.awt.*;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
-import java.net.URI;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,88 +14,126 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.mojang.util.UUIDTypeAdapter;
+import com.sintinium.oauth.gui.ErrorScreen;
+import com.sintinium.oauth.gui.GuiScreenCustom;
+import com.sintinium.oauth.profile.MicrosoftProfile;
+import com.sintinium.oauth.util.AgnosticUtils;
+import com.sintinium.oauth.util.Lambdas;
+import com.sintinium.oauth.util.NullUtils;
+import com.sun.net.httpserver.HttpServer;
+
+import net.minecraft.client.gui.GuiMainMenu;
 
 //import org.json.*;
 
+@SuppressWarnings("restriction")
 public class MicrosoftLogin {
+    private final Logger LOGGER = LogManager.getLogger();
 
     private static final String msTokenUrl = "https://login.live.com/oauth20_token.srf";
     private static final String authXbl = "https://user.auth.xboxlive.com/user/authenticate";
     private static final String authXsts = "https://xsts.auth.xboxlive.com/xsts/authorize";
     private static final String minecraftAuth = "https://api.minecraftservices.com/authentication/login_with_xbox";
     private static final String minecraftProfile = "https://api.minecraftservices.com/minecraft/profile";
-    private static String clientId = "907a248d-3eb5-4d01-99d2-ff72d79c5eb1";
-    private static String redirectDict = "relogin";
-    private static String redirect = "http://localhost:26669/" + redirectDict;
+    private static final String clientId = "907a248d-3eb5-4d01-99d2-ff72d79c5eb1";
+    private static final String redirectDict = "relogin";
+    private static final String redirect = "http://localhost:26669/" + redirectDict;
     // https://wiki.vg/Microsoft_Authentication_Scheme
     private static final String msAuthUrl = new UrlBuilder("https://login.live.com/oauth20_authorize.srf")
             .addParameter("client_id", clientId)
             .addParameter("response_type", "code")
             .addParameter("redirect_uri", redirect)
             .addParameter("scope", "XboxLive.signin%20offline_access")
+            .addParameter("prompt", "select_account")
             .build();
-    private RequestConfig config = RequestConfig.custom().setConnectTimeout(30 * 1000).setSocketTimeout(30 * 1000).setConnectionRequestTimeout(30 * 1000).build();
-    private CloseableHttpClient client = HttpClientBuilder.create().setDefaultRequestConfig(config).build();
+    private final RequestConfig config = RequestConfig.custom().setConnectTimeout(30 * 1000).setSocketTimeout(30 * 1000).setConnectionRequestTimeout(30 * 1000).build();
+    private final CloseableHttpClient client;
     private boolean isCancelled = false;
-    private String errorMsg = null;
-    private boolean isDebug = false;
     private Consumer<String> updateStatus = s -> {
     };
+    private CountDownLatch serverLatch = null;
+
+    private final List<JsonObject> erroredResponses = new ArrayList<>();
+
+    public MicrosoftLogin() {
+        SSLContext sslContext = null;
+        try {
+            KeyStore keyStore = KeyStore.getInstance("JKS");
+            try (InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream("cacerts")) {
+                keyStore.load(stream, "changeit".toCharArray());
+            }
+
+            sslContext = SSLContext.getInstance("TLS");
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            keyManagerFactory.init(keyStore, "changeit".toCharArray());
+            trustManagerFactory.init(keyStore);
+            sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        client = HttpClientBuilder.create().setSSLSocketFactory(new SSLConnectionSocketFactory(sslContext)).setDefaultRequestConfig(config).build();
+    }
 
     public void setUpdateStatusConsumer(Consumer<String> updateStatus) {
         this.updateStatus = updateStatus;
     }
 
-    public MinecraftProfile login(Runnable callback) {
+    public MicrosoftProfile loginFromRefresh(String refreshToken) throws Exception {
+        try {
+            MsToken token = callIfNotCancelled(this::refreshMsToken, refreshToken);
+            if (token == null) return null;
+
+            return loginWithToken(token);
+        } finally {
+            try {
+                client.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public MicrosoftProfile login() throws Exception {
         try {
             String authorizeCode = callIfNotCancelled(this::authorizeUser);
-            if (authorizeCode != null) {
-                printDebug("MS Oauth: " + authorizeCode);
-            }
             if (authorizeCode == null) return null;
 
             updateStatus.accept("Getting token from Microsoft");
             MsToken token = callIfNotCancelled(this::getMsToken, authorizeCode);
-            if (token != null) {
-                printDebug("Ms Token: " + token.accessToken);
-            }
+            if (token == null) return null;
 
-            updateStatus.accept("Getting Xbox Live token");
-            XblToken xblToken = callIfNotCancelled(this::getXblToken, token.accessToken);
-            if (xblToken != null) {
-                printDebug("XBL Token: " + xblToken.token + " | " + xblToken.ush);
-            }
-
-            updateStatus.accept("Logging into Xbox Live");
-            XstsToken xstsToken = callIfNotCancelled(this::getXstsToken, xblToken);
-            if (xstsToken != null) {
-                printDebug("Xsts Token: " + xstsToken.token);
-            }
-
-            updateStatus.accept("Getting your Minecraft token");
-            MinecraftToken profile = callIfNotCancelled(() -> getMinecraftToken(xstsToken, xblToken));
-            if (profile != null) {
-                printDebug("Minecraft Profile Token: " + profile.accessToken);
-            }
-
-            updateStatus.accept("Loading your profile");
-            MinecraftProfile mcProfile = callIfNotCancelled(this::getMinecraftProflile, profile);
-            if (mcProfile != null) {
-                printDebug("Username: " + mcProfile.name);
-                printDebug("UUID: " + mcProfile.id);
-            }
-
-            updateStatus.accept("Logging you into Minecraft");
-            if (mcProfile != null) {
-                LoginUtil.loginMs(mcProfile);
-            }
-
-            callback.run();
-            return mcProfile;
-        } catch (Exception e) {
-            e.printStackTrace();
+            return loginWithToken(token);
         } finally {
             try {
                 client.close();
@@ -120,196 +141,430 @@ public class MicrosoftLogin {
                 e.printStackTrace();
             }
         }
-        return null;
     }
 
-    private void printDebug(String text) {
-        if (!isDebug) return;
-        System.out.println(text);
-    }
+    private MicrosoftProfile loginWithToken(MsToken token) throws Exception {
+        updateStatus.accept("Getting Xbox Live token");
+        XblToken xblToken = callIfNotCancelled(this::getXblToken, token.accessToken);
 
-    private <T, R> R callIfNotCancelled(Function<T, R> function, T value) {
-        if (isCancelled) return null;
-        if (errorMsg != null) {
+        updateStatus.accept("Logging into Xbox Live");
+        XstsToken xstsToken = callIfNotCancelled(this::getXstsToken, xblToken);
+
+        updateStatus.accept("Getting your Minecraft token");
+        MinecraftToken profile = callIfNotCancelled(() -> getMinecraftToken(xstsToken, xblToken));
+
+        updateStatus.accept("Loading your profile");
+        MinecraftProfile mcProfile = callIfNotCancelled(this::getMinecraftProfile, profile);
+        if (mcProfile == null) {
+            GuiScreenCustom.setScreen(new ErrorScreen(new GuiMainMenu(), true, "Failed to create Minecraft Profile."));
             return null;
         }
+
+        return new MicrosoftProfile(mcProfile.name, UUIDTypeAdapter.fromString(mcProfile.id), mcProfile.token.accessToken, token.refreshToken);
+    }
+
+    private void addResponseDebugInfo(JsonObject response) {
+        this.erroredResponses.add(response);
+    }
+
+    public String getErroredResponses() {
+        StringBuilder sb = new StringBuilder();
+        int index = 1;
+        for (JsonObject response : erroredResponses) {
+        	try {
+        		Method m = JsonElement.class.getDeclaredMethod("deepCopy", new Class[0]);
+        		m.setAccessible(true);
+        		response = (JsonObject)m.invoke(response);
+        	} catch(NullPointerException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+        		continue;
+        	}
+            sb.append(index).append(": ").append(hideElements(response,
+                    "access_token",
+                    "refresh_token",
+                    "Token",
+                    "DisplayClaims",
+                    "xui",
+                    "uhs"
+            )).append(System.lineSeparator());
+            index++;
+        }
+        return sb.toString();
+    }
+    
+    private JsonObject hideElements(JsonObject obj, final String... elements) {
+        for (String element : elements) {
+            for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+                // If nested loop over it first.
+                if (entry.getValue().isJsonObject()) {
+                    hideElements(entry.getValue().getAsJsonObject(), elements);
+                    continue;
+                }
+
+                // From here on we're only dealing with matched elements
+                if (!entry.getKey().equalsIgnoreCase(element)) continue;
+
+                if (entry.getValue().isJsonArray()) {
+                    // Recursive consumer. Don't judge me.
+                    Consumer<JsonArray> iterate = new Consumer<JsonArray>() {
+                        @Override
+                        public void accept(JsonArray jsonElements) {
+                            JsonArray array = new JsonArray();
+                            for (JsonElement jsonElement : entry.getValue().getAsJsonArray()) {
+                                if (jsonElement.isJsonPrimitive()) {
+                                    array.add(new JsonPrimitive(getHiddenString(jsonElement)));
+                                } else if (jsonElement.isJsonArray()) {
+                                    accept(jsonElement.getAsJsonArray());
+                                } else if (jsonElement.isJsonObject()) {
+                                    array.add(hideElements(jsonElement.getAsJsonObject(), elements));
+                                } else {
+                                    array.add(jsonElement);
+                                }
+                            }
+                            entry.setValue(array);
+                        }
+                    };
+                    iterate.accept(entry.getValue().getAsJsonArray());
+                }
+
+                // Just hides the value.
+                if (entry.getValue().isJsonPrimitive()) {
+                    entry.setValue(new JsonPrimitive(getHiddenString(entry.getValue())));
+                }
+
+                if (entry.getValue().isJsonNull()) {
+                    entry.setValue(JsonNull.INSTANCE);
+                }
+            }
+        }
+
+        return obj;
+    }
+
+    private String getHiddenString(JsonElement element) {
+        String input = element.getAsString();
+        if (input == null) return "null";
+        if (StringUtils.isEmpty(input)) return "empty";
+
+        StringBuilder builder = new StringBuilder();
+        int count = 0;
+        for (@SuppressWarnings("unused") char c : input.toCharArray()) {
+            if (count <= 10)
+                builder.append("?");
+            count++;
+        }
+        if (count > 10)
+            builder.append("...+").append(count - 10);
+        return builder.toString();
+    }
+
+    private <T, R> R callIfNotCancelled(Lambdas.FunctionWithException<T, R> function, T value) throws Exception {
+        if (isCancelled) return null;
         return function.apply(value);
     }
 
-    private <T> T callIfNotCancelled(Supplier<T> runnable) {
+    private <T> T callIfNotCancelled(Lambdas.SupplierWithException<T> runnable) throws Exception {
         if (isCancelled) return null;
-        if (errorMsg != null) {
-            return null;
-        }
         return runnable.get();
     }
 
     public void cancelLogin() {
         isCancelled = true;
+        if (serverLatch != null) {
+            serverLatch.countDown();
+        }
     }
 
-    public String getErrorMsg() {
-        return errorMsg;
+    public static void logout() {
+        AgnosticUtils.openUri("https://www.microsoft.com/mscomhp/onerf/signout");
     }
 
     // 1st
-    private String authorizeUser() {
-        try {
-            CountDownLatch latch = new CountDownLatch(1);
-            HttpServer server = HttpServer.create(new InetSocketAddress(26669), 0);
-            AtomicReference<String> msCode = new AtomicReference<>(null);
-            server.createContext("/" + redirectDict, httpExchange -> {
-                String code = httpExchange.getRequestURI().getQuery();
-                if (code != null) {
-                    msCode.set(code.substring(code.indexOf('=') + 1));
-                }
-                String response = "You can now close your browser.";
-                httpExchange.sendResponseHeaders(200, response.length());
-                OutputStream stream = httpExchange.getResponseBody();
-                stream.write(response.getBytes());
-                stream.close();
-                latch.countDown();
-                server.stop(2);
-            });
-            server.setExecutor(null);
-            server.start();
-//        Desktop.getDesktop().browse(new URI(msAuthUrl));
-
-            try {
-                Desktop.getDesktop().browse(new URI(msAuthUrl));
-            } catch (Exception e) {
-                e.printStackTrace();
+	private String authorizeUser() throws InterruptedException, IOException {
+        this.serverLatch = new CountDownLatch(1);
+        HttpServer server = HttpServer.create(new InetSocketAddress(26669), 0);
+        AtomicReference<String> msCode = new AtomicReference<>(null);
+        server.createContext("/" + redirectDict, httpExchange -> {
+            String code = httpExchange.getRequestURI().getQuery();
+            if (code != null) {
+                msCode.set(code.substring(code.indexOf('=') + 1));
             }
+            String response = "You can now close your browser.";
+            httpExchange.sendResponseHeaders(200, response.length());
+            OutputStream stream = httpExchange.getResponseBody();
+            stream.write(response.getBytes());
+            stream.close();
+            this.serverLatch.countDown();
+            server.stop(2);
+        });
+        server.setExecutor(null);
+        server.start();
 
-            latch.await();
-
-            return msCode.get();
-        } catch (Exception e) {
-            errorMsg = ExceptionUtils.getStackTrace(e);
+        AgnosticUtils.openUri(msAuthUrl);
+        serverLatch.await();
+        server.stop(2);
+        if (this.isCancelled) {
+            return null;
         }
-        return null;
+
+        return msCode.get();
     }
 
     // 2nd
-    private MsToken getMsToken(String authorizeCode) {
-        try {
-            HttpPost post = new HttpPost(msTokenUrl);
+    private MsToken getMsToken(String authorizeCode) throws IOException {
+        NullUtils.requireNotNull(authorizeCode, "authorizeCode");
+        HttpPost post = new HttpPost(msTokenUrl);
 
-            List<NameValuePair> params = new ArrayList<>();
-            params.add(new BasicNameValuePair("client_id", clientId));
-            params.add(new BasicNameValuePair("scope", "xboxlive.signin"));
-            params.add(new BasicNameValuePair("code", authorizeCode));
-            params.add(new BasicNameValuePair("grant_type", "authorization_code"));
-            params.add(new BasicNameValuePair("redirect_uri", redirect));
-            post.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+        List<NameValuePair> params = new ArrayList<>();
+        params.add(new BasicNameValuePair("client_id", clientId));
+        params.add(new BasicNameValuePair("scope", "xboxlive.signin"));
+        params.add(new BasicNameValuePair("code", authorizeCode));
+        params.add(new BasicNameValuePair("grant_type", "authorization_code"));
+        params.add(new BasicNameValuePair("redirect_uri", redirect));
+        post.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
 
-            post.setHeader("Accept", "application/x-www-form-urlencoded");
-            post.setHeader("Content-type", "application/x-www-form-urlencoded");
-            HttpResponse response = client.execute(post);
+        post.setHeader("Accept", "application/x-www-form-urlencoded");
+        post.setHeader("Content-type", "application/x-www-form-urlencoded");
+        HttpResponse response = client.execute(post);
+        
 
-            if (response.getEntity() == null) {
-                // TODO: Throw readable exception!
-                throw new RuntimeException("No entity!");
-            }
-//        System.out.println(EntityUtils.toString(response.getEntity()));
-            JsonObject obj = parseObject(EntityUtils.toString(response.getEntity()));
-            return new MsToken(obj.get("access_token").getAsString(), obj.get("refresh_token").getAsString());
-        } catch (Exception e) {
-            this.errorMsg = ExceptionUtils.getStackTrace(e);
+        JsonObject obj = parseObject(response);
+        if (!obj.has("access_token")) {
+            throw new IllegalStateException("Missing access_token from obj.has(\"access_token\")");
         }
-        return null;
+        JsonElement accessTokenElement = obj.get("access_token");
+        NullUtils.requireNotNull(accessTokenElement, "accessTokenElement");
+        String accessToken = accessTokenElement.getAsString();
+        NullUtils.requireNotNull(accessToken, "accessToken");
+
+        if (!obj.has("refresh_token")) {
+            throw new IllegalStateException("Missing refresh_token from obj.has(\"refresh_token\")");
+        }
+        JsonElement refreshTokenElement = obj.get("refresh_token");
+        NullUtils.requireNotNull(refreshTokenElement, "refreshTokenElement");
+        String refreshToken = refreshTokenElement.getAsString();
+        NullUtils.requireNotNull(refreshToken, "refreshToken");
+
+        return new MsToken(accessToken, refreshToken);
+    }
+
+    private MsToken refreshMsToken(String refreshToken) throws IOException {
+        NullUtils.requireNotNull(refreshToken, "refreshToken");
+
+        HttpPost post = new HttpPost(msTokenUrl);
+
+        List<NameValuePair> params = new ArrayList<>();
+        params.add(new BasicNameValuePair("client_id", clientId));
+        params.add(new BasicNameValuePair("refresh_token", refreshToken));
+        params.add(new BasicNameValuePair("grant_type", "refresh_token"));
+        params.add(new BasicNameValuePair("redirect_uri", redirect));
+        post.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
+
+        post.setHeader("Accept", "application/x-www-form-urlencoded");
+        post.setHeader("Content-type", "application/x-www-form-urlencoded");
+        HttpResponse response = client.execute(post);
+
+        JsonObject obj = parseObject(response);
+
+        if (!obj.has("access_token")) return null;
+        if (!obj.has("refresh_token")) return null;
+
+        JsonElement accessTokenElement = obj.get("access_token");
+        NullUtils.requireNotNull(accessTokenElement, "accessTokenElement");
+        String accessToken = accessTokenElement.getAsString();
+        NullUtils.requireNotNull(accessToken, "accessToken");
+
+        JsonElement refreshTokenElement = obj.get("refresh_token");
+        NullUtils.requireNotNull(refreshTokenElement, "refreshTokenElement");
+        String newRefreshToken = refreshTokenElement.getAsString();
+        NullUtils.requireNotNull(newRefreshToken, "newRefreshToken");
+
+        return new MsToken(accessToken, newRefreshToken);
     }
 
     // 3
-    private XblToken getXblToken(String accessToken) {
-        try {
-            HttpPost post = new HttpPost(authXbl);
+    private XblToken getXblToken(String accessToken) throws IOException {
+        NullUtils.requireNotNull(accessToken, "accessToken");
 
-            JsonObject obj = new JsonObject();
-            JsonObject props = new JsonObject();
-            props.addProperty("AuthMethod", "RPS");
-            props.addProperty("SiteName", "user.auth.xboxlive.com");
-            props.addProperty("RpsTicket", "d=" + accessToken);
-            obj.add("Properties", props);
-            obj.addProperty("RelyingParty", "http://auth.xboxlive.com");
-            obj.addProperty("TokenType", "JWT");
+        HttpPost post = new HttpPost(authXbl);
 
-            StringEntity requestEntity = new StringEntity(obj.toString(), ContentType.APPLICATION_JSON);
-            post.setEntity(requestEntity);
+        JsonObject obj = new JsonObject();
+        JsonObject props = new JsonObject();
+        props.addProperty("AuthMethod", "RPS");
+        props.addProperty("SiteName", "user.auth.xboxlive.com");
+        props.addProperty("RpsTicket", "d=" + accessToken);
+        obj.add("Properties", props);
+        obj.addProperty("RelyingParty", "http://auth.xboxlive.com");
+        obj.addProperty("TokenType", "JWT");
 
-            HttpResponse response = client.execute(post);
+        StringEntity requestEntity = new StringEntity(obj.toString(), ContentType.APPLICATION_JSON);
+        post.setEntity(requestEntity);
 
-            if (response.getEntity() == null) {
-                // TODO
-                throw new RuntimeException("No entity!");
+        HttpResponse response = client.execute(post);
+
+        JsonObject responseObj = parseObject(response);
+        if (!responseObj.has("Token")) {
+            throw new IllegalStateException("Missing token from responseObj.has(\"Token\")");
+        }
+        JsonElement tokenElement = responseObj.get("Token");
+        NullUtils.requireNotNull(tokenElement, "tokenElement");
+        String token = tokenElement.getAsString();
+        NullUtils.requireNotNull(token, "token");
+
+        if (!responseObj.has("DisplayClaims")) {
+            throw new IllegalStateException("Missing display claims from responseObj.has(\"DisplayClaims\")");
+        }
+        JsonElement displayClaimsElement = responseObj.get("DisplayClaims");
+        NullUtils.requireNotNull(displayClaimsElement, "displayClaimsElement");
+        JsonObject displayClaims = displayClaimsElement.getAsJsonObject();
+        NullUtils.requireNotNull(displayClaims, "displayClaims");
+
+        if (!displayClaims.has("xui")) {
+            throw new IllegalStateException("Missing xui from displayClaims.has(\"xui\")");
+        }
+
+        JsonElement xuiElement = displayClaims.get("xui");
+        NullUtils.requireNotNull(xuiElement, "xuiElement");
+        JsonArray xuiArray = xuiElement.getAsJsonArray();
+        NullUtils.requireNotNull(xuiArray, "xuiArray");
+        if (AgnosticUtils.isEmpty(xuiArray)) {
+            throw new IllegalStateException("xuiArray is empty");
+        }
+        JsonElement xuiFirst = xuiArray.get(0);
+        NullUtils.requireNotNull(xuiFirst, "xuiFirst");
+        JsonObject xuiFirstObject = xuiFirst.getAsJsonObject();
+
+        if (!xuiFirstObject.has("uhs")) {
+            throw new IllegalStateException("Missing uhs from xuiFirstObject.has(\"uhs\")");
+        }
+
+        JsonElement uhsElement = xuiFirstObject.get("uhs");
+        NullUtils.requireNotNull(uhsElement, "uhsElement");
+        String uhs = uhsElement.getAsString();
+        NullUtils.requireNotNull(uhs, "uhs");
+
+        return new XblToken(token, uhs);
+    }
+
+    private XstsToken getXstsToken(XblToken xblToken) throws IOException, BaseMicrosoftLoginException {
+        NullUtils.requireNotNull(xblToken, "xblToken");
+        NullUtils.requireNotNull(xblToken.token, "xblToken.token");
+
+        HttpPost post = new HttpPost(authXsts);
+        JsonObject obj = new JsonObject();
+        JsonObject props = new JsonObject();
+        JsonArray token = new JsonArray();
+        token.add(new JsonPrimitive(xblToken.token));
+        props.addProperty("SandboxId", "RETAIL");
+        props.add("UserTokens", token);
+        obj.add("Properties", props);
+        obj.addProperty("RelyingParty", "rp://api.minecraftservices.com/");
+        obj.addProperty("TokenType", "JWT");
+
+        StringEntity entity = new StringEntity(obj.toString(), ContentType.APPLICATION_JSON);
+        post.setEntity(entity);
+
+        HttpResponse response = client.execute(post);
+
+        JsonObject responseJson = parseObject(response);
+        NullUtils.requireNotNull(responseJson, "responseJson");
+
+        if (responseJson.has("XErr")) {
+            long xErr = responseJson.get("XErr").getAsLong();
+            if (xErr == 2148916233L) {
+                throw new NoXboxAccountException();
+            } else if (xErr == 2148916235L) {
+                throw new BannedCountryException();
+            } else if (xErr == 2148916238L) {
+                throw new UnderageAccountException();
             }
-            JsonObject responseObj = parseObject(response);
-            return new XblToken(responseObj.get("Token").getAsString(), responseObj.get("DisplayClaims").getAsJsonObject().get("xui").getAsJsonArray().get(0).getAsJsonObject().get("uhs").getAsString());
-        } catch (Exception e) {
-            this.errorMsg = ExceptionUtils.getStackTrace(e);
+            cancelLogin();
+            return null;
         }
-        return null;
+
+        if (!responseJson.has("Token")) {
+            throw new IllegalStateException("Missing token from responseJson.has(\"Token\")");
+        }
+
+        JsonElement tokenElement = responseJson.get("Token");
+        NullUtils.requireNotNull(tokenElement, "tokenElement");
+
+        String tokenString = tokenElement.getAsString();
+        NullUtils.requireNotNull(tokenString, "tokenString");
+
+        return new XstsToken(tokenString);
     }
 
-    private XstsToken getXstsToken(XblToken xblToken) {
-        try {
-            HttpPost post = new HttpPost(authXsts);
-            JsonObject obj = new JsonObject();
-            JsonObject props = new JsonObject();
-            JsonArray token = new JsonArray();
-            token.add(new JsonPrimitive(xblToken.token));
-            props.addProperty("SandboxId", "RETAIL");
-            props.add("UserTokens", token);
-            obj.add("Properties", props);
-            obj.addProperty("RelyingParty", "rp://api.minecraftservices.com/");
-            obj.addProperty("TokenType", "JWT");
+    private MinecraftToken getMinecraftToken(XstsToken xstsToken, XblToken xblToken) throws IOException {
+        NullUtils.requireNotNull(xstsToken, "xstsToken");
+        NullUtils.requireNotNull(xstsToken.token, "xstsToken.token");
+        NullUtils.requireNotNull(xblToken, "xblToken");
+        NullUtils.requireNotNull(xblToken.ush, "xblToken.ush");
 
-            StringEntity entity = new StringEntity(obj.toString(), ContentType.APPLICATION_JSON);
-            post.setEntity(entity);
-
-            HttpResponse response = client.execute(post);
-            return new XstsToken(parseObject(response).get("Token").getAsString());
-        } catch (Exception e) {
-            this.errorMsg = ExceptionUtils.getStackTrace(e);
+        HttpPost post = new HttpPost(minecraftAuth);
+        JsonObject obj = new JsonObject();
+        obj.addProperty("identityToken", "XBL3.0 x=" + xblToken.ush + ";" + xstsToken.token);
+        StringEntity entity = new StringEntity(obj.toString(), ContentType.APPLICATION_JSON);
+        post.setEntity(entity);
+        HttpResponse response = client.execute(post);
+        JsonObject responseObj = parseObject(response);
+        NullUtils.requireNotNull(responseObj, "responseObj");
+        if (!responseObj.has("access_token")) {
+            throw new IllegalStateException("Missing access_token from responseObj.has(\"access_token\")");
         }
-        return null;
+        JsonElement accessTokenElement = responseObj.get("access_token");
+        String accessToken = accessTokenElement.getAsString();
+        NullUtils.requireNotNull(accessToken, "accessToken");
+        return new MinecraftToken(accessToken);
     }
 
-    private MinecraftToken getMinecraftToken(XstsToken xstsToken, XblToken xblToken) {
-        try {
-            HttpPost post = new HttpPost(minecraftAuth);
-            JsonObject obj = new JsonObject();
-            obj.addProperty("identityToken", "XBL3.0 x=" + xblToken.ush + ";" + xstsToken.token);
-            StringEntity entity = new StringEntity(obj.toString(), ContentType.APPLICATION_JSON);
-            post.setEntity(entity);
-            HttpResponse response = client.execute(post);
-            JsonObject responseObj = parseObject(response);
-            return new MinecraftToken(responseObj.get("access_token").getAsString());
-        } catch (Exception e) {
-            this.errorMsg = ExceptionUtils.getStackTrace(e);
-        }
-        return null;
-    }
+    private MinecraftProfile getMinecraftProfile(MinecraftToken minecraftToken) throws Exception {
+        HttpGet get = new HttpGet(minecraftProfile);
+        get.setHeader("Authorization", "Bearer " + minecraftToken.accessToken);
+        HttpResponse response = client.execute(get);
+        JsonObject obj = parseObject(response);
+        NullUtils.requireNotNull(obj, "obj");
 
-    private MinecraftProfile getMinecraftProflile(MinecraftToken minecraftToken) {
-        try {
-            HttpGet get = new HttpGet(minecraftProfile);
-            get.setHeader("Authorization", "Bearer " + minecraftToken.accessToken);
-            HttpResponse response = client.execute(get);
-            JsonObject obj = parseObject(response);
-            return new MinecraftProfile(obj.get("name").getAsString(), obj.get("id").getAsString(), minecraftToken);
-        } catch (Exception e) {
-            this.errorMsg = ExceptionUtils.getStackTrace(e);
+        if (obj.has("error")) {
+            throw new NoAccountFoundException();
         }
-        return null;
+
+        if (!obj.has("name")) {
+            throw new IllegalStateException("Missing name from obj.has(\"name\")");
+        }
+        JsonElement nameElement = obj.get("name");
+        String name = nameElement.getAsString();
+        NullUtils.requireNotNull(name, "name");
+
+        if (!obj.has("id")) {
+            throw new IllegalStateException("Missing id from obj.has(\"id\")");
+        }
+        JsonElement idElement = obj.get("id");
+        String id = idElement.getAsString();
+        NullUtils.requireNotNull(id, "id");
+
+        return new MinecraftProfile(name, id, minecraftToken);
     }
 
     private JsonObject parseObject(HttpResponse entity) throws IOException {
-        return parseObject(EntityUtils.toString(entity.getEntity()));
+        HttpEntity responseEntity = entity.getEntity();
+        NullUtils.requireNotNull(responseEntity, "responseEntity");
+        String responseString = EntityUtils.toString(responseEntity);
+        NullUtils.requireNotNull(responseString, "responseString");
+
+        if (entity.getStatusLine().getStatusCode() < 200 || entity.getStatusLine().getStatusCode() >= 300) {
+            LOGGER.error("Received error code: " + entity.getStatusLine().getStatusCode());
+            LOGGER.error("Response: " + responseString);
+        }
+        return parseObject(responseString);
     }
 
     private JsonObject parseObject(String str) {
-        return new JsonParser().parse(str).getAsJsonObject();
+        JsonElement json = AgnosticUtils.parseJson(str);
+        NullUtils.requireNotNull(json, "json");
+        JsonObject obj = json.getAsJsonObject();
+        NullUtils.requireNotNull(obj, "obj");
+        addResponseDebugInfo(obj);
+        return obj;
     }
 
     private static class MsToken {
@@ -350,8 +605,8 @@ public class MicrosoftLogin {
 
     private static class UrlBuilder {
 
-        private String url;
-        private Map<String, Object> parameters = new HashMap<>();
+        private final String url;
+        private final Map<String, Object> parameters = new HashMap<>();
 
         public UrlBuilder(String url) {
             this.url = url;
@@ -390,5 +645,25 @@ public class MicrosoftLogin {
         public String str() {
             return "name=" + name + "&" + "id=" + id + "&" + "token=" + token.accessToken;
         }
+    }
+
+    @SuppressWarnings("serial")
+    public static class BaseMicrosoftLoginException extends Exception {
+    }
+
+    @SuppressWarnings("serial")
+    public static class NoXboxAccountException extends BaseMicrosoftLoginException {
+    }
+
+    @SuppressWarnings("serial")
+    public static class BannedCountryException extends BaseMicrosoftLoginException {
+    }
+
+    @SuppressWarnings("serial")
+    public static class UnderageAccountException extends BaseMicrosoftLoginException {
+    }
+
+    @SuppressWarnings("serial")
+	public static class NoAccountFoundException extends BaseMicrosoftLoginException {
     }
 }
