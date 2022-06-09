@@ -6,7 +6,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextComponent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,19 +16,19 @@ public class LoginTypeScreen extends OAuthScreen {
     private final Runnable onMicrosoft;
 
     public LoginTypeScreen(Runnable onMojang, Runnable onMicrosoft) {
-        super(new TextComponent("Select Account Type"));
+        super(Component.literal("Select Account Type"));
         this.onMojang = onMojang;
         this.onMicrosoft = onMicrosoft;
     }
 
     @Override
     protected void init() {
-        this.addRenderableWidget(new Button(this.width / 2 - 100, this.height / 2 - 20 - 2, 200, 20, new TextComponent("Mojang Login"), p_onPress_1_ -> {
+        this.addRenderableWidget(new Button(this.width / 2 - 100, this.height / 2 - 20 - 2, 200, 20, Component.literal("Mojang Login"), p_onPress_1_ -> {
             this.onMojang.run();
         }));
         final List<Component> msTooltip = new ArrayList<>();
-        msTooltip.add(new TextComponent("Will open your browser to login to Microsoft."));
-        this.addRenderableWidget(new Button(this.width / 2 - 100, this.height / 2 + 2, 200 /*- 52*/, 20, new TextComponent("Microsoft Login"), (p_213031_1_) -> {
+        msTooltip.add(Component.literal("Will open your browser to login to Microsoft."));
+        this.addRenderableWidget(new Button(this.width / 2 - 100, this.height / 2 + 2, 200 /*- 52*/, 20, Component.literal("Microsoft Login"), (p_213031_1_) -> {
 //            final MicrosoftLogin login = new MicrosoftLogin();
 //            LoginLoadingScreen loadingScreen = new LoginLoadingScreen(new ProfileSelectionScreen(), this, login::cancelLogin, true);
 //            login.setUpdateStatusConsumer(loadingScreen::updateText);

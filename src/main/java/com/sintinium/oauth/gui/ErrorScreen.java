@@ -12,7 +12,6 @@ import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
-import net.minecraft.network.chat.TextComponent;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 public class ErrorScreen extends OAuthScreen {
@@ -22,13 +21,13 @@ public class ErrorScreen extends OAuthScreen {
     private boolean isInfo = false;
 
     public ErrorScreen(boolean isMs, String message) {
-        super(new TextComponent("Error logging into " + (isMs ? "Microsoft." : "Mojang.")));
+        super(Component.literal("Error logging into " + (isMs ? "Microsoft." : "Mojang.")));
         this.message = message;
         System.err.println(message);
     }
 
     public ErrorScreen(boolean isMs, Throwable e) {
-        super(new TextComponent("Error logging into " + (isMs ? "Microsoft." : "Mojang.")));
+        super(Component.literal("Error logging into " + (isMs ? "Microsoft." : "Mojang.")));
         this.e = e;
         e.printStackTrace();
     }
@@ -97,8 +96,8 @@ public class ErrorScreen extends OAuthScreen {
             drawCenteredString(p_230430_1_, Minecraft.getInstance().font, "If you believe this is a bug please create an issue at", this.width / 2, this.height / 2 - 12, 0xFFFFFF);
             drawCenteredString(p_230430_1_, Minecraft.getInstance().font, "https://github.com/Sintinium/oauth with your latest log file.", this.width / 2, this.height / 2, 0xFFFFFF);
         } else {
-            Component github = new TextComponent("Please create an issue at https://github.com/Sintinium/oauth with your log file.")
-                    .setStyle(Style.EMPTY.setUnderlined(true));
+            Component github = Component.literal("Please create an issue at https://github.com/Sintinium/oauth with your log file.")
+                    .setStyle(Style.EMPTY.withUnderlined(true));
             drawCenteredString(p_230430_1_, Minecraft.getInstance().font, "An error occurred. This could be a bug.", this.width / 2, this.height / 2 - 40, 0xFFFFFF);
             drawCenteredString(p_230430_1_, Minecraft.getInstance().font, github, this.width / 2, this.height / 2 - 28, 0xFFFFFF);
             float scale = .5f;

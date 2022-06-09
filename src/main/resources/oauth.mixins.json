@@ -1,7 +1,7 @@
 {
   "required": true,
   "package": "com.sintinium.oauth.mixin",
-  "compatibilityLevel": "JAVA_8",
+  "compatibilityLevel": "JAVA_17",
   "refmap": "oauth.refmap.json",
   "mixins": [
   ],

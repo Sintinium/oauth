@@ -5,7 +5,7 @@ import com.sintinium.oauth.gui.profile.ProfileSelectionScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.CommonComponents;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.Component;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -21,7 +21,7 @@ public class LoginLoadingScreen extends OAuthScreen {
     private final AtomicReference<String> updateText = new AtomicReference<>();
 
     public LoginLoadingScreen(Runnable onCancel, boolean isMicrosoft) {
-        super(new TextComponent("Logging in"));
+        super(Component.literal("Logging in"));
         this.onCancel = onCancel;
         this.isMicrosoft = isMicrosoft;
 

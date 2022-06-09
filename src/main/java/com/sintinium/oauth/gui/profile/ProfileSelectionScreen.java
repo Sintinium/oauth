@@ -25,7 +25,7 @@ import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.PlayerModelPart;
 import org.apache.logging.log4j.LogManager;
@@ -42,7 +42,7 @@ public class ProfileSelectionScreen extends OAuthScreen {
     private ProfileEntry initialEntry;
 
     public ProfileSelectionScreen() {
-        super(new TextComponent("Profiles"));
+        super(Component.literal("Profiles"));
     }
 
     public ProfileSelectionScreen(ProfileEntry initialEntry) {
@@ -259,7 +259,7 @@ public class ProfileSelectionScreen extends OAuthScreen {
     }
 
     private Button addButton(int x, int y, int width, String text, Button.OnPress onPress) {
-        return this.addRenderableWidget(new Button(x, y, width, 20, new TextComponent(text), onPress));
+        return this.addRenderableWidget(new Button(x, y, width, 20, Component.literal(text), onPress));
     }
 
     @Override

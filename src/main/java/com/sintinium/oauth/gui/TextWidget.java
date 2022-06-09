@@ -3,14 +3,14 @@ package com.sintinium.oauth.gui;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.network.chat.TextComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 
 public class TextWidget extends Button {
     private String text;
 
     public TextWidget(int x, int y, int width, int height, String text) {
-        super(x, y, width, height, new TextComponent(text), p_onPress_1_ -> {
+        super(x, y, width, height, Component.literal(text), p_onPress_1_ -> {
         });
     }
 
