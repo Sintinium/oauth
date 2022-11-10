@@ -62,8 +62,8 @@ public class MicrosoftProfile implements IProfile {
                 ProfileManager.getInstance().save();
             }
             LoginUtil.loginMs(this);
-            LoginUtil.needsRefresh = true;
-            return LoginUtil.isOnline();
+            LoginUtil.setOnline(true);
+            return true;
         } catch (Exception e) {
             LogManager.getLogger().error(login.getErroredResponses());
             throw e;

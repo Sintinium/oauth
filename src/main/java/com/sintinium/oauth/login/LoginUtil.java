@@ -4,19 +4,22 @@ import com.mojang.authlib.Agent;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.UserType;
 import com.mojang.authlib.exceptions.AuthenticationException;
+import com.mojang.authlib.minecraft.UserApiService;
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import com.mojang.authlib.yggdrasil.YggdrasilMinecraftSessionService;
 import com.mojang.authlib.yggdrasil.YggdrasilUserAuthentication;
 import com.mojang.util.UUIDTypeAdapter;
 import com.sintinium.oauth.GuiEventHandler;
+import com.sintinium.oauth.mixin.MinecraftMixin;
 import com.sintinium.oauth.profile.MicrosoftProfile;
 import com.sintinium.oauth.profile.MojangProfile;
 import com.sintinium.oauth.util.MultiplayerAllowedUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.User;
-import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
+import net.minecraft.client.gui.screens.social.PlayerSocialManager;
 
-import java.lang.reflect.Field;
+import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -46,34 +49,43 @@ public class LoginUtil {
             return wasOnline;
         }
         User session = Minecraft.getInstance().getUser();
-        String uuid = UUID.randomUUID().toString();
+        byte[] bytes = new byte[16];
+        new SecureRandom().nextBytes(bytes);
+        String hash = new BigInteger(bytes).toString(16);
         needsRefresh = false;
         lastCheck = System.currentTimeMillis();
         GuiEventHandler.warned = false;
-        isMultiplayerDisabled = MultiplayerAllowedUtil.isMultiplayerDisabled(session.getAccessToken());
         try {
-            minecraftSessionService.joinServer(session.getGameProfile(), session.getAccessToken(), uuid);
-            GameProfile mssProfile = minecraftSessionService.hasJoinedServer(session.getGameProfile(), uuid, null);
-            if (mssProfile != null && mssProfile.isComplete()) {
-                wasOnline = true;
-                return true;
-            } else {
-                wasOnline = false;
-                return false;
-            }
-        } catch (AuthenticationException e) {
+            isMultiplayerDisabled = MultiplayerAllowedUtil.isMultiplayerDisabled(session.getAccessToken());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            MicrosoftLogin microsoftLogin = new MicrosoftLogin();
+            microsoftLogin.getMinecraftProfile(Minecraft.getInstance().getUser().getAccessToken());
+            wasOnline = true;
+            return true;
+        } catch (Exception e) {
             wasOnline = false;
             return false;
         }
     }
 
+    public static void setOnline(boolean isOnline) {
+        LoginUtil.wasOnline = isOnline;
+    }
+
     public static GameProfile getGameProfile(User session) {
-        String serverId = UUID.randomUUID().toString();
+        byte[] bytes = new byte[16];
+        new SecureRandom().nextBytes(bytes);
+        String hash = new BigInteger(bytes).toString(16);
+
         needsRefresh = false;
         lastCheck = System.currentTimeMillis();
         try {
-            minecraftSessionService.joinServer(session.getGameProfile(), session.getAccessToken(), serverId);
-            GameProfile profile = minecraftSessionService.hasJoinedServer(session.getGameProfile(), serverId, null);
+            Minecraft.getInstance().getMinecraftSessionService().joinServer(session.getGameProfile(), session.getAccessToken(), hash);
+            GameProfile profile = Minecraft.getInstance().getMinecraftSessionService().hasJoinedServer(session.getGameProfile(), hash, null);
             if (profile != null && profile.isComplete()) {
                 return profile;
             }
@@ -83,9 +95,10 @@ public class LoginUtil {
         return null;
     }
 
-    public static void loginMs(MicrosoftProfile profile) throws WrongMinecraftVersionException {
+    public static void loginMs(MicrosoftProfile profile) throws WrongMinecraftVersionException, AuthenticationException {
         User session = new User(profile.getName(), profile.getUUID().toString(), profile.getAccessToken(), Optional.empty(), Optional.empty(), User.Type.MSA);
-        setSession(session);
+        UserApiService apiService = authService.createUserApiService(profile.getAccessToken());
+        setSession(session, apiService);
     }
 
     public static MojangProfile tryGetMojangProfile(String username, String password) throws AuthenticationException {
@@ -113,7 +126,7 @@ public class LoginUtil {
 
     public static void loginOffline(String username) throws WrongMinecraftVersionException {
         User session = new User(username, UUID.nameUUIDFromBytes(username.getBytes()).toString(), "NotValid", Optional.empty(), Optional.empty(), User.Type.LEGACY);
-        setSession(session);
+        setSession(session, UserApiService.OFFLINE);
     }
 
     public static boolean loginMojangOrLegacy(String username, String password) throws AuthenticationException, WrongMinecraftVersionException {
@@ -133,19 +146,20 @@ public class LoginUtil {
         userAuth.logOut();
 
         User session = new User(name, uuid, token, Optional.empty(), Optional.empty(), User.Type.byName(type.getName()));
-        setSession(session);
+        setSession(session, UserApiService.OFFLINE);
         lastMojangUsername = username;
         return isOnline;
     }
 
-    public static void setSession(User session) throws WrongMinecraftVersionException {
-        Field field = ObfuscationReflectionHelper.findField(Minecraft.class, "f_90998_");
-        field.setAccessible(true);
-        try {
-            field.set(Minecraft.getInstance(), session);
-        } catch (IllegalAccessException e) {
-            throw new WrongMinecraftVersionException("Missing session field. Are you using SRG mappings?");
-        }
+    public static void setSession(User session, UserApiService apiService) throws WrongMinecraftVersionException {
+        MinecraftMixin mc = (MinecraftMixin) Minecraft.getInstance();
+        mc.setUser(session);
+        mc.setUserApiService(apiService);
+        mc.setPlayerSocialManager(new PlayerSocialManager(Minecraft.getInstance(), apiService));
+
+        Minecraft.getInstance().getProfileProperties().clear();
+        Minecraft.getInstance().getProfileProperties();
+
         needsRefresh = true;
         updateOnlineStatus();
     }
