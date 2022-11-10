@@ -17,7 +17,7 @@ import net.minecraftforge.fml.common.Mod;
 public class GuiEventHandler {
     public static boolean warned = false;
     @SubscribeEvent
-    public static void multiplayerScreenOpen(ScreenEvent.InitScreenEvent.Post event) {
+    public static void multiplayerScreenOpen(ScreenEvent.Init.Post event) {
         if (!(event.getScreen() instanceof JoinMultiplayerScreen)) return;
         if (LoginUtil.isMultiplayerDisabled() && !warned) {
             Minecraft.getInstance().setScreen(new MultiplayerDisabledScreen());
