@@ -42,19 +42,18 @@ public class LoginUtil {
         needsRefresh = false;
         lastCheck = System.currentTimeMillis();
         try {
-            minecraftSessionService.joinServer(session.getGameProfile(), session.getAccessToken(), uuid);
-            GameProfile mssProfile = minecraftSessionService.hasJoinedServer(session.getGameProfile(), uuid, null);
-            if (mssProfile != null && mssProfile.isComplete()) {
-                wasOnline = true;
-                return true;
-            } else {
-                wasOnline = false;
-                return false;
-            }
-        } catch (AuthenticationException e) {
+            MicrosoftLogin microsoftLogin = new MicrosoftLogin();
+            microsoftLogin.getMinecraftProfile(Minecraft.getInstance().getUser().getAccessToken());
+            wasOnline = true;
+            return true;
+        } catch (Exception e) {
             wasOnline = false;
             return false;
         }
+    }
+
+    public static void setOnline(boolean isOnline) {
+        LoginUtil.wasOnline = isOnline;
     }
 
     public static GameProfile getGameProfile(Session session) {

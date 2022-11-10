@@ -49,7 +49,7 @@ public class MicrosoftLogin {
 
     private final Logger LOGGER = LogManager.getLogger();
 
-    private static final String msTokenUrl = "https://login.live.com/oauth20_token.srf";
+    private static final String msTokenUrl = "https://login.microsoftonline.com/consumers/oauth2/v2.0/token";
     private static final String authXbl = "https://user.auth.xboxlive.com/user/authenticate";
     private static final String authXsts = "https://xsts.auth.xboxlive.com/xsts/authorize";
     private static final String minecraftAuth = "https://api.minecraftservices.com/authentication/login_with_xbox";
@@ -58,7 +58,7 @@ public class MicrosoftLogin {
     private static final String redirectDict = "relogin";
     private static final String redirect = "http://localhost:26669/" + redirectDict;
     // https://wiki.vg/Microsoft_Authentication_Scheme
-    private static final String msAuthUrl = new UrlBuilder("https://login.live.com/oauth20_authorize.srf")
+    private static final String msAuthUrl = new UrlBuilder("https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize")
             .addParameter("client_id", clientId)
             .addParameter("response_type", "code")
             .addParameter("redirect_uri", redirect)
@@ -501,6 +501,10 @@ public class MicrosoftLogin {
         String accessToken = accessTokenElement.getAsString();
         NullUtils.requireNotNull(accessToken, "accessToken");
         return new MinecraftToken(accessToken);
+    }
+
+    public MinecraftProfile getMinecraftProfile(String accessToken) throws Exception {
+        return getMinecraftProfile(new MinecraftToken(accessToken));
     }
 
     private MinecraftProfile getMinecraftProfile(MinecraftToken minecraftToken) throws Exception {

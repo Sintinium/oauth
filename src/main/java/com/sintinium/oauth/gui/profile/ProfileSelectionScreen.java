@@ -185,11 +185,8 @@ public class ProfileSelectionScreen extends OAuthScreen {
                 }
 
                 try {
-                    GameProfile profile = LoginUtil.getGameProfile(Minecraft.getInstance().getUser());
-                    if (profile != null) {
-                        ProfileManager.getInstance().getProfile(selected.getProfile().getUUID()).setName(profile.getName());
-                        ProfileManager.getInstance().save();
-                    }
+                    ProfileManager.getInstance().getProfile(selected.getProfile().getUUID()).setName(Minecraft.getInstance().getUser().getName());
+                    ProfileManager.getInstance().save();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
