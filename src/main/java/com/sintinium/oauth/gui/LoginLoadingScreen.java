@@ -3,7 +3,6 @@ package com.sintinium.oauth.gui;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.sintinium.oauth.gui.profile.ProfileSelectionScreen;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 
@@ -38,7 +37,7 @@ public class LoginLoadingScreen extends OAuthScreen {
 
     @Override
     protected void init() {
-        this.addRenderableWidget(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, CommonComponents.GUI_CANCEL, (p_213029_1_) -> {
+        this.addRenderableWidget(OAuthButton.create(this.width / 2 - 100, this.height / 2 + 60, 200, 20, CommonComponents.GUI_CANCEL, (p_213029_1_) -> {
             onCancel.run();
             setScreen(new ProfileSelectionScreen());
         }));

@@ -17,7 +17,7 @@ import com.sintinium.oauth.util.MultiplayerAllowedUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.User;
 import net.minecraft.client.gui.screens.social.PlayerSocialManager;
-import net.minecraft.client.multiplayer.ProfileKeyPairManager;
+import net.minecraft.client.multiplayer.AccountProfileKeyPairManager;
 import net.minecraft.client.multiplayer.chat.report.ReportEnvironment;
 import net.minecraft.client.multiplayer.chat.report.ReportingContext;
 
@@ -159,7 +159,7 @@ public class LoginUtil {
         mc.setUser(session);
         mc.setUserApiService(apiService);
         mc.setPlayerSocialManager(new PlayerSocialManager(Minecraft.getInstance(), apiService));
-        mc.setProfileKeyPairManager(new ProfileKeyPairManager(apiService, session.getProfileId(), Minecraft.getInstance().gameDirectory.toPath()));
+        mc.setProfileKeyPairManager(new AccountProfileKeyPairManager(apiService, session.getProfileId(), Minecraft.getInstance().gameDirectory.toPath()));
         mc.setReportingContext(ReportingContext.create(ReportEnvironment.local(), apiService));
 
         Minecraft.getInstance().getProfileProperties().clear();

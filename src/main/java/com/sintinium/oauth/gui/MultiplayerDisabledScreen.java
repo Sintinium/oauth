@@ -6,7 +6,6 @@ import com.sintinium.oauth.GuiEventHandler;
 import com.sintinium.oauth.util.AgnosticUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.network.chat.CommonComponents;
@@ -21,10 +20,10 @@ public class MultiplayerDisabledScreen extends OAuthScreen {
     @Override
     protected void init() {
         GuiEventHandler.warned = true;
-        this.addRenderableWidget(new Button(this.width / 2 - 100, this.height / 2 + 38, 200, 20, Component.literal("Open Privacy Settings"), p_onPress_1_ -> {
+        this.addRenderableWidget(OAuthButton.create(this.width / 2 - 100, this.height / 2 + 38, 200, 20, Component.literal("Open Privacy Settings"), p_onPress_1_ -> {
             AgnosticUtils.openUri("https://account.xbox.com/en-us/Settings");
         }));
-        this.addRenderableWidget(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, CommonComponents.GUI_CANCEL, p_onPress_1_ -> {
+        this.addRenderableWidget(OAuthButton.create(this.width / 2 - 100, this.height / 2 + 60, 200, 20, CommonComponents.GUI_CANCEL, p_onPress_1_ -> {
             Minecraft.getInstance().setScreen(new JoinMultiplayerScreen(new TitleScreen()));
         }));
     }

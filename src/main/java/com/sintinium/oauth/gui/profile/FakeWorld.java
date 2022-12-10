@@ -5,6 +5,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.core.Holder;
+import net.minecraft.core.HolderOwner;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -71,6 +72,11 @@ public class FakeWorld extends ClientLevel {
 
         public Holder.Kind kind() {
             return Holder.Kind.DIRECT;
+        }
+
+        @Override
+        public boolean canSerializeIn(HolderOwner<T> p_255833_) {
+            return false;
         }
 
         public String toString() {

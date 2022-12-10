@@ -6,7 +6,6 @@ import com.sintinium.oauth.OAuth;
 import com.sintinium.oauth.login.MicrosoftLogin;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.network.chat.CommonComponents;
@@ -38,7 +37,7 @@ public class ErrorScreen extends OAuthScreen {
 
     @Override
     protected void init() {
-        this.addRenderableWidget(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, CommonComponents.GUI_CANCEL, p_onPress_1_ -> {
+        this.addRenderableWidget(OAuthButton.create(this.width / 2 - 100, this.height / 2 + 60, 200, 20, CommonComponents.GUI_CANCEL, p_onPress_1_ -> {
             setScreen(new JoinMultiplayerScreen(new TitleScreen()));
         }));
     }

@@ -1,11 +1,11 @@
 package com.sintinium.oauth;
 
 import com.sintinium.oauth.gui.MultiplayerDisabledScreen;
+import com.sintinium.oauth.gui.OAuthButton;
 import com.sintinium.oauth.gui.TextWidget;
 import com.sintinium.oauth.gui.profile.ProfileSelectionScreen;
 import com.sintinium.oauth.login.LoginUtil;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
@@ -28,7 +28,7 @@ public class GuiEventHandler {
         try {
 //            Method addButtonMethod = ObfuscationReflectionHelper.findMethod(Screen.class, "addButton", Widget.class);
 //            Method addButtonMethod = ObfuscationReflectionHelper.findMethod(Screen.class, "func_230480_a_", Widget.class);
-            event.addListener(new Button(10, 6, 66, 20, Component.literal("OAuth Login"), p_onPress_1_ -> Minecraft.getInstance().setScreen(new ProfileSelectionScreen())));
+            event.addListener(OAuthButton.create(10, 6, 66, 20, Component.literal("OAuth Login"), p_onPress_1_ -> Minecraft.getInstance().setScreen(new ProfileSelectionScreen())));
             final TextWidget textWidget = new TextWidget(10 + 66 + 3, 6, 0, 20, "Status: loading");
             textWidget.setFGColor(0xFFFFFF);
             Thread thread = new Thread(() -> {
