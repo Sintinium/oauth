@@ -1,31 +1,32 @@
 package com.sintinium.oauth.gui;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiScreen;
-
 import java.util.concurrent.atomic.AtomicReference;
 
-public class LoginLoadingScreen extends GuiScreenCustom {
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiScreen;
 
-    private String loadingText = "Loading";
+public class LoginLoadingScreen extends GuiScreenCustom {
+    private static final String loadingText = "Loading";
     private int dots = 0;
     private String renderText = loadingText;
 
-    private GuiScreen multiplayerScreen;
     private GuiScreen lastScreen;
     private int tick = 0;
     private Runnable onCancel;
     private boolean isMicrosoft;
-    private String title = "Logging in";
+//    private static final String title = "Logging in";
     private AtomicReference<String> updateText = new AtomicReference<>();
 
-    protected LoginLoadingScreen(GuiScreen multiplayerScreen, GuiScreen callingScreen, Runnable onCancel, boolean isMicrosoft) {
-        this.multiplayerScreen = multiplayerScreen;
-        this.lastScreen = callingScreen;
+    public LoginLoadingScreen(GuiScreen lastScreen, Runnable onCancel, boolean isMicrosoft) {
+        this.lastScreen = lastScreen;
         this.onCancel = onCancel;
         this.isMicrosoft = isMicrosoft;
-        updateText.set("Check your browser");
+
+        if (this.isMicrosoft) {
+            updateText.set("Check your browser");
+        } else {
+            updateText.set("Authorizing you with Mojang");
+        }
     }
 
     public void updateText(String text) {
@@ -36,25 +37,17 @@ public class LoginLoadingScreen extends GuiScreenCustom {
     public void initGui() {
         this.addButton(new ActionButton(0, this.width / 2 - 100, this.height / 2 + 60, 200, 20, "Cancel", () -> {
             onCancel.run();
-            Minecraft.getMinecraft().displayGuiScreen(lastScreen);
+            setScreen(lastScreen);
         }));
     }
 
     @Override
-    protected void actionPerformed(GuiButton button) {
-        if (button instanceof ActionButton) {
-            ((ActionButton) button).onClicked();
-        } else {
-            throw new RuntimeException("Missing button action");
-        }
-    }
-
-    @Override
     public void updateScreen() {
+    	super.updateScreen();
         tick++;
         if (tick % 20 != 0) return;
         dots++;
-        if (dots >= 3) {
+        if (dots > 3) {
             dots = 0;
         }
         StringBuilder builder = new StringBuilder();
