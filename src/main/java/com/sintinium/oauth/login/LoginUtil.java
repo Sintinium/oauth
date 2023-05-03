@@ -12,7 +12,6 @@ import com.mojang.util.UUIDTypeAdapter;
 import com.sintinium.oauth.GuiEventHandler;
 import com.sintinium.oauth.mixin.MinecraftMixin;
 import com.sintinium.oauth.profile.MicrosoftProfile;
-import com.sintinium.oauth.profile.MojangProfile;
 import com.sintinium.oauth.util.MultiplayerAllowedUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.User;
@@ -35,7 +34,6 @@ public class LoginUtil {
 
     private static final YggdrasilAuthenticationService authService = new YggdrasilAuthenticationService(Minecraft.getInstance().getProxy(), UUID.randomUUID().toString());
     private static final YggdrasilUserAuthentication userAuth = (YggdrasilUserAuthentication) authService.createUserAuthentication(Agent.MINECRAFT);
-    private static final YggdrasilMinecraftSessionService minecraftSessionService = (YggdrasilMinecraftSessionService) authService.createMinecraftSessionService();
     private static boolean isMultiplayerDisabled = false;
 
     public static void updateOnlineStatus() {
@@ -100,36 +98,13 @@ public class LoginUtil {
 
     public static void loginMs(MicrosoftProfile profile) throws WrongMinecraftVersionException, AuthenticationException {
         User session = new User(profile.getName(), profile.getUUID().toString(), profile.getAccessToken(), Optional.empty(), Optional.empty(), User.Type.MSA);
-        UserApiService apiService = authService.createUserApiService(profile.getAccessToken());
-        setSession(session, apiService);
-    }
-
-    public static MojangProfile tryGetMojangProfile(String username, String password) throws AuthenticationException {
-        if (password.isEmpty()) {
-            return null;
-        }
-        userAuth.setUsername(username);
-        userAuth.setPassword(password);
-        userAuth.logIn();
-
-        String name = userAuth.getSelectedProfile().getName();
-        UUID uuid = userAuth.getSelectedProfile().getId();
-        String token = userAuth.getAuthenticatedToken();
-        UserType type = userAuth.getUserType();
-        boolean isOnline = userAuth.canPlayOnline();
-
-        userAuth.logOut();
-
-        if (!isOnline) {
-            return null;
-        }
-
-        return new MojangProfile(name, username, password, uuid, type);
+//        UserApiService apiService = authService.createUserApiService(profile.getAccessToken());
+        setSession(session, true);
     }
 
     public static void loginOffline(String username) throws WrongMinecraftVersionException {
         User session = new User(username, UUID.nameUUIDFromBytes(username.getBytes()).toString(), "NotValid", Optional.empty(), Optional.empty(), User.Type.LEGACY);
-        setSession(session, UserApiService.OFFLINE);
+        setSession(session, false);
     }
 
     public static boolean loginMojangOrLegacy(String username, String password) throws AuthenticationException, WrongMinecraftVersionException {
@@ -149,14 +124,26 @@ public class LoginUtil {
         userAuth.logOut();
 
         User session = new User(name, uuid, token, Optional.empty(), Optional.empty(), User.Type.byName(type.getName()));
-        setSession(session, UserApiService.OFFLINE);
+        setSession(session, false);
         lastMojangUsername = username;
         return isOnline;
     }
 
-    public static void setSession(User session, UserApiService apiService) throws WrongMinecraftVersionException {
+    public static void setSession(User session, boolean onlineLogin) throws WrongMinecraftVersionException {
         MinecraftMixin mc = (MinecraftMixin) Minecraft.getInstance();
         mc.setUser(session);
+
+        UserApiService apiService = UserApiService.OFFLINE;
+        if (onlineLogin) {
+            YggdrasilMinecraftSessionService sessionService = (YggdrasilMinecraftSessionService) Minecraft.getInstance().getMinecraftSessionService();
+            YggdrasilAuthenticationService authenticationService = sessionService.getAuthenticationService();
+            try {
+                apiService = authenticationService.createUserApiService(session.getAccessToken());
+            } catch (AuthenticationException e) {
+                e.printStackTrace();
+            }
+        }
+
         mc.setUserApiService(apiService);
         mc.setPlayerSocialManager(new PlayerSocialManager(Minecraft.getInstance(), apiService));
         mc.setProfileKeyPairManager(new AccountProfileKeyPairManager(apiService, session.getProfileId(), Minecraft.getInstance().gameDirectory.toPath()));
