@@ -19,7 +19,7 @@ apply plugin: 'org.spongepowered.mixin'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
-version = '1.1.14' // When changed make sure to change the version in the resources/mods.toml
+version = '1.1.15' // When changed make sure to change the version in the resources/mods.toml
 group = 'com.sintinium.oauth' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'oauth'
 
