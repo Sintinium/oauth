@@ -1,8 +1,11 @@
 package com.sintinium.oauth.gui;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.sintinium.oauth.gui.components.OAuthButton;
 import com.sintinium.oauth.gui.profile.ProfileSelectionScreen;
+import com.sintinium.oauth.util.GuiUtils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
@@ -38,7 +41,7 @@ public class LoginLoadingScreen extends OAuthScreen {
 
     @Override
     protected void init() {
-        this.addRenderableWidget(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, CommonComponents.GUI_CANCEL, (p_213029_1_) -> {
+        this.addRenderableWidget(new OAuthButton(this.width / 2 - 100, this.height / 2 + 60, 200, 20, CommonComponents.GUI_CANCEL, (p_213029_1_) -> {
             onCancel.run();
             setScreen(new ProfileSelectionScreen());
         }));
@@ -62,12 +65,12 @@ public class LoginLoadingScreen extends OAuthScreen {
     }
 
     @Override
-    public void render(PoseStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
-        this.renderBackground(p_230430_1_);
-        drawCenteredString(p_230430_1_, Minecraft.getInstance().font, renderText, this.width / 2, this.height / 2 - 40, 0xFFFFFF);
+    public void render(GuiGraphics guiGraphics, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
+        this.renderBackground(guiGraphics);
+        GuiUtils.drawCentered(guiGraphics, renderText, this.width / 2, this.height / 2 - 40, 0xFFFFFF);
         if (this.isMicrosoft) {
-            drawCenteredString(p_230430_1_, Minecraft.getInstance().font, updateText.get(), this.width / 2, this.height / 2 - 28, 0xFFFFFF);
+            GuiUtils.drawCentered(guiGraphics, updateText.get(), this.width / 2, this.height / 2 - 28, 0xFFFFFF);
         }
-        super.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
+        super.render(guiGraphics, p_230430_2_, p_230430_3_, p_230430_4_);
     }
 }

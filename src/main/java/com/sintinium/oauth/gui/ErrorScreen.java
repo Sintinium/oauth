@@ -3,9 +3,11 @@ package com.sintinium.oauth.gui;
 import com.google.common.base.Splitter;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.sintinium.oauth.OAuth;
+import com.sintinium.oauth.gui.components.OAuthButton;
 import com.sintinium.oauth.login.MicrosoftLogin;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
@@ -38,7 +40,7 @@ public class ErrorScreen extends OAuthScreen {
 
     @Override
     protected void init() {
-        this.addRenderableWidget(new Button(this.width / 2 - 100, this.height / 2 + 60, 200, 20, CommonComponents.GUI_CANCEL, p_onPress_1_ -> {
+        this.addRenderableWidget(new OAuthButton(this.width / 2 - 100, this.height / 2 + 60, 200, 20, CommonComponents.GUI_CANCEL, p_onPress_1_ -> {
             setScreen(new JoinMultiplayerScreen(new TitleScreen()));
         }));
     }
@@ -78,30 +80,30 @@ public class ErrorScreen extends OAuthScreen {
     }
 
     @Override
-    public void render(PoseStack p_230430_1_, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
+    public void render(GuiGraphics guiGraphics, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
         Font font = Minecraft.getInstance().font;
-        this.renderBackground(p_230430_1_);
+        this.renderBackground(guiGraphics);
         if (isInfo) {
-            drawCenteredString(p_230430_1_, Minecraft.getInstance().font, this.title, this.width / 2, this.height / 2 - 40, 0xFFFFFF);
+            guiGraphics.drawCenteredString(Minecraft.getInstance().font, this.title, this.width / 2, this.height / 2 - 40, 0xFFFFFF);
 
             Iterable<String> messages = Splitter.on("\n").split(getMessage());
             int index = 0;
             for (String m : messages) {
-                font.drawShadow(p_230430_1_, m, this.width / 2f - font.width(m) / 2f, (this.height / 2f - 24f) + (index * 12f), 0xFF4444);
+                guiGraphics.drawString(this.font, m,this.width / 2f - font.width(m) / 2f, (this.height / 2f - 24f) + (index * 12f), 0xFF4444, true);
                 index++;
             }
         } else if (getMessage().toLowerCase().contains("no such host is known") || getMessage().toLowerCase().contains("connection reset")) {
-            drawCenteredString(p_230430_1_, Minecraft.getInstance().font, this.title, this.width / 2, this.height / 2 - 40, 0xFFFFFF);
-            drawCenteredString(p_230430_1_, Minecraft.getInstance().font, "The servers could be down or it could be an internet problem.", this.width / 2, this.height / 2 - 28, 0xFFFFFF);
-            drawCenteredString(p_230430_1_, Minecraft.getInstance().font, "If you believe this is a bug please create an issue at", this.width / 2, this.height / 2 - 12, 0xFFFFFF);
-            drawCenteredString(p_230430_1_, Minecraft.getInstance().font, "https://github.com/Sintinium/oauth with your latest log file.", this.width / 2, this.height / 2, 0xFFFFFF);
+            guiGraphics.drawCenteredString(Minecraft.getInstance().font, this.title, this.width / 2, this.height / 2 - 40, 0xFFFFFF);
+            guiGraphics.drawCenteredString(Minecraft.getInstance().font, "The servers could be down or it could be an internet problem.", this.width / 2, this.height / 2 - 28, 0xFFFFFF);
+            guiGraphics.drawCenteredString(Minecraft.getInstance().font, "If you believe this is a bug please create an issue at", this.width / 2, this.height / 2 - 12, 0xFFFFFF);
+            guiGraphics.drawCenteredString(Minecraft.getInstance().font, "https://github.com/Sintinium/oauth with your latest log file.", this.width / 2, this.height / 2, 0xFFFFFF);
         } else {
             Component github = Component.literal("Please create an issue at https://github.com/Sintinium/oauth with your log file.")
                     .setStyle(Style.EMPTY.withUnderlined(true));
-            drawCenteredString(p_230430_1_, Minecraft.getInstance().font, "An error occurred. This could be a bug.", this.width / 2, this.height / 2 - 40, 0xFFFFFF);
-            drawCenteredString(p_230430_1_, Minecraft.getInstance().font, github, this.width / 2, this.height / 2 - 28, 0xFFFFFF);
+            guiGraphics.drawCenteredString(Minecraft.getInstance().font, "An error occurred. This could be a bug.", this.width / 2, this.height / 2 - 40, 0xFFFFFF);
+            guiGraphics.drawCenteredString(Minecraft.getInstance().font, github, this.width / 2, this.height / 2 - 28, 0xFFFFFF);
             float scale = .5f;
-            p_230430_1_.scale(scale, scale, scale);
+            guiGraphics.pose().scale(scale, scale, scale);
             String msg = getMessage();
             if (OAuth.getInstance().modContainer != null) {
                 msg = "OAuth Forge v" + OAuth.getInstance().modContainer.getModInfo().getVersion().toString() + ": " + msg;
@@ -109,12 +111,12 @@ public class ErrorScreen extends OAuthScreen {
             Iterable<String> messages = Splitter.fixedLength(Math.round(80 * (1f / scale))).limit(12).split(msg);
             int index = 0;
             for (String m : messages) {
-                font.drawShadow(p_230430_1_, m, this.width / 2f - font.width(m) / 2f * scale, (this.height / 2f - 16f) * (1f / scale) + (index * 12f), 0xFF4444);
+                guiGraphics.drawString(font, m, this.width / 2f - font.width(m) / 2f * scale, (this.height / 2f - 16f) * (1f / scale) + (index * 12f), 0xFF4444, true);
                 index++;
             }
-            p_230430_1_.scale(1f / scale, 1f / scale, 1f / scale);
+            guiGraphics.pose().scale(1f / scale, 1f / scale, 1f / scale);
         }
 
-        super.render(p_230430_1_, p_230430_2_, p_230430_3_, p_230430_4_);
+        super.render(guiGraphics, p_230430_2_, p_230430_3_, p_230430_4_);
     }
 }

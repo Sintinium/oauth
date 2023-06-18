@@ -7,16 +7,18 @@ import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Quaternion;
-import com.mojang.math.Vector3f;
+import com.mojang.math.Axis;
 import com.sintinium.oauth.gui.*;
+import com.sintinium.oauth.gui.components.OAuthButton;
 import com.sintinium.oauth.login.LoginUtil;
 import com.sintinium.oauth.login.MicrosoftLogin;
 import com.sintinium.oauth.profile.MicrosoftProfile;
 import com.sintinium.oauth.profile.OfflineProfile;
 import com.sintinium.oauth.profile.ProfileManager;
+import com.sintinium.oauth.util.GuiUtils;
 import com.sintinium.oauth.util.PlayerRenderers;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
@@ -29,9 +31,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.PlayerModelPart;
 import org.apache.logging.log4j.LogManager;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 public class ProfileSelectionScreen extends OAuthScreen {
 
@@ -48,10 +53,6 @@ public class ProfileSelectionScreen extends OAuthScreen {
     public ProfileSelectionScreen(ProfileEntry initialEntry) {
         this();
         this.initialEntry = initialEntry;
-    }
-
-    private static void onMojangType() {
-        setScreen(new LoginScreen());
     }
 
     public void onLoginButton() {
@@ -256,7 +257,7 @@ public class ProfileSelectionScreen extends OAuthScreen {
     }
 
     private Button addButton(int x, int y, int width, String text, Button.OnPress onPress) {
-        return this.addRenderableWidget(new Button(x, y, width, 20, Component.literal(text), onPress));
+        return this.addRenderableWidget(new OAuthButton(x, y, width, 20, text, onPress));
     }
 
     @Override
@@ -291,18 +292,18 @@ public class ProfileSelectionScreen extends OAuthScreen {
     }
 
     @Override
-    public void render(PoseStack stack, int mouseX, int mouseY, float delta) {
-        renderBackground(stack);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
+        renderBackground(guiGraphics);
         int size = 60;
         int x = 40;
         int y = height / 2 + size;
-        this.profileList.render(stack, mouseX, mouseY, delta);
+        this.profileList.render(guiGraphics, mouseX, mouseY, delta);
 //        InventoryScreen.renderEntityInInventory(x, y, size, -mouseX + x, -mouseY + y - size * 2 + size / 2f, FakePlayer.getInstance());
         renderPlayer(RenderSystem.getModelViewStack(), mouseX, mouseY, delta);
-        Minecraft.getInstance().font.drawShadow(stack, "Status: " + (LoginUtil.isOnline() ? "Online" : "Offline"), 12, 12, LoginUtil.isOnline() ? 0x55FF55 : 0xFF5555);
-        drawCenteredString(stack, font, "Current Profile: " + Minecraft.getInstance().getUser().getName(), width / 2, 12, 0xFFFFFF);
+        GuiUtils.drawShadow(guiGraphics, "Status: " + (LoginUtil.isOnline() ? "Online" : "Offline"), 12, 12, LoginUtil.isOnline() ? 0x55FF55 : 0xFF5555);
+        GuiUtils.drawCentered(guiGraphics, "Current Profile: " + Minecraft.getInstance().getUser().getName(), width / 2, 12, 0xFFFFFF);
 
-        super.render(stack, mouseX, mouseY, delta);
+        super.render(guiGraphics, mouseX, mouseY, delta);
     }
 
     private void renderPlayer(PoseStack stack, int mouseX, int mouseY, float delta) {
@@ -319,18 +320,18 @@ public class ProfileSelectionScreen extends OAuthScreen {
         FakePlayer fakePlayer = FakePlayer.getInstance();
         float f = (float) Math.atan(rotX / 40.0F);
         float f1 = (float) Math.atan(rotY / 40.0F);
+
         fakePlayer.yBodyRot = 180.0F + f * 20.0F;
         fakePlayer.setYRot(180.0F + f * 40.0F);
         fakePlayer.setXRot(-f1 * 20.0F);
         fakePlayer.yHeadRot = fakePlayer.getYRot();
         fakePlayer.yHeadRotO = fakePlayer.getYRot();
 
-
         PoseStack playerStack = new PoseStack();
         playerStack.translate(0.0, 0.0, 1000.0);
         playerStack.scale(size, size, size);
-        Quaternion quaternion = Vector3f.ZP.rotationDegrees(180.0F);
-        Quaternion quaternion1 = Vector3f.XP.rotationDegrees((float) Math.atan(rotX / 40F));
+        Quaternionf quaternion = (new Quaternionf()).rotateZ(3.1415927f);
+        Quaternionf quaternion1 = (new Quaternionf()).rotateX((float) Math.toRadians(rotX / 40F));
         quaternion.mul(quaternion1);
         playerStack.mulPose(quaternion);
         playerStack.scale(0.9375F, 0.9375F, 0.9375F);
@@ -353,7 +354,7 @@ public class ProfileSelectionScreen extends OAuthScreen {
 
     private void renderModel(PoseStack stack, MultiBufferSource multiBufferSource) {
         stack.pushPose();
-        stack.mulPose(Vector3f.YP.rotationDegrees(180 - Mth.lerp(1f, FakePlayer.getInstance().yBodyRotO, FakePlayer.getInstance().yBodyRot)));
+        stack.mulPose((new Quaternionf()).rotateY((float) Math.toRadians(180 - Mth.lerp(1f, FakePlayer.getInstance().yBodyRotO, FakePlayer.getInstance().yBodyRot))));
         stack.scale(-1f, -1f, 1f);
         stack.translate(0.0, -1.501, 0.0);
         boolean slim = false;
@@ -376,8 +377,8 @@ public class ProfileSelectionScreen extends OAuthScreen {
         if (fakePlayer.isCapeLoaded() && fakePlayer.isModelPartShown(PlayerModelPart.CAPE) && fakePlayer.getCloakTextureLocation() != null) {
             stack.pushPose();
             stack.translate(0.0D, 0.0D, 0.225D);
-            stack.mulPose(Vector3f.ZN.rotationDegrees(5f));
-            stack.mulPose(Vector3f.XP.rotationDegrees(5f));
+            stack.mulPose(Axis.ZN.rotationDegrees(5f));
+            stack.mulPose(Axis.XP.rotationDegrees(5f));
             VertexConsumer vertexConsumer1 = multiBufferSource.getBuffer(RenderType.entitySolid(fakePlayer.getCloakTextureLocation()));
             model.renderCloak(stack, vertexConsumer1, 15728880, OverlayTexture.NO_OVERLAY);
             stack.popPose();

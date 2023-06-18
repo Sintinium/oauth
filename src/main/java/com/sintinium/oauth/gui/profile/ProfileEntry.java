@@ -7,7 +7,9 @@ import com.sintinium.oauth.profile.OfflineProfile;
 import com.sintinium.oauth.profile.ProfileManager;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
@@ -44,10 +46,10 @@ public class ProfileEntry extends ObjectSelectionList.Entry<ProfileEntry> {
     }
 
     @Override
-    public void render(PoseStack pMatrixStack, int pIndex, int pTop, int pLeft, int pWidth, int pHeight, int pMouseX, int pMouseY, boolean pIsMouseOver, float pPartialTicks) {
+    public void render(GuiGraphics guiGraphics, int pIndex, int pTop, int pLeft, int pWidth, int pHeight, int pMouseX, int pMouseY, boolean pIsMouseOver, float pPartialTicks) {
         String name = profile.getName();
         if (isOffline) name += " (Offline)";
-        Minecraft.getInstance().font.drawShadow(pMatrixStack, name, pLeft, pTop + 2, 0xFFFFFF);
+        guiGraphics.drawString(Minecraft.getInstance().font, name, pLeft, pTop + 2, 0xFFFFFF);
         if (this.profileList.getSelected() == this) {
             upArrow.setSelected(true);
             downArrow.setSelected(true);
@@ -59,10 +61,10 @@ public class ProfileEntry extends ObjectSelectionList.Entry<ProfileEntry> {
         upArrow.setPosition(pLeft + pWidth, pTop);
         downArrow.setPosition(pLeft + pWidth, pTop);
         if (profileList.children().indexOf(this) > 0) {
-            upArrow.render(pMatrixStack, pIndex, pTop, pLeft, pWidth, pHeight, pMouseX, pMouseY, pIsMouseOver, pPartialTicks);
+            upArrow.render(guiGraphics, pIndex, pTop, pLeft, pWidth, pHeight, pMouseX, pMouseY, pIsMouseOver, pPartialTicks);
         }
         if (profileList.children().indexOf(this) < profileList.children().size() - 1) {
-            downArrow.render(pMatrixStack, pIndex, pTop, pLeft, pWidth, pHeight, pMouseX, pMouseY, pIsMouseOver, pPartialTicks);
+            downArrow.render(guiGraphics, pIndex, pTop, pLeft, pWidth, pHeight, pMouseX, pMouseY, pIsMouseOver, pPartialTicks);
         }
     }
 
@@ -146,14 +148,14 @@ public class ProfileEntry extends ObjectSelectionList.Entry<ProfileEntry> {
             return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
         }
 
-        public void render(PoseStack pMatrixStack, int pIndex, int pTop, int pLeft, int pWidth, int pHeight, int pMouseX, int pMouseY, boolean pIsMouseOver, float pPartialTicks) {
+        public void render(GuiGraphics guiGraphics, int pIndex, int pTop, int pLeft, int pWidth, int pHeight, int pMouseX, int pMouseY, boolean pIsMouseOver, float pPartialTicks) {
             RenderSystem.setShader(GameRenderer::getPositionTexShader);
             RenderSystem.setShaderTexture(0, ICON_OVERLAY_LOCATION);
             RenderSystem.setShaderColor(1f, 1f, 1, 1f);
             if (isMouseOver(pMouseX, pMouseY)) {
-                GuiComponent.blit(pMatrixStack, x, y, textureX, textureY + 32, width, height, 256, 256);
+                guiGraphics.blit(ICON_OVERLAY_LOCATION, x, y, textureX, textureY + 32, width, height, 256, 256);
             } else {
-                GuiComponent.blit(pMatrixStack, x, y, textureX, textureY, width, height, 256, 256);
+                guiGraphics.blit(ICON_OVERLAY_LOCATION, x, y, textureX, textureY, width, height, 256, 256);
             }
         }
     }
