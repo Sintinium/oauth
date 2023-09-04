@@ -183,11 +183,6 @@ public class FakeClientPlayNetHandler extends ClientPacketListener {
         }
 
         @Override
-        public Optional<Holder<T>> getRandom(RandomSource randomSource) {
-            return Optional.empty();
-        }
-
-        @Override
         public boolean containsKey(ResourceLocation p_123011_) {
             return false;
         }
@@ -215,16 +210,6 @@ public class FakeClientPlayNetHandler extends ClientPacketListener {
         @Override
         public Holder.Reference<T> createIntrusiveHolder(T p_206068_) {
             return null;
-        }
-
-        @Override
-        public Optional<Holder<T>> getHolder(int i) {
-            return Optional.empty();
-        }
-
-        @Override
-        public Optional<Holder<T>> getHolder(ResourceKey<T> resourceKey) {
-            return Optional.empty();
         }
 
         @Override
@@ -304,6 +289,21 @@ public class FakeClientPlayNetHandler extends ClientPacketListener {
         }
 
         #else
+
+        @Override
+        public Optional<Holder<T>> getRandom(RandomSource randomSource) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Holder<T>> getHolder(int i) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Holder<T>> getHolder(ResourceKey<T> resourceKey) {
+            return Optional.empty();
+        }
 
         @Override
         public Lifecycle elementsLifecycle() {
