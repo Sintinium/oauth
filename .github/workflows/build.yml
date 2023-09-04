@@ -32,6 +32,9 @@ jobs:
       - name: build 1.19.4
         run: ./gradlew assemble -PmcVer="1.19.4"
 
+      - name: build 1.19.2
+        run: ./gradlew assemble -PmcVer="1.19.2"
+
       - name: capture build artifacts
         if: ${{ runner.os == 'Linux' }} # Only upload artifacts built from one OS
         uses: actions/upload-artifact@v2

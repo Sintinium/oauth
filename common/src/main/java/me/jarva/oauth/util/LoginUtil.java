@@ -171,7 +171,11 @@ public class LoginUtil {
 
         mc.setUserApiService(apiService);
         mc.setPlayerSocialManager(new PlayerSocialManager(Minecraft.getInstance(), apiService));
+        #if POST_MC_1_19_2
         mc.setProfileKeyPairManager(ProfileKeyPairManager.create(apiService, session, Minecraft.getInstance().gameDirectory.toPath()));
+        #else
+        mc.setProfileKeyPairManager(new ProfileKeyPairManager(apiService, UUID.fromString(session.getUuid()), Minecraft.getInstance().gameDirectory.toPath()));
+        #endif
         mc.setReportingContext(ReportingContext.create(ReportEnvironment.local(), apiService));
 
         Minecraft.getInstance().getProfileProperties().clear();

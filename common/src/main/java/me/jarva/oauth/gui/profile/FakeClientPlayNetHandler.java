@@ -2,6 +2,7 @@ package me.jarva.oauth.gui.profile;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Lifecycle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
@@ -48,20 +49,36 @@ public class FakeClientPlayNetHandler extends ClientPacketListener {
     }
 
     private class FakeRegistry implements RegistryAccess {
-
+        #if PRE_CURRENT_MC_1_19_2
+        @Override
+        public <E> Optional<Registry<E>> ownedRegistry(ResourceKey<? extends Registry<? extends E>> resourceKey) {
+            return Optional.empty();
+        }
+        #endif
         @Override
         public <E> Optional<Registry<E>> registry(ResourceKey<? extends Registry<? extends E>> p_123085_) {
             return Optional.empty();
         }
 
+        #if POST_MC_1_19_2
         @Override
         public <T> Optional<HolderLookup.RegistryLookup<T>> lookup(ResourceKey<? extends Registry<? extends T>> p_256275_) {
             return Optional.empty();
         }
+        #endif
 
         @Override
         public <E> Registry<E> registryOrThrow(ResourceKey<? extends Registry<? extends E>> p_175516_) {
+            #if POST_MC_1_19_2
             return new FakeRegistoryObj<>();
+            #else
+            return new FakeRegistoryObj<>((ResourceKey<? extends Registry<E>>) p_175516_);
+            #endif
+        }
+
+        @Override
+        public Stream<RegistryEntry<?>> ownedRegistries() {
+            return null;
         }
 
         @Override
@@ -74,13 +91,27 @@ public class FakeClientPlayNetHandler extends ClientPacketListener {
             return null;
         }
 
+        #if POST_MC_1_19_2
         @Override
         public Lifecycle allRegistriesLifecycle() {
             return null;
         }
+        #endif
     }
 
+    #if POST_MC_1_19_2
     private class FakeRegistoryObj<T> implements Registry<T> {
+    #else
+    private class FakeRegistoryObj<T> extends Registry<T> {
+        protected FakeRegistoryObj(ResourceKey<? extends Registry<T>> resourceKey, Lifecycle lifecycle) {
+            super(resourceKey, lifecycle);
+        }
+
+        protected FakeRegistoryObj(ResourceKey<? extends Registry<T>> resourceKey) {
+            super(resourceKey, Lifecycle.stable());
+        }
+    #endif
+
 
         @Override
         public Holder.Reference<T> getHolderOrThrow(ResourceKey<T> p_249087_) {
@@ -137,11 +168,6 @@ public class FakeClientPlayNetHandler extends ClientPacketListener {
         }
 
         @Override
-        public Lifecycle registryLifecycle() {
-            return null;
-        }
-
-        @Override
         public Set<ResourceLocation> keySet() {
             return null;
         }
@@ -157,7 +183,7 @@ public class FakeClientPlayNetHandler extends ClientPacketListener {
         }
 
         @Override
-        public Optional<Holder.Reference<T>> getRandom(RandomSource p_235781_) {
+        public Optional<Holder<T>> getRandom(RandomSource randomSource) {
             return Optional.empty();
         }
 
@@ -177,23 +203,28 @@ public class FakeClientPlayNetHandler extends ClientPacketListener {
         }
 
         @Override
+        public Holder<T> getOrCreateHolderOrThrow(ResourceKey<T> resourceKey) {
+            return null;
+        }
+
+        @Override
+        public DataResult<Holder<T>> getOrCreateHolder(ResourceKey<T> resourceKey) {
+            return null;
+        }
+
+        @Override
         public Holder.Reference<T> createIntrusiveHolder(T p_206068_) {
             return null;
         }
 
         @Override
-        public Optional<Holder.Reference<T>> getHolder(int p_206051_) {
+        public Optional<Holder<T>> getHolder(int i) {
             return Optional.empty();
         }
 
         @Override
-        public Optional<Holder.Reference<T>> getHolder(ResourceKey<T> p_206050_) {
+        public Optional<Holder<T>> getHolder(ResourceKey<T> resourceKey) {
             return Optional.empty();
-        }
-
-        @Override
-        public Holder<T> wrapAsHolder(T p_263382_) {
-            return null;
         }
 
         @Override
@@ -222,6 +253,11 @@ public class FakeClientPlayNetHandler extends ClientPacketListener {
         }
 
         @Override
+        public boolean isKnownTagName(TagKey<T> tagKey) {
+            return false;
+        }
+
+        @Override
         public void resetTags() {
 
         }
@@ -229,6 +265,32 @@ public class FakeClientPlayNetHandler extends ClientPacketListener {
         @Override
         public void bindTags(Map<TagKey<T>, List<Holder<T>>> p_205997_) {
 
+        }
+
+        #if POST_MC_1_19_2
+        @Override
+        public Optional<Holder.Reference<T>> getRandom(RandomSource p_235781_) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Holder.Reference<T>> getHolder(int p_206051_) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<Holder.Reference<T>> getHolder(ResourceKey<T> p_206050_) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Lifecycle registryLifecycle() {
+            return null;
+        }
+
+        @Override
+        public Holder<T> wrapAsHolder(T p_263382_) {
+            return null;
         }
 
         @Override
@@ -240,6 +302,15 @@ public class FakeClientPlayNetHandler extends ClientPacketListener {
         public HolderLookup.RegistryLookup<T> asLookup() {
             return null;
         }
+
+        #else
+
+        @Override
+        public Lifecycle elementsLifecycle() {
+            return null;
+        }
+
+        #endif
 
         @NotNull
         @Override

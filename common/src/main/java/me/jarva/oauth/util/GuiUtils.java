@@ -28,9 +28,9 @@ public class GuiUtils {
     public static void blit(GuiGraphics graphics, ResourceLocation location, int x, int y, float textureX, float textureY, int width, int height, int dX, int dY) {
         graphics.blit(location, x, y, textureX, textureY, width, height, dX, dY);
     }
-    #endif
 
-    #if PRE_MC_1_20_1
+    #else
+
     public static void drawShadow(PoseStack graphics, Component text, int x, int y, int color) {
         Minecraft.getInstance().font.draw(graphics, text, x, y, color);
     }
