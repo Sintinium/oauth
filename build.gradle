@@ -1,0 +1,329 @@
+plugins {
+    id "architectury-plugin" version "3.4-SNAPSHOT"
+    id "dev.architectury.loom" version "0.12.0-SNAPSHOT" apply false
+    id "io.github.pacifistmc.forgix" version "1.2.6"
+}
+
+// The accesswidener is set as <modid>.accesswidener
+
+// These are the access wideners depending on the minecraft version
+def mcVersionToAccessWidenerVersion = [
+        "1.16.5": "1_19_3",
+        "1.18.2": "1_19_3",
+        "1.19.2": "1_19_2",
+        "1.19.4": "1_19_4",
+        "1.20.1": "1_20_1",
+]
+rootProject.ext.set("accessWideners", mcVersionToAccessWidenerVersion)
+
+loadProperties()
+makeAccessWidener()
+defineMixins()
+
+forgix {
+    group = rootProject.maven_group
+    mergedJarName = "${rootProject.mod_id}-${rootProject.mod_version}-${rootProject.minecraft_version}.jar"
+    outputDir = "merged"
+}
+
+architectury {
+    minecraft = rootProject.minecraft_version
+}
+
+subprojects { p ->
+    apply plugin: "dev.architectury.loom"
+
+    loom {
+        silentMojangMappingsLicense()
+    }
+
+    def awFile = project(":common").file("src/main/resources/${rootProject.mod_id}.accesswidener")
+
+    if (awFile.exists()) {
+        if (p != project(":forge")) {
+            loom {
+                accessWidenerPath = awFile
+            }
+        } else {
+            loom {
+                accessWidenerPath = awFile
+
+                forge {
+                    convertAccessWideners = true
+                    extraAccessWideners.add loom.accessWidenerPath.get().asFile.name
+                }
+            }
+        }
+    }
+
+    configurations {
+        shade // I recommend using "addJar" instead of "shade"
+        addJar
+
+        if (minecraft_version == "1.16.5") { // This is because 1.18.1- doesn't support JarJar
+            if (p == project(":forge")) {
+                shade.extendsFrom addJar
+            } else {
+                if (p != project(":common")) {
+                    include.extendsFrom addJar
+                } else {
+                    shade.extendsFrom addJar
+                }
+            }
+        } else {
+            if (p != project(":common")) {
+                include.extendsFrom addJar
+            }
+        }
+
+        implementation.extendsFrom shade
+        modImplementation.extendsFrom addJar
+    }
+
+    dependencies {
+        minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+        mappings loom.officialMojangMappings()
+
+        annotationProcessor "systems.manifold:manifold-preprocessor:${rootProject.manifold_version}"
+
+        // https://github.com/LlamaLad7/MixinExtras/wiki
+        addJar "com.github.LlamaLad7:MixinExtras:${rootProject.mixin_extras}"
+        annotationProcessor("com.github.LlamaLad7:MixinExtras:${rootProject.mixin_extras}")
+        
+        
+        
+        
+        
+        // Dev Env Optimizations
+        //// https://www.cursemaven.com/
+        //// https://docs.modrinth.com/docs/tutorials/maven/
+
+        if (p == project(":fabric")) {
+            if (rootProject.hasProperty("sodium")) {
+                modImplementation "maven.modrinth:sodium:${rootProject.sodium}"
+            }
+            if (rootProject.hasProperty("lazydfu_fabric")) {
+                modImplementation "maven.modrinth:lazydfu:${rootProject.lazydfu_fabric}"
+            }
+            if (rootProject.hasProperty("smoothboot_fabric")) {
+                modImplementation "curse.maven:smooth-boot-415758:${rootProject.smoothboot_fabric}"
+            }
+            if (rootProject.hasProperty("starlight_fabric")) {
+                modImplementation "curse.maven:starlight-521783:${rootProject.starlight_fabric}"
+            }
+        }
+
+        if (p == project(":forge")) {
+            if (rootProject.hasProperty("rubidium")) {
+                modImplementation "curse.maven:rubidium-574856:${rootProject.rubidium}"
+            }
+            if (rootProject.hasProperty("smoothboot_forge")) {
+                modImplementation "curse.maven:smooth-boot-reloaded-633412:${rootProject.smoothboot_forge}"
+            }
+            if (rootProject.hasProperty("starlight_forge")) {
+                modImplementation "curse.maven:starlight-forge-526854:${rootProject.starlight_forge}"
+            }
+        }
+    }
+
+    processResources {
+        def properties = [
+                accessWidener: rootProject.accessWidener,
+                id: rootProject.mod_id,
+                displayName: rootProject.display_name,
+                version: rootProject.mod_version,
+                license: rootProject.license,
+                javaVersion: rootProject.java_version
+        ]
+
+        inputs.properties properties
+
+        filesMatching("architectury.common.json") {
+            expand properties
+        }
+
+        filesMatching("fabric.mod.json") {
+            expand properties
+        }
+
+        filesMatching("META-INF/mods.toml") {
+            expand properties
+        }
+
+        for (String mixinFile : rootProject.ext.get("mixins")) {
+            filesMatching(mixinFile) {
+                expand properties
+            }
+        }
+    }
+
+    remapJar.finalizedBy(mergeJars)
+}
+
+allprojects {
+    apply plugin: "java"
+    apply plugin: "architectury-plugin"
+    apply plugin: "maven-publish"
+
+    archivesBaseName = rootProject.archives_base_name
+    version = rootProject.mod_version
+    group = rootProject.maven_group
+
+    repositories {
+        // For Manifold
+        maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+
+        // For lots of stuff
+        maven { url 'https://jitpack.io' }
+
+        // Modrinth Mods
+        maven {
+            url "https://api.modrinth.com/maven"
+            content { includeGroup "maven.modrinth" }
+        }
+
+        // CurseForge Mods
+        maven {
+            url "https://www.cursemaven.com"
+            content { includeGroup "curse.maven" }
+        }
+    }
+
+    tasks.withType(JavaCompile) {
+        options.encoding = "UTF-8"
+        options.release = rootProject.java_version as Integer
+        options.compilerArgs += ['-Xplugin:Manifold']
+    }
+
+    java {
+        withSourcesJar()
+    }
+}
+
+
+
+
+/* Cursed stuff is defined below! Beware of dog */
+
+
+
+// Defines the preprocessors
+def setupManifoldProcessors(List<String> mcVers, int mcIndex) {
+    ArrayList<String> redefineList = new ArrayList<String>()
+    for (int i = 0; i < mcVers.size(); i++) {
+        String mcStr = mcVers.get(i).replace(".", "_")
+
+        if (mcIndex < i) {
+            redefineList.add("PRE_MC_" + mcStr)
+        }
+
+        if (mcIndex <= i) {
+            redefineList.add("PRE_CURRENT_MC_" + mcStr)
+        }
+
+        if (mcIndex == i) {
+            redefineList.add("MC_" + mcStr)
+        }
+
+        if (mcIndex > i) {
+            redefineList.add("POST_MC_" + mcStr)
+        }
+
+        if (mcIndex >= i) {
+            redefineList.add("POST_CURRENT_MC_" + mcStr)
+        }
+    }
+
+    StringBuilder sb = new StringBuilder()
+    sb.append("# No need to edit this file since it's generated by the build script\n")
+    sb.append("# If you need to change versions then edit \"mc_versions\" in gradle.properties\n\n")
+
+    for (String redefinedVersion : redefineList) {
+        sb.append(redefinedVersion)
+        sb.append("=\n")
+    }
+
+    new File(projectDir, "build.properties").text = sb.toString()
+}
+
+// Loads the properties for each version & sets up the preprocessors
+def loadProperties() {
+    def mcVersion = ""
+    def mcVers = mc_versions.split(", ")
+//    mcVers*.trim()
+    int mcIndex = -1
+
+    println "Avalible Minecraft Versions: ${mc_versions}"
+
+    if (project.hasProperty("mcVer")) {
+        mcVersion = mcVer
+        mcIndex = Arrays.asList(mcVers).indexOf(mcVer)
+    }
+
+    if (mcIndex == -1) {
+        println "Defaulting to ${rootProject.default_mc_version} since the set mcVer is invalid."
+        println "Use -PmcVer='${rootProject.default_mc_version}' to set the mcVer."
+
+        mcVersion = default_mc_version
+        mcIndex = Arrays.asList(mcVers).indexOf(default_mc_version)
+    }
+
+    println "Using " + mcVersion + ".properties"
+    def properties = new Properties()
+
+    properties.load(new FileInputStream("$rootProject.rootDir/"+"$mcVersion"+".properties"))
+
+    properties.each { property ->
+        rootProject.ext.set(property.key, property.value)
+    }
+
+    setupManifoldProcessors(Arrays.asList(mcVers), mcIndex)
+
+    rootProject.ext.set("accessWidenerVersion", rootProject.accessWideners.get(mcVersion))
+}
+
+// Sets up the accesswideners
+def makeAccessWidener() {
+    def accessWidenerFile = project(":common").file("src/main/resources/${rootProject.mod_id}.accesswidener")
+    def versionAccessWidenerFile = project(":common").file("src/main/resources/${rootProject.accessWidenerVersion}.${rootProject.mod_id}.aw")
+
+    if (accessWidenerFile.exists()) {
+        delete accessWidenerFile
+    }
+
+    if (versionAccessWidenerFile.exists()) {
+        copy {
+            from versionAccessWidenerFile
+            into project(":common").file("src/main/resources/")
+            rename "${rootProject.accessWidenerVersion}.${rootProject.mod_id}.aw", "${rootProject.mod_id}.accesswidener"
+        }
+        def text = accessWidenerFile.text
+        text = text + "\n# Do not edit this file. It is automatically generated by the build script. Edit ${versionAccessWidenerFile.name} instead!"
+
+        accessWidenerFile.text = text
+    } else {
+        versionAccessWidenerFile.createNewFile()
+        versionAccessWidenerFile.text = "accessWidener   v2  named"
+    }
+    rootProject.ext.set("accessWidener", "${rootProject.accessWidenerVersion}.${rootProject.mod_id}.aw")
+}
+
+// Defines the mixins
+def defineMixins() {
+    def mixins = new ArrayList<String>()
+    def projects = new ArrayList<String>()
+
+    for (Project proj : rootProject.subprojects) {
+        projects.add(proj.name)
+    }
+
+    for (String proj : projects) {
+        for (File file : project(proj).file("src/main/resources/").listFiles()) {
+            if (file.getName().endsWith("mixin.json") || file.getName().endsWith("mixins.json")) {
+                mixins.add(file.getName())
+            }
+        }
+    }
+
+    rootProject.ext.set("mixins", mixins)
+}
