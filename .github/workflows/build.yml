@@ -1,13 +1,17 @@
+# Automatically build the project and run any configured tests for every push
+# and submitted pull request. This can help catch issues that only occur on
+# certain platforms or Java versions, and provides a first line of defence
+# against bad commits.
+
 name: build
 on: [pull_request, push]
 
 jobs:
-  setup:
+  build:
     strategy:
       matrix:
         java: [17]
         os: [ubuntu-20.04]
-        minecraft: [1.19.4,1.20.1]
     runs-on: ${{ matrix.os }}
     steps:
       - name: checkout repository
@@ -22,8 +26,11 @@ jobs:
         if: ${{ runner.os != 'Windows' }}
         run: chmod +x ./gradlew
 
-      - name: build ${{ matrix.minecraft }}
-        run: ./gradlew assemble -PmcVer="${{ matrix.minecraft }}"
+      - name: build 1.20.1
+        run: ./gradlew assemble -PmcVer="1.20.1"
+
+      - name: build 1.19.4
+        run: ./gradlew assemble -PmcVer="1.19.4"
 
       - name: capture build artifacts
         if: ${{ runner.os == 'Linux' }} # Only upload artifacts built from one OS
