@@ -76,10 +76,12 @@ public class FakeClientPlayNetHandler extends ClientPacketListener {
             #endif
         }
 
+        #if PRE_CURRENT_MC_1_19_2
         @Override
         public Stream<RegistryEntry<?>> ownedRegistries() {
             return null;
         }
+        #endif
 
         @Override
         public Stream<RegistryEntry<?>> registries() {
@@ -197,6 +199,7 @@ public class FakeClientPlayNetHandler extends ClientPacketListener {
             return null;
         }
 
+        #if PRE_CURRENT_MC_1_19_2
         @Override
         public Holder<T> getOrCreateHolderOrThrow(ResourceKey<T> resourceKey) {
             return null;
@@ -206,6 +209,12 @@ public class FakeClientPlayNetHandler extends ClientPacketListener {
         public DataResult<Holder<T>> getOrCreateHolder(ResourceKey<T> resourceKey) {
             return null;
         }
+
+        @Override
+        public boolean isKnownTagName(TagKey<T> tagKey) {
+            return false;
+        }
+        #endif
 
         @Override
         public Holder.Reference<T> createIntrusiveHolder(T p_206068_) {
@@ -235,11 +244,6 @@ public class FakeClientPlayNetHandler extends ClientPacketListener {
         @Override
         public Stream<TagKey<T>> getTagNames() {
             return null;
-        }
-
-        @Override
-        public boolean isKnownTagName(TagKey<T> tagKey) {
-            return false;
         }
 
         @Override
