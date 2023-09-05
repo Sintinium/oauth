@@ -17,9 +17,11 @@ import me.jarva.oauth.profile.MojangProfile;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.User;
 import net.minecraft.client.gui.screens.social.PlayerSocialManager;
+#if POST_MC_1_18_2
 import net.minecraft.client.multiplayer.ProfileKeyPairManager;
 import net.minecraft.client.multiplayer.chat.report.ReportEnvironment;
 import net.minecraft.client.multiplayer.chat.report.ReportingContext;
+#endif
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
@@ -171,12 +173,14 @@ public class LoginUtil {
 
         mc.setUserApiService(apiService);
         mc.setPlayerSocialManager(new PlayerSocialManager(Minecraft.getInstance(), apiService));
+        #if POST_MC_1_18_2
         #if POST_MC_1_19_2
         mc.setProfileKeyPairManager(ProfileKeyPairManager.create(apiService, session, Minecraft.getInstance().gameDirectory.toPath()));
         #else
         mc.setProfileKeyPairManager(new ProfileKeyPairManager(apiService, UUID.fromString(session.getUuid()), Minecraft.getInstance().gameDirectory.toPath()));
         #endif
         mc.setReportingContext(ReportingContext.create(ReportEnvironment.local(), apiService));
+        #endif
 
         Minecraft.getInstance().getProfileProperties().clear();
         Minecraft.getInstance().getProfileProperties();

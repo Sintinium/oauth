@@ -32,7 +32,11 @@ public class FakeWorld extends ClientLevel {
     }
 
     public FakeWorld() {
+        #if POST_MC_1_18_2
         super(FakeClientPlayNetHandler.getInstance(), new ClientLevelData(Difficulty.EASY, false, true), Level.OVERWORLD, new FakeHolder<>(FakeDimensionType.getInstance()), 0, 0, () -> null, new LevelRenderer(Minecraft.getInstance(), Minecraft.getInstance().getEntityRenderDispatcher(), Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().renderBuffers()), false, 0L);
+        #else
+        super(FakeClientPlayNetHandler.getInstance(), new ClientLevelData(Difficulty.EASY, false, true), Level.OVERWORLD, new Holder.Direct<>(FakeDimensionType.getInstance()), 0, 0, () -> null, new LevelRenderer(Minecraft.getInstance(), Minecraft.getInstance().renderBuffers()), false, 0L);
+        #endif
     }
 
     public static record FakeHolder<T>(T value) implements Holder<T> {

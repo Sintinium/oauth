@@ -9,6 +9,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import me.jarva.oauth.profile.IProfile;
 import me.jarva.oauth.profile.OfflineProfile;
 import me.jarva.oauth.profile.ProfileManager;
+import me.jarva.oauth.util.ComponentUtils;
 import me.jarva.oauth.util.GuiUtils;
 import net.minecraft.Util;
 import net.minecraft.client.gui.components.ObjectSelectionList;
@@ -54,7 +55,7 @@ public class ProfileEntry extends ObjectSelectionList.Entry<ProfileEntry> {
     #endif
         String name = profile.getName();
         if (isOffline) name += " (Offline)";
-        GuiUtils.drawShadow(graphics, Component.literal(name), pLeft, pTop + 2, 0xFFFFFF);
+        GuiUtils.drawShadow(graphics, ComponentUtils.literal(name), pLeft, pTop + 2, 0xFFFFFF);
         if (this.profileList.getSelected() == this) {
             upArrow.setSelected(true);
             downArrow.setSelected(true);
@@ -119,7 +120,7 @@ public class ProfileEntry extends ObjectSelectionList.Entry<ProfileEntry> {
 
     @Override
     public @NotNull Component getNarration() {
-        return Component.empty();
+        return ComponentUtils.empty();
     }
 
     private static class ArrowButton {

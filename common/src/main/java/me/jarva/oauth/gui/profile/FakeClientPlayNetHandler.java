@@ -1,14 +1,11 @@
 package me.jarva.oauth.gui.profile;
 
+#if POST_MC_1_19_2
 import com.mojang.authlib.GameProfile;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Lifecycle;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.core.*;
-import net.minecraft.network.Connection;
-import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -18,6 +15,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Stream;
+#endif
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.PacketFlow;
+
 
 public class FakeClientPlayNetHandler extends ClientPacketListener {
 
@@ -34,10 +39,15 @@ public class FakeClientPlayNetHandler extends ClientPacketListener {
         #if POST_MC_1_19_2
         super(Minecraft.getInstance(), null, new Connection(PacketFlow.CLIENTBOUND), null, null, null);
         #else
+        #if PRE_CURRENT_MC_1_18_2
+        super(Minecraft.getInstance(), null, new Connection(PacketFlow.CLIENTBOUND), Minecraft.getInstance().getUser().getGameProfile(), null);
+        #else
         super(Minecraft.getInstance(), null, new Connection(PacketFlow.CLIENTBOUND), null, null);
+        #endif
         #endif
     }
 
+    #if POST_MC_1_19_2
     @Override
     public RegistryAccess registryAccess() {
         return new FakeRegistry();
@@ -322,4 +332,5 @@ public class FakeClientPlayNetHandler extends ClientPacketListener {
             return null;
         }
     }
+    #endif
 }

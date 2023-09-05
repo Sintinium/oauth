@@ -4,9 +4,9 @@ package me.jarva.oauth.gui;
 
 import me.jarva.oauth.gui.components.OAuthButton;
 import me.jarva.oauth.gui.profile.ProfileSelectionScreen;
+import me.jarva.oauth.util.ComponentUtils;
 import me.jarva.oauth.util.GuiUtils;
 import net.minecraft.network.chat.CommonComponents;
-import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -29,7 +29,7 @@ public class LoginLoadingScreen extends OAuthScreen {
     private final AtomicReference<String> updateText = new AtomicReference<>();
 
     public LoginLoadingScreen(Runnable onCancel, boolean isMicrosoft) {
-        super(Component.literal("Logging in"));
+        super(ComponentUtils.literal("Logging in"));
         this.onCancel = onCancel;
         this.isMicrosoft = isMicrosoft;
 
@@ -76,9 +76,9 @@ public class LoginLoadingScreen extends OAuthScreen {
     public void render(@NotNull PoseStack graphics, int p_230430_2_, int p_230430_3_, float p_230430_4_) {
     #endif
         this.renderBackground(graphics);
-        GuiUtils.drawCentered(graphics, Component.literal(renderText), this.width / 2, this.height / 2 - 40, 0xFFFFFF);
+        GuiUtils.drawCentered(graphics, ComponentUtils.literal(renderText), this.width / 2, this.height / 2 - 40, 0xFFFFFF);
         if (this.isMicrosoft) {
-            GuiUtils.drawCentered(graphics, Component.literal(updateText.get()), this.width / 2, this.height / 2 - 28, 0xFFFFFF);
+            GuiUtils.drawCentered(graphics, ComponentUtils.literal(updateText.get()), this.width / 2, this.height / 2 - 28, 0xFFFFFF);
         }
         super.render(graphics, p_230430_2_, p_230430_3_, p_230430_4_);
     }

@@ -5,6 +5,7 @@ import net.minecraft.client.gui.GuiGraphics;
 #else
 import com.mojang.blaze3d.vertex.PoseStack;
 #endif
+import me.jarva.oauth.util.ComponentUtils;
 import me.jarva.oauth.util.GuiUtils;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
@@ -13,9 +14,9 @@ import net.minecraft.util.Mth;
 public class TextWidget extends Button {
     public TextWidget(int x, int y, int width, int height, String text) {
         #if POST_MC_1_19_2
-        super(x, y, width, height, Component.literal(text), button -> {}, Button.DEFAULT_NARRATION);
+        super(x, y, width, height, ComponentUtils.literal(text), button -> {}, Button.DEFAULT_NARRATION);
         #else
-        super(x, y, width, height, Component.literal(text), button -> {});
+        super(x, y, width, height, ComponentUtils.literal(text), button -> {});
         #endif
     }
 

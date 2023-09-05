@@ -8,6 +8,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 #endif
 import me.jarva.oauth.gui.components.OAuthButton;
 import me.jarva.oauth.login.MicrosoftLogin;
+import me.jarva.oauth.util.ComponentUtils;
 import me.jarva.oauth.util.GuiUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -26,13 +27,13 @@ public class ErrorScreen extends OAuthScreen {
     private boolean isInfo = false;
 
     public ErrorScreen(boolean isMs, String message) {
-        super(Component.literal("Error logging into " + (isMs ? "Microsoft." : "Mojang.")));
+        super(ComponentUtils.literal("Error logging into " + (isMs ? "Microsoft." : "Mojang.")));
         this.message = message;
         System.err.println(message);
     }
 
     public ErrorScreen(boolean isMs, Throwable e) {
-        super(Component.literal("Error logging into " + (isMs ? "Microsoft." : "Mojang.")));
+        super(ComponentUtils.literal("Error logging into " + (isMs ? "Microsoft." : "Mojang.")));
         this.e = e;
         e.printStackTrace();
     }
@@ -96,18 +97,18 @@ public class ErrorScreen extends OAuthScreen {
             Iterable<String> messages = Splitter.on("\n").split(getMessage());
             int index = 0;
             for (String m : messages) {
-                GuiUtils.drawShadow(graphics, Component.literal(m), this.width / 2 - font.width(m) / 2, (this.height / 2 - 24) + (index * 12), 0xFF4444);
+                GuiUtils.drawShadow(graphics, ComponentUtils.literal(m), this.width / 2 - font.width(m) / 2, (this.height / 2 - 24) + (index * 12), 0xFF4444);
                 index++;
             }
         } else if (getMessage().toLowerCase().contains("no such host is known") || getMessage().toLowerCase().contains("connection reset")) {
             GuiUtils.drawCentered(graphics, this.title, this.width / 2, this.height / 2 - 40, 0xFFFFFF);
-            GuiUtils.drawCentered(graphics, Component.literal("The servers could be down or it could be an internet problem."), this.width / 2, this.height / 2 - 28, 0xFFFFFF);
-            GuiUtils.drawCentered(graphics, Component.literal("If you believe this is a bug please create an issue at"), this.width / 2, this.height / 2 - 12, 0xFFFFFF);
-            GuiUtils.drawCentered(graphics, Component.literal("https://github.com/Sintinium/oauth with your latest log file."), this.width / 2, this.height / 2, 0xFFFFFF);
+            GuiUtils.drawCentered(graphics, ComponentUtils.literal("The servers could be down or it could be an internet problem."), this.width / 2, this.height / 2 - 28, 0xFFFFFF);
+            GuiUtils.drawCentered(graphics, ComponentUtils.literal("If you believe this is a bug please create an issue at"), this.width / 2, this.height / 2 - 12, 0xFFFFFF);
+            GuiUtils.drawCentered(graphics, ComponentUtils.literal("https://github.com/Sintinium/oauth with your latest log file."), this.width / 2, this.height / 2, 0xFFFFFF);
         } else {
-            Component github = Component.literal("Please create an issue at https://github.com/Sintinium/oauth with your log file.")
+            Component github = ComponentUtils.literal("Please create an issue at https://github.com/Sintinium/oauth with your log file.")
                     .setStyle(Style.EMPTY.withUnderlined(true));
-            GuiUtils.drawCentered(graphics, Component.literal("An error occurred. This could be a bug."), this.width / 2, this.height / 2 - 40, 0xFFFFFF);
+            GuiUtils.drawCentered(graphics, ComponentUtils.literal("An error occurred. This could be a bug."), this.width / 2, this.height / 2 - 40, 0xFFFFFF);
             GuiUtils.drawCentered(graphics, github, this.width / 2, this.height / 2 - 28, 0xFFFFFF);
             float scale = .5f;
             GuiUtils.scale(graphics, scale);
@@ -118,7 +119,7 @@ public class ErrorScreen extends OAuthScreen {
             Iterable<String> messages = Splitter.fixedLength(Math.round(80 * (1f / scale))).limit(12).split(msg);
             int index = 0;
             for (String m : messages) {
-                GuiUtils.drawShadow(graphics, Component.literal(m), (int) (this.width / 2 - font.width(m) / 2 * scale), (int) ((this.height / 2 - 16) * (1 / scale) + (index * 12)), 0xFF4444);
+                GuiUtils.drawShadow(graphics, ComponentUtils.literal(m), (int) (this.width / 2 - font.width(m) / 2 * scale), (int) ((this.height / 2 - 16) * (1 / scale) + (index * 12)), 0xFF4444);
                 index++;
             }
             GuiUtils.scale(graphics, 1f / scale);

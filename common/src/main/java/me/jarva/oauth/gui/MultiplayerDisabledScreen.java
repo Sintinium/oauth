@@ -9,6 +9,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import me.jarva.oauth.events.JoinMultiplayerScreenHandler;
 import me.jarva.oauth.gui.components.OAuthButton;
 import me.jarva.oauth.util.AgnosticUtils;
+import me.jarva.oauth.util.ComponentUtils;
 import me.jarva.oauth.util.GuiUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -21,13 +22,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class MultiplayerDisabledScreen extends OAuthScreen {
     public MultiplayerDisabledScreen() {
-        super(Component.literal("multiplayer_disabled"));
+        super(ComponentUtils.literal("multiplayer_disabled"));
     }
 
     @Override
     protected void init() {
         JoinMultiplayerScreenHandler.warned = true;
-        this.addRenderableWidget(new OAuthButton(this.width / 2 - 100, this.height / 2 + 38, 200, 20, Component.literal("Open Privacy Settings"), button -> {
+        this.addRenderableWidget(new OAuthButton(this.width / 2 - 100, this.height / 2 + 38, 200, 20, ComponentUtils.literal("Open Privacy Settings"), button -> {
             AgnosticUtils.openUri("https://account.xbox.com/en-us/Settings");
         }));
         this.addRenderableWidget(new OAuthButton(this.width / 2 - 100, this.height / 2 + 60, 200, 20, CommonComponents.GUI_CANCEL, button -> {
@@ -44,13 +45,13 @@ public class MultiplayerDisabledScreen extends OAuthScreen {
         Font font = Minecraft.getInstance().font;
         this.renderBackground(graphics);
 
-        GuiUtils.drawCentered(graphics, Component.literal("Multiplayer Disabled").setStyle(Style.EMPTY.withBold(true)), this.width / 2, this.height / 2 - 40, 0xFFFFFF);
+        GuiUtils.drawCentered(graphics, ComponentUtils.literal("Multiplayer Disabled").setStyle(Style.EMPTY.withBold(true)), this.width / 2, this.height / 2 - 40, 0xFFFFFF);
 
         String message = "This account is not allowed to play multiplayer.\nTo enable multiplayer go to your account settings and enable it.\nIf this error persists try deleting the profile.";
         Iterable<String> messages = Splitter.on('\n').split(message);
         int index = 0;
         for (String m : messages) {
-            GuiUtils.drawShadow(graphics, Component.literal(m), this.width / 2 - font.width(m) / 2, (this.height / 2 - 24) + (index * 12), 0xFF4444);
+            GuiUtils.drawShadow(graphics, ComponentUtils.literal(m), this.width / 2 - font.width(m) / 2, (this.height / 2 - 24) + (index * 12), 0xFF4444);
             index++;
         }
     }

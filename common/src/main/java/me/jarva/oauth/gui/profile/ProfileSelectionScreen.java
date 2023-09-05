@@ -51,7 +51,7 @@ public class ProfileSelectionScreen extends OAuthScreen {
     private ProfileEntry initialEntry;
 
     public ProfileSelectionScreen() {
-        super(Component.literal("Profiles"));
+        super(ComponentUtils.literal("Profiles"));
     }
 
     public ProfileSelectionScreen(ProfileEntry initialEntry) {
@@ -261,7 +261,7 @@ public class ProfileSelectionScreen extends OAuthScreen {
     }
 
     private Button addButton(int x, int y, int width, String text, Button.OnPress onPress) {
-        return this.addRenderableWidget(new OAuthButton(x, y, width, 20, Component.literal(text), onPress));
+        return this.addRenderableWidget(new OAuthButton(x, y, width, 20, ComponentUtils.literal(text), onPress));
     }
 
     @Override
@@ -307,8 +307,8 @@ public class ProfileSelectionScreen extends OAuthScreen {
         int y = height / 2 + size;
         this.profileList.render(graphics, mouseX, mouseY, delta);
         renderPlayer(RenderSystem.getModelViewStack(), mouseX, mouseY, delta);
-        GuiUtils.drawShadow(graphics, Component.literal("Status: " + (LoginUtil.isOnline() ? "Online" : "Offline")), 12, 12, LoginUtil.isOnline() ? 0x55FF55 : 0xFF5555);
-        GuiUtils.drawCentered(graphics, Component.literal("Current Profile: " + Minecraft.getInstance().getUser().getName()), width / 2, 12, 0xFFFFFF);
+        GuiUtils.drawShadow(graphics, ComponentUtils.literal("Status: " + (LoginUtil.isOnline() ? "Online" : "Offline")), 12, 12, LoginUtil.isOnline() ? 0x55FF55 : 0xFF5555);
+        GuiUtils.drawCentered(graphics, ComponentUtils.literal("Current Profile: " + Minecraft.getInstance().getUser().getName()), width / 2, 12, 0xFFFFFF);
 
         super.render(graphics, mouseX, mouseY, delta);
     }
