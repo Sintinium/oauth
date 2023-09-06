@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "${id}",
+  "version": "${version}",
+  "name": "${displayName}",
+  "description": "This is an example description! Tell everyone what your mod is about!",
+  "authors": [
+    "Me!"
+  ],
+  "contact": {
+    "homepage": "https://fabricmc.net/",
+    "sources": "https://github.com/FabricMC/fabric-example-mod"
+  },
+  "license": "${license}",
+  "icon": "assets/${id}/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "me.jarva.oauth.fabric.OAuthFabric"
+    ],
+    "client": [
+      "me.jarva.oauth.fabric.OAuthFabricClient"
+    ],
+    "preLaunch": [
+      "me.jarva.oauth.fabric.PreLaunchSetup"
+    ]
+  },
+  "mixins": [
+    "oauth.mixins.json",
+    "oauth-common.mixins.json"
+  ],
+  "depends": {
+    "fabric": "*",
+    "minecraft": "*"
+  }
+}

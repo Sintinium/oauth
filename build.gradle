@@ -1,223 +1,329 @@
-buildscript {
-    repositories {
-        maven { url = 'https://maven.minecraftforge.net' }
-        mavenCentral()
-        maven { url = 'https://repo.spongepowered.org/maven/' }
-        maven { url = 'https://maven.parchmentmc.org' }
+plugins {
+    id "architectury-plugin" version "3.4-SNAPSHOT"
+    id "dev.architectury.loom" version "0.12.0-SNAPSHOT" apply false
+    id "io.github.pacifistmc.forgix" version "1.2.6"
+}
+
+// The accesswidener is set as <modid>.accesswidener
+
+// These are the access wideners depending on the minecraft version
+def mcVersionToAccessWidenerVersion = [
+        "1.16.5": "1_16_5",
+        "1.18.2": "1_18_2",
+        "1.19.2": "1_19_2",
+        "1.19.4": "1_19_4",
+        "1.20.1": "1_20_1",
+]
+rootProject.ext.set("accessWideners", mcVersionToAccessWidenerVersion)
+
+loadProperties()
+makeAccessWidener()
+defineMixins()
+
+forgix {
+    group = rootProject.maven_group
+    mergedJarName = "${rootProject.mod_id}-${rootProject.mod_version}-${rootProject.minecraft_version}.jar"
+    outputDir = "merged"
+}
+
+architectury {
+    minecraft = rootProject.minecraft_version
+}
+
+subprojects { p ->
+    apply plugin: "dev.architectury.loom"
+
+    loom {
+        silentMojangMappingsLicense()
     }
+
+    def awFile = project(":common").file("src/main/resources/${rootProject.mod_id}.accesswidener")
+
+    if (awFile.exists()) {
+        if (p != project(":forge")) {
+            loom {
+                accessWidenerPath = awFile
+            }
+        } else {
+            loom {
+                accessWidenerPath = awFile
+
+                forge {
+                    convertAccessWideners = true
+                    extraAccessWideners.add loom.accessWidenerPath.get().asFile.name
+                }
+            }
+        }
+    }
+
+    configurations {
+        shade // I recommend using "addJar" instead of "shade"
+        addJar
+
+        if (minecraft_version == "1.16.5") { // This is because 1.18.1- doesn't support JarJar
+            if (p == project(":forge")) {
+                shade.extendsFrom addJar
+            } else {
+                if (p != project(":common")) {
+                    include.extendsFrom addJar
+                } else {
+                    shade.extendsFrom addJar
+                }
+            }
+        } else {
+            if (p != project(":common")) {
+                include.extendsFrom addJar
+            }
+        }
+
+        implementation.extendsFrom shade
+        modImplementation.extendsFrom addJar
+    }
+
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '6.0.+', changing: true
-        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
-//        classpath 'org.parchmentmc:librarian:1.+'
-    }
-}
+        minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+        mappings loom.officialMojangMappings()
 
-apply plugin: 'net.minecraftforge.gradle'
-// Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
-//apply plugin: 'org.parchmentmc.librarian.forgegradle'
-apply plugin: 'org.spongepowered.mixin'
-apply plugin: 'eclipse'
-apply plugin: 'maven-publish'
+        annotationProcessor "systems.manifold:manifold-preprocessor:${rootProject.manifold_version}"
 
-version = '1.1.15' // When changed make sure to change the version in the resources/mods.toml
-group = 'com.sintinium.oauth' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = 'oauth'
+        // https://github.com/LlamaLad7/MixinExtras/wiki
+        addJar "com.github.LlamaLad7:MixinExtras:${rootProject.mixin_extras}"
+        annotationProcessor("com.github.LlamaLad7:MixinExtras:${rootProject.mixin_extras}")
+        
+        
+        
+        
+        
+        // Dev Env Optimizations
+        //// https://www.cursemaven.com/
+        //// https://docs.modrinth.com/docs/tutorials/maven/
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17) // Mojang ships Java 17 to end users, so your mod should target Java 17.
-
-println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
-minecraft {
-    // The mappings can be changed at any time, and must be in the following format.
-    // Channel:   Version:
-    // snapshot   YYYYMMDD   Snapshot are built nightly.
-    // stable     #          Stables are built at the discretion of the MCP team.
-    // official   MCVersion  Official field/method names from Mojang mapping files
-    //
-    // You must be aware of the Mojang license when using the 'official' mappings.
-    // See more information here: https://github.com/MinecraftForge/MCPConfig/blob/master/Mojang.md
-    //
-    // Use non-default mappings at your own risk. they may not always work.
-    // Simply re-run your setup task after changing the mappings to update your workspace.
-//    mappings channel: 'parchment', version: '2021.10.17-1.16.5'
-    mappings channel: 'official', version: '1.20'
-    // makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
-
-    // accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
-
-    // Default run configurations.
-    // These can be tweaked, removed, or duplicated as needed.
-    runs {
-        client {
-            workingDirectory project.file('run')
-            property 'mixin.env.refMapRemappingFile', "${buildDir}/createSrgToMcp/output.srg"
-            property 'mixin.env.remapRefMap', 'true'
-            property 'mixin.debug.export', 'true'
-            arg "--mixin=oauth.mixins.json"
-
-            // Recommended logging data for a userdev environment
-            // The markers can be changed as needed.
-            // "SCAN": For mods scan.
-            // "REGISTRIES": For firing of registry events.
-            // "REGISTRYDUMP": For getting the contents of all registries.
-            property 'forge.logging.markers', 'REGISTRIES'
-
-            // Recommended logging level for the console
-            // You can set various levels here.
-            // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
-            property 'forge.logging.console.level', 'debug'
-
-            mods {
-                oauth {
-                    source sourceSets.main
-                }
+        if (p == project(":fabric")) {
+            if (rootProject.hasProperty("sodium")) {
+                modImplementation "maven.modrinth:sodium:${rootProject.sodium}"
+            }
+            if (rootProject.hasProperty("lazydfu_fabric")) {
+                modImplementation "maven.modrinth:lazydfu:${rootProject.lazydfu_fabric}"
+            }
+            if (rootProject.hasProperty("smoothboot_fabric")) {
+                modImplementation "curse.maven:smooth-boot-415758:${rootProject.smoothboot_fabric}"
+            }
+            if (rootProject.hasProperty("starlight_fabric")) {
+                modImplementation "curse.maven:starlight-521783:${rootProject.starlight_fabric}"
             }
         }
 
-        server {
-            workingDirectory project.file('run')
-            property 'mixin.env.refMapRemappingFile', "${buildDir}/createSrgToMcp/output.srg"
-            property 'mixin.env.remapRefMap', 'true'
-            arg  "-mixin=oauth.mixins.json"
-
-            // Recommended logging data for a userdev environment
-            // The markers can be changed as needed.
-            // "SCAN": For mods scan.
-            // "REGISTRIES": For firing of registry events.
-            // "REGISTRYDUMP": For getting the contents of all registries.
-            property 'forge.logging.markers', 'REGISTRIES'
-
-            // Recommended logging level for the console
-            // You can set various levels here.
-            // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
-            property 'forge.logging.console.level', 'debug'
-
-            mods {
-                oauth {
-                    source sourceSets.main
-                }
+        if (p == project(":forge")) {
+            if (rootProject.hasProperty("rubidium")) {
+                modImplementation "curse.maven:rubidium-574856:${rootProject.rubidium}"
             }
-        }
-
-        data {
-            workingDirectory project.file('run')
-
-            // Recommended logging data for a userdev environment
-            // The markers can be changed as needed.
-            // "SCAN": For mods scan.
-            // "REGISTRIES": For firing of registry events.
-            // "REGISTRYDUMP": For getting the contents of all registries.
-            property 'forge.logging.markers', 'REGISTRIES'
-
-            // Recommended logging level for the console
-            // You can set various levels here.
-            // Please read: https://stackoverflow.com/questions/2031163/when-to-use-the-different-log-levels
-            property 'forge.logging.console.level', 'debug'
-
-            // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
-            args '--mod', 'oauth', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
-
-            mods {
-                oauth {
-                    source sourceSets.main
-                }
+            if (rootProject.hasProperty("smoothboot_forge")) {
+                modImplementation "curse.maven:smooth-boot-reloaded-633412:${rootProject.smoothboot_forge}"
+            }
+            if (rootProject.hasProperty("starlight_forge")) {
+                modImplementation "curse.maven:starlight-forge-526854:${rootProject.starlight_forge}"
             }
         }
     }
-}
 
-// Include resources generated by data generators.
-sourceSets.main.resources { srcDir 'src/generated/resources' }
+    processResources {
+        def properties = [
+                accessWidener: rootProject.accessWidener,
+                id: rootProject.mod_id,
+                displayName: rootProject.display_name,
+                version: rootProject.mod_version,
+                license: rootProject.license,
+                javaVersion: rootProject.java_version
+        ]
 
-repositories {
-    maven {
-        url "https://www.cursemaven.com"
-        allowInsecureProtocol = true
-    }
-    maven { url = 'https://repo.spongepowered.org/maven/' }
-}
+        inputs.properties properties
 
-dependencies {
-    // Specify the version of Minecraft to use, If this is any group other then 'net.minecraft' it is assumed
-    // that the dep is a ForgeGradle 'patcher' dependency. And it's patches will be applied.
-    // The userdev artifact is a special name and will get all sorts of transformations applied to it.
-    minecraft 'net.minecraftforge:forge:1.20-46.0.2'
-//    implementation("org.json:json:20190722")
-//    implementation("com.google.code.gson:gson:2.8.0")
+        filesMatching("architectury.common.json") {
+            expand properties
+        }
 
-    // To test hats for compatibility issues
-//    implementation fg.deobf("curse.maven:hats-229073:3539379")
-//    implementation fg.deobf("curse.maven:ichunutil-229060:3539371")
-//    implementation fg.deobf("curse.maven:tabula-229092:3539385")
+        filesMatching("fabric.mod.json") {
+            expand properties
+        }
 
-//    implementation("org.spongepowered:mixin:0.8.4")
-    annotationProcessor('org.spongepowered:mixin:0.8.4:processor')
+        filesMatching("META-INF/mods.toml") {
+            expand properties
+        }
 
-    // You may put jars on which you depend on in ./libs or you may define them like so..
-    // compile "some.group:artifact:version:classifier"
-    // compile "some.group:artifact:version"
-
-    // Real examples
-    // compile 'com.mod-buildcraft:buildcraft:6.0.8:dev'  // adds buildcraft to the dev env
-    // compile 'com.googlecode.efficient-java-matrix-library:ejml:0.24' // adds ejml to the dev env
-
-    // The 'provided' configuration is for optional dependencies that exist at compile-time but might not at runtime.
-    // provided 'com.mod-buildcraft:buildcraft:6.0.8:dev'
-
-    // These dependencies get remapped to your current MCP mappings
-    // deobf 'com.mod-buildcraft:buildcraft:6.0.8:dev'
-
-    // For more info...
-    // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
-    // http://www.gradle.org/docs/current/userguide/dependency_management.html
-
-}
-processResources {
-    inputs.property "version", project.version
-
-    filesMatching("mods.toml") {
-        expand "version": project.version
-    }
-}
-
-// Example for how to get properties into the manifest for reading by the runtime..
-jar {
-    manifest {
-        attributes([
-                "Specification-Title"   : "oauth",
-                "Specification-Vendor"  : "sintinium",
-                "Specification-Version" : "1", // We are version 1 of ourselves
-                "Implementation-Title"  : project.name,
-                "Implementation-Version": "${archiveVersion.get()}",
-                "Implementation-Vendor" : "sintinium",
-//                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-                "MixinConfigs"          : "oauth.mixins.json",
-//                "TweakClass": "org.spongepowered.asm.launch.MixinTweaker",
-//                'FMLCorePluginContainsFMLMod': 'true'
-        ])
-    }
-
-    archiveFileName = "oauth-${version}-1.20.jar"
-}
-
-mixin {
-    add(sourceSets.main, "oauth.refmap.json")
-}
-
-// Example configuration to allow publishing using the maven-publish task
-// This is the preferred method to reobfuscate your jar file
-jar.finalizedBy('reobfJar')
-// However if you are in a multi-project build, dev time needs unobfed jar files, so you can delay the obfuscation until publishing by doing
-//publish.dependsOn('reobfJar')
-
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            artifact jar
+        for (String mixinFile : rootProject.ext.get("mixins")) {
+            filesMatching(mixinFile) {
+                expand properties
+            }
         }
     }
+
+    remapJar.finalizedBy(mergeJars)
+}
+
+allprojects {
+    apply plugin: "java"
+    apply plugin: "architectury-plugin"
+    apply plugin: "maven-publish"
+
+    archivesBaseName = rootProject.archives_base_name
+    version = rootProject.mod_version
+    group = rootProject.maven_group
+
     repositories {
+        // For Manifold
+        maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
+
+        // For lots of stuff
+        maven { url 'https://jitpack.io' }
+
+        // Modrinth Mods
         maven {
-            url "file:///${project.projectDir}/mcmodsrepo"
+            url "https://api.modrinth.com/maven"
+            content { includeGroup "maven.modrinth" }
+        }
+
+        // CurseForge Mods
+        maven {
+            url "https://www.cursemaven.com"
+            content { includeGroup "curse.maven" }
         }
     }
+
+    tasks.withType(JavaCompile) {
+        options.encoding = "UTF-8"
+        options.release = rootProject.java_version as Integer
+        options.compilerArgs += ['-Xplugin:Manifold']
+    }
+
+    java {
+        withSourcesJar()
+    }
+}
+
+
+
+
+/* Cursed stuff is defined below! Beware of dog */
+
+
+
+// Defines the preprocessors
+def setupManifoldProcessors(List<String> mcVers, int mcIndex) {
+    ArrayList<String> redefineList = new ArrayList<String>()
+    for (int i = 0; i < mcVers.size(); i++) {
+        String mcStr = mcVers.get(i).replace(".", "_")
+
+        if (mcIndex < i) {
+            redefineList.add("PRE_MC_" + mcStr)
+        }
+
+        if (mcIndex <= i) {
+            redefineList.add("PRE_CURRENT_MC_" + mcStr)
+        }
+
+        if (mcIndex == i) {
+            redefineList.add("MC_" + mcStr)
+        }
+
+        if (mcIndex > i) {
+            redefineList.add("POST_MC_" + mcStr)
+        }
+
+        if (mcIndex >= i) {
+            redefineList.add("POST_CURRENT_MC_" + mcStr)
+        }
+    }
+
+    StringBuilder sb = new StringBuilder()
+    sb.append("# No need to edit this file since it's generated by the build script\n")
+    sb.append("# If you need to change versions then edit \"mc_versions\" in gradle.properties\n\n")
+
+    for (String redefinedVersion : redefineList) {
+        sb.append(redefinedVersion)
+        sb.append("=\n")
+    }
+
+    new File(projectDir, "build.properties").text = sb.toString()
+}
+
+// Loads the properties for each version & sets up the preprocessors
+def loadProperties() {
+    def mcVersion = ""
+    def mcVers = mc_versions.split(", ")
+//    mcVers*.trim()
+    int mcIndex = -1
+
+    println "Avalible Minecraft Versions: ${mc_versions}"
+
+    if (project.hasProperty("mcVer")) {
+        mcVersion = mcVer
+        mcIndex = Arrays.asList(mcVers).indexOf(mcVer)
+    }
+
+    if (mcIndex == -1) {
+        println "Defaulting to ${rootProject.default_mc_version} since the set mcVer is invalid."
+        println "Use -PmcVer='${rootProject.default_mc_version}' to set the mcVer."
+
+        mcVersion = default_mc_version
+        mcIndex = Arrays.asList(mcVers).indexOf(default_mc_version)
+    }
+
+    println "Using " + mcVersion + ".properties"
+    def properties = new Properties()
+
+    properties.load(new FileInputStream("$rootProject.rootDir/"+"$mcVersion"+".properties"))
+
+    properties.each { property ->
+        rootProject.ext.set(property.key, property.value)
+    }
+
+    setupManifoldProcessors(Arrays.asList(mcVers), mcIndex)
+
+    rootProject.ext.set("accessWidenerVersion", rootProject.accessWideners.get(mcVersion))
+}
+
+// Sets up the accesswideners
+def makeAccessWidener() {
+    def accessWidenerFile = project(":common").file("src/main/resources/${rootProject.mod_id}.accesswidener")
+    def versionAccessWidenerFile = project(":common").file("src/main/resources/${rootProject.accessWidenerVersion}.${rootProject.mod_id}.aw")
+
+    if (accessWidenerFile.exists()) {
+        delete accessWidenerFile
+    }
+
+    if (versionAccessWidenerFile.exists()) {
+        copy {
+            from versionAccessWidenerFile
+            into project(":common").file("src/main/resources/")
+            rename "${rootProject.accessWidenerVersion}.${rootProject.mod_id}.aw", "${rootProject.mod_id}.accesswidener"
+        }
+        def text = accessWidenerFile.text
+        text = text + "\n# Do not edit this file. It is automatically generated by the build script. Edit ${versionAccessWidenerFile.name} instead!"
+
+        accessWidenerFile.text = text
+    } else {
+        versionAccessWidenerFile.createNewFile()
+        versionAccessWidenerFile.text = "accessWidener   v2  named"
+    }
+    rootProject.ext.set("accessWidener", "${rootProject.accessWidenerVersion}.${rootProject.mod_id}.aw")
+}
+
+// Defines the mixins
+def defineMixins() {
+    def mixins = new ArrayList<String>()
+    def projects = new ArrayList<String>()
+
+    for (Project proj : rootProject.subprojects) {
+        projects.add(proj.name)
+    }
+
+    for (String proj : projects) {
+        for (File file : project(proj).file("src/main/resources/").listFiles()) {
+            if (file.getName().endsWith("mixin.json") || file.getName().endsWith("mixins.json")) {
+                mixins.add(file.getName())
+            }
+        }
+    }
+
+    rootProject.ext.set("mixins", mixins)
 }

@@ -1,0 +1,21 @@
+modLoader = "javafml"
+loaderVersion = "[0,)"
+#issueTrackerURL = ""
+license = "${license}"
+
+[[mods]]
+modId = "${id}"
+version = "${version}"
+displayName = "${displayName}"
+authors = "Me!"
+description = '''
+Adds the ability to relogin without closing your game. It includes legacy username logins, mojang logins, and microsoft account logins.
+'''
+logoFile = "assets/${id}/icon.png"
+
+[[dependencies.${id}]]
+modId = "forge"
+mandatory = true
+versionRange = "[0.0.0,)"
+ordering = "NONE"
+side = "BOTH"

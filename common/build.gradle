@@ -1,0 +1,35 @@
+architectury {
+    common(rootProject.enabled_platforms.split(", "))
+}
+
+repositories {
+    maven { url "https://maven.shedaniel.me/" }
+}
+
+dependencies {
+    // We depend on fabric loader here to use the fabric @Environment annotations and get the mixin dependencies
+    // Do NOT use other classes from fabric loader
+    modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
+
+    if (minecraft_version == "1.16.5") {
+        modImplementation "me.shedaniel:architectury:${rootProject.architectury_version}"
+    } else {
+        modImplementation "dev.architectury:architectury:${rootProject.architectury_version}"
+    }
+
+    modImplementation "me.shedaniel.cloth:cloth-config:${rootProject.cloth_config_version}"
+}
+
+publishing {
+    publications {
+        mavenCommon(MavenPublication) {
+            artifactId = rootProject.archives_base_name
+            from components.java
+        }
+    }
+
+    // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
+    repositories {
+        // Add repositories to publish to here.
+    }
+}

@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "package": "me.jarva.oauth.mixins",
+  "compatibilityLevel": "JAVA_${javaVersion}",
+  "client": [
+    "EntityRendererMixin",
+    "MinecraftMixin"
+  ],
+  "mixins": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
